@@ -71,7 +71,7 @@ public sealed class UiTests
 
         var install = AppActions.RunAsync(AppAction.Install, note.Status!, window);
         await WaitUntil(window, () => install.IsCompleted);
-        Assert.Equal("ThixNote 1.0.2-20261116 ist installiert.", await install);
+        Assert.Equal("ThixNote 1.1.1-20261116 ist installiert.", await install);
         Settle(window);
 
         Assert.Equal("Öffnen", note.ActionText);
@@ -84,7 +84,7 @@ public sealed class UiTests
     public async Task Keyboard_filters_opens_details_and_goes_back()
     {
         using var data = new TestData();
-        data.System.Add(AppCatalog.Find("thixnote")!, "1.0.2-20261116");
+        data.System.Add(AppCatalog.Find("thixnote")!, "1.1.1-20261116");
         await AppService.RefreshAsync();
         var window = Open();
 
@@ -102,7 +102,7 @@ public sealed class UiTests
         var detail = Assert.IsType<AppDetailPage>(window.PageHost.Content);
         Assert.Equal("thixnote", detail.AppId);
         Assert.Equal("ThixNote", detail.NameText.Text);
-        Assert.Equal("1.0.2-20261116", detail.InstalledText.Text);
+        Assert.Equal("1.1.1-20261116", detail.InstalledText.Text);
         Assert.True(detail.UninstallButton.IsVisible);
 
         window.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);

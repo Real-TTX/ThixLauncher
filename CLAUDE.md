@@ -25,7 +25,7 @@ apps is read from the system and GitHub; settings are `settings.json`.
 - Run: `dotnet run --project src/ThixLauncher` (with `THIXLAUNCHER_DATA_DIR=<folder>` an instance of its own). A development
   run works on the real computer: Installieren really installs the app.
 - **Snapshots:** `dotnet run --project src/ThixLauncher -- --snapshot docs/images` draws every window headless from sample
-  data (ThixClip 0.1.9 installed with 0.1.12 waiting, ThixNote 1.0.2 offered, pinned clock 16.11.2026 14:32, version 1.0.0,
+  data (ThixClip 0.1.9 installed with 0.1.12 waiting, ThixNote 1.1.1 offered, pinned clock 16.11.2026 14:32, version 1.0.0,
   ANNA-PC) in light and dark: `setup-*`, `main-{apps,installing,detail,settings,about,folded}`, `dialog-uninstall`, `toast`,
   `tray-icon-{windows,macos}[-updates]`. A new window or page: add it to `Snapshot.cs` and look at the pictures.
 - The Windows publish (win-x64) is a **trimmed** single file (`TrimMode=partial`, about 33 MB). No `dynamic`, no built-in

@@ -80,14 +80,14 @@ internal static class SelfTest
             var clip = AppService.Get("thixclip");
             var note = AppService.Get("thixnote");
             Ensure(clip.Latest?.Version.Text == "0.1.12-20261115" && clip.Latest.Sha256?.Length == 64, $"ThixClip: {clip.Latest?.Version.Text} {clip.FeedError}");
-            Ensure(note.Latest?.Version.Text == "1.0.2-20261116" && note.Latest.Sha256?.Length == 64, $"ThixNote: {note.Latest?.Version.Text} {note.FeedError}");
+            Ensure(note.Latest?.Version.Text == "1.1.1-20261116" && note.Latest.Sha256?.Length == 64, $"ThixNote: {note.Latest?.Version.Text} {note.FeedError}");
             return $"{github.Requests.Count} requests";
         });
 
         await Check("install, start, remove (download, SHA-256)", async () =>
         {
             await AppService.InstallAsync("thixnote");
-            Ensure(AppService.Get("thixnote").Installed?.VersionText == "1.0.2-20261116", "not installed");
+            Ensure(AppService.Get("thixnote").Installed?.VersionText == "1.1.1-20261116", "not installed");
             AppService.Launch("thixnote");
             Ensure(system.Launched.SequenceEqual(["thixnote"]), "not started");
             await AppService.UninstallAsync("thixnote");

@@ -24,8 +24,9 @@ public sealed class AppServiceTests
         Assert.Contains("/releases/download/release-channel/", clip.Latest.DownloadUrl);
 
         var note = AppService.Get("thixnote");
-        Assert.Equal("1.0.2-20261116", note.Latest!.Version.Text);
-        Assert.Matches(@"^ThixNote-(Setup-1\.0\.2-20261116-win-x64\.exe|1\.0\.2-20261116-osx-(arm64|x64)-portable\.zip)$", note.Latest.PackageFile);
+        Assert.Equal("1.1.1-20261116", note.Latest!.Version.Text);
+        Assert.Matches(@"^ThixNote(Setup\.exe|-macOS-(arm64|x64)\.zip)$", note.Latest.PackageFile);
+        Assert.Contains("/releases/download/release-channel/", note.Latest.DownloadUrl);
         Assert.Equal(64, note.Latest.Sha256!.Length);
         Assert.Equal(AppState.NotInstalled, note.State);
         Assert.NotNull(AppService.LastRefresh);
@@ -65,7 +66,7 @@ public sealed class AppServiceTests
         await AppService.RefreshAsync();
 
         var note = AppService.Get("thixnote");
-        Assert.Equal("1.0.2-20261116", note.Latest!.Version.Text);
+        Assert.Equal("1.1.1-20261116", note.Latest!.Version.Text);
         Assert.Contains("Limit", note.FeedError);
     }
 
@@ -119,7 +120,7 @@ public sealed class AppServiceTests
         Assert.Equal(1, AppService.Count(AppFilter.Updates));
 
         await AppService.InstallAsync("thixnote");
-        Assert.Equal("1.0.2-20261116", AppService.Get("thixnote").Installed!.VersionText);
+        Assert.Equal("1.1.1-20261116", AppService.Get("thixnote").Installed!.VersionText);
         Assert.Equal(0, AppService.Count(AppFilter.Updates));
 
         var refused = await Assert.ThrowsAsync<BusinessException>(() => AppService.InstallAsync("thixnote"));
@@ -148,24 +149,7 @@ public sealed class AppServiceTests
 
         var refused = await Assert.ThrowsAsync<BusinessException>(() => AppService.InstallAsync("thixnote"));
         Assert.Contains("keine Prüfsumme", refused.Message);
-        Assert.DoesNotContain(data.GitHub.Requests, url => url.Contains("/releases/download/v", StringComparison.Ordinal));
-    }
-
-    [Fact]
-    public async Task A_setup_closed_without_installing_says_so()
-    {
-        using var data = new TestData();
-        data.System.CancelSetups = true;
-        await AppService.RefreshAsync();
-        var note = AppCatalog.Find("thixnote")!;
-        if (note.InstallsQuietly)
-        {
-            return; // only the setups that ask can be closed (Windows)
-        }
-
-        var refused = await Assert.ThrowsAsync<BusinessException>(() => AppService.InstallAsync("thixnote"));
-        Assert.Contains("abgebrochen", refused.Message);
-        Assert.Equal(AppState.NotInstalled, AppService.Get("thixnote").State);
+        Assert.DoesNotContain(data.GitHub.Requests, url => !url.EndsWith(".json", StringComparison.Ordinal) && url.Contains("/releases/download/", StringComparison.Ordinal));
     }
 
     [Fact]

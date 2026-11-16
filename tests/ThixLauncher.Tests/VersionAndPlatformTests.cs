@@ -39,6 +39,9 @@ public sealed class VersionAndPlatformTests
     [InlineData("nightly-14-20261116", "0.1.9-20261110", false)]
     [InlineData("0.1.12-20261115", "nightly-10-20261115", false)]
     [InlineData("local-20261116", "local-20261115", false)]
+    [InlineData("1.1.1-20261116", "1.0.5-20261114", true)] // ThixNote: a new workflow started its build numbers over
+    [InlineData("1.0.5-20261114", "1.1.1-20261116", false)]
+    [InlineData("1.1.2-20261117", "1.1.1-20261116", true)]
     public void Only_a_higher_build_of_the_same_channel_is_newer(string latest, string installed, bool newer) =>
         Assert.Equal(newer, AppVersion.Parse(latest)!.IsNewerThan(AppVersion.Parse(installed)!));
 

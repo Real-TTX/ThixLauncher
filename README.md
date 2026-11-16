@@ -35,12 +35,15 @@ Nightlies aus dem Branch `dev` stehen im Pre-Release `nightly-channel`.
 - **Die Apps** stehen im Katalog (`AppCatalog`): wo sie ihre Builds veröffentlichen und wie ihr Setup läuft. ThixLauncher
   liest bei jedem Start und alle 6 Stunden, was installiert ist und was der gewählte Kanal anbietet (Release oder
   Nightly) – direkt aus den GitHub-Releases der Apps:
-  - **ThixClip:** das Manifest `thixclip-update.json` im Release `release-channel` / `nightly-channel`.
-  - **ThixNote:** die GitHub-Releases (`v…` für Release, Pre-Release `nightly-…` für Nightly), das Paket über seinen Dateinamen.
+  - **ThixClip** und **ThixNote:** das Manifest (`thixclip-update.json`, `thixnote-update.json`) im Release
+    `release-channel` / `nightly-channel`. Eine App, die nur einzelne Releases veröffentlicht, liest ThixLauncher auch
+    (`FeedKind.GitHubReleases`: `v…` für Release, Pre-Release `nightly-…` für Nightly, das Paket über seinen Dateinamen).
+- **Versionen:** Ein Release ist neuer, wenn Major.Minor größer ist, sonst die Build-Nummer. So zählt ThixNote 1.1.1
+  (neuer Workflow ab Build 1) als neuer als 1.0.5.
 - **Sicher:** Jedes Paket wird vor der Installation per **SHA-256** geprüft (aus dem Manifest bzw. GitHubs Digest). Ein
   Paket ohne Prüfsumme wird nie installiert.
-- **Installieren / Aktualisieren:** unter Windows läuft das Setup der App selbst – ThixClip ohne Rückfrage
-  (`--update`), ThixNote mit seinem eigenen Assistenten (ThixLauncher wartet, bis er geschlossen ist). Unter macOS
+- **Installieren / Aktualisieren:** unter Windows läuft das Setup der App selbst, ohne Rückfrage
+  (`--update`). Ein Setup, das nachfragt, öffnet sich, und ThixLauncher wartet, bis es geschlossen ist. Unter macOS
   ersetzt ThixLauncher das App-Bundle in `/Applications` (bzw. `~/Applications`) und beendet eine laufende App vorher.
 - **Entfernen:** mit dem Deinstallationsprogramm der App (das stille, wenn es eines gibt). Die Daten der App bleiben.
 - **Starten:** aus der Liste, über die Symbole oben in der Titelleiste oder aus dem Menü des Tray-Symbols.

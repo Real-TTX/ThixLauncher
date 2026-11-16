@@ -37,19 +37,15 @@ public static class AppCatalog
                           "wie in einem Editor. Breit eine kleine Notizbibliothek, schmal ein Editor wie Notepad.",
             Icon = "file-text",
             Repository = "Real-TTX/ThixNote",
-            Feed = FeedKind.GitHubReleases,
-            PackagePatterns = new Dictionary<string, string>
-            {
-                ["win-x64"] = @"^ThixNote-Setup-.+-win-x64\.exe$",
-                ["osx-arm64"] = @"^ThixNote-.+-osx-arm64-portable\.zip$",
-                ["osx-x64"] = @"^ThixNote-.+-osx-x64-portable\.zip$",
-            },
+            Feed = FeedKind.ChannelManifest,
+            ManifestFileName = "thixnote-update.json",
             WindowsExecutable = "ThixNote.exe",
             WindowsUninstallKey = "ThixNote",
-            // ThixNote's setup has no quiet mode yet: it opens and asks (folder, shortcut, file types).
-            WindowsQuietInstallArguments = null,
+            // ThixNoteSetup.exe --update installs or updates without a window; a running ThixNote saves its notes and ends,
+            // it is not started again (that would take "--restart").
+            WindowsQuietInstallArguments = "--update",
             MacBundleName = "ThixNote.app",
-            MacBundleId = "app.thixnote",
+            MacBundleId = "info.schmoldt.thixnote",
         },
     ];
 

@@ -9,8 +9,8 @@ namespace ThixLauncher.Core.Infrastructure;
 
 /// <summary>
 /// GitHub in memory, for the tests, the self test and the snapshots (<see cref="ReleaseFeed.HandlerForTests"/>): it answers
-/// the manifests of the rolling channels (ThixClip, ThixLauncher), the release list of the GitHub API (ThixNote) and the
-/// downloads, with the versions set in <see cref="Versions"/>. A package is a small text whose SHA-256 the feeds declare,
+/// the manifests of the rolling channels (ThixClip, ThixNote, ThixLauncher), the release list of the GitHub API (an app
+/// with <see cref="FeedKind.GitHubReleases"/>) and the downloads, with the versions set in <see cref="Versions"/>. A package is a small text whose SHA-256 the feeds declare,
 /// so the whole way – feed, download, checksum, install – runs as it does with the real GitHub. Never used by the real app.
 /// </summary>
 internal sealed class SampleGitHub : HttpMessageHandler
@@ -27,19 +27,19 @@ internal sealed class SampleGitHub : HttpMessageHandler
     /// <summary>Declare a wrong checksum for every package (a damaged download).</summary>
     public bool BreakChecksums { get; set; }
 
-    /// <summary>Leave the digest out of the release list (a package without a checksum).</summary>
+    /// <summary>Leave the checksums out of the manifests and the release list (a package without a checksum).</summary>
     public bool OmitDigests { get; set; }
 
     /// <summary>Every URL asked for, in order.</summary>
     public List<string> Requests { get; } = [];
 
-    /// <summary>The sample state of the snapshots: ThixClip 0.1.12 in release (installed: 0.1.9), ThixNote 1.0.2, nightlies of both.</summary>
+    /// <summary>The sample state of the snapshots: ThixClip 0.1.12 in release (installed: 0.1.9), ThixNote 1.1.1, nightlies of both.</summary>
     public static SampleGitHub WithSampleReleases()
     {
         var github = new SampleGitHub();
         github.Versions[("thixclip", AppVersion.Release)] = "0.1.12-20261115";
         github.Versions[("thixclip", AppVersion.Nightly)] = "nightly-14-20261116";
-        github.Versions[("thixnote", AppVersion.Release)] = "1.0.2-20261116";
+        github.Versions[("thixnote", AppVersion.Release)] = "1.1.1-20261116";
         github.Versions[("thixnote", AppVersion.Nightly)] = "nightly-5-20261116";
         return github;
     }
@@ -108,19 +108,20 @@ internal sealed class SampleGitHub : HttpMessageHandler
     {
         var parsed = AppVersion.Parse(version)!;
         var windows = $"{repo}Setup.exe";
+        var sha = OmitDigests ? string.Empty : Sha(appId, version);
         return new
         {
             version,
             channel,
             buildNumber = parsed.BuildNumber,
             setup = windows,
-            sha256 = Sha(appId, version),
+            sha256 = sha,
             publishedAt = PublishedAt,
             packages = new Dictionary<string, object>
             {
-                ["win-x64"] = new { file = windows, sha256 = Sha(appId, version) },
-                ["osx-arm64"] = new { file = $"{repo}-macOS-arm64.zip", sha256 = Sha(appId, version) },
-                ["osx-x64"] = new { file = $"{repo}-macOS-x64.zip", sha256 = Sha(appId, version) },
+                ["win-x64"] = new { file = windows, sha256 = sha },
+                ["osx-arm64"] = new { file = $"{repo}-macOS-arm64.zip", sha256 = sha },
+                ["osx-x64"] = new { file = $"{repo}-macOS-x64.zip", sha256 = sha },
             },
         };
     }
