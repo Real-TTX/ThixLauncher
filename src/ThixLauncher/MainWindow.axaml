@@ -1,0 +1,32 @@
+<mat:MatWindow xmlns="https://github.com/avaloniaui"
+               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+               xmlns:mat="using:MatDesktop"
+               x:Class="ThixLauncher.MainWindow"
+               Title="ThixLauncher" Width="1180" Height="760" MinWidth="760" MinHeight="460"
+               WindowStartupLocation="CenterScreen">
+  <!--
+    The one window of ThixLauncher, in MatDesktop's chrome: the title bar (DESK-03: logo and word mark, the installed apps to
+    start with one click in the middle, the caption buttons on Windows, the traffic lights on macOS), the menu (DESK-04:
+    Apps, Installiert, Updates, Settings below a line, the version = About and the fold to a rail at its foot) and the page.
+  -->
+  <Grid RowDefinitions="Auto,*">
+    <mat:MatTitleBar x:Name="TitleBar" AppName="ThixLauncher" CloseKey="Esc">
+      <mat:MatTitleBar.WordMark>
+        <TextBlock VerticalAlignment="Center" FontSize="{DynamicResource Mat.FontSizeXl}" FontWeight="SemiBold">
+          <Run Text="Thix" /><Run Text="Launcher" Foreground="{DynamicResource Mat.AccentText}" />
+        </TextBlock>
+      </mat:MatTitleBar.WordMark>
+      <mat:MatTitleBar.Center>
+        <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+          <TextBlock x:Name="QuickLaunchLabel" Text="Starten" Theme="{StaticResource MatText.Muted}" VerticalAlignment="Center" />
+          <StackPanel x:Name="QuickLaunch" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" />
+        </StackPanel>
+      </mat:MatTitleBar.Center>
+    </mat:MatTitleBar>
+
+    <Grid Grid.Row="1" ColumnDefinitions="Auto,*">
+      <mat:MatNav x:Name="Sidebar" AppName="ThixLauncher" />
+      <ContentControl Grid.Column="1" x:Name="PageHost" />
+    </Grid>
+  </Grid>
+</mat:MatWindow>

@@ -1,0 +1,67 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mat="using:MatDesktop"
+             xmlns:controls="using:ThixLauncher.Controls"
+             x:Class="ThixLauncher.Pages.AppsPage">
+  <!--
+    The apps (the list page): the title with the state of the catalog, the toolbar above the list (search, filter, sort and
+    "Nach Updates suchen"), the apps as cards (logo, name, version, state, the main action at the right) and the actions of
+    the chosen app below the list, left-aligned from positive to negative, Deinstallieren after a gap.
+  -->
+  <Border Background="{DynamicResource Mat.Surface}">
+    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" Margin="28,22,28,20">
+      <StackPanel>
+        <TextBlock x:Name="TitleText" Text="Apps" Theme="{StaticResource MatText.PageTitle}" />
+        <TextBlock x:Name="SubtitleText" Theme="{StaticResource MatText.Muted}" Margin="0,4,0,0" TextWrapping="Wrap" />
+      </StackPanel>
+
+      <controls:InfoBar Grid.Row="1" x:Name="PageMessage" Margin="0,14,0,0" />
+
+      <!-- The toolbar: search, filter, sort, check -->
+      <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,16,0,14">
+        <TextBox x:Name="SearchBox" Theme="{StaticResource MatSearchBox}" MaxWidth="360" HorizontalAlignment="Stretch"
+                 Watermark="Apps durchsuchen" AutomationProperties.Name="Apps durchsuchen" />
+        <ComboBox Grid.Column="1" x:Name="FilterChoice" MinWidth="170" Margin="12,0,0,0" VerticalAlignment="Center"
+                  AutomationProperties.Name="Filter" ToolTip.Tip="Filter">
+          <ComboBoxItem Content="Alle Apps" />
+          <ComboBoxItem Content="Installiert" />
+          <ComboBoxItem Content="Updates" />
+          <ComboBoxItem Content="Nicht installiert" />
+        </ComboBox>
+        <ComboBox Grid.Column="2" x:Name="SortChoice" MinWidth="150" Margin="8,0,0,0" VerticalAlignment="Center"
+                  AutomationProperties.Name="Sortierung" ToolTip.Tip="Sortierung">
+          <ComboBoxItem Content="Nach Name" />
+          <ComboBoxItem Content="Nach Status" />
+        </ComboBox>
+        <Button Grid.Column="3" x:Name="RefreshButton" Margin="8,0,0,0" VerticalAlignment="Center" Click="OnRefreshClick">
+          <controls:IconLabel x:Name="RefreshLabel" Icon="refresh" Text="Nach Updates suchen" />
+        </Button>
+      </Grid>
+
+      <Panel Grid.Row="3">
+        <ListBox x:Name="AppList" Theme="{StaticResource MatList}" ItemContainerTheme="{StaticResource MatCardRow}" SelectionMode="Single"
+                 AutomationProperties.Name="Apps" />
+        <StackPanel x:Name="EmptyState" IsVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+          <mat:MatIcon Icon="search" Size="32" HorizontalAlignment="Center" Foreground="{DynamicResource Mat.TextFaint}" />
+          <TextBlock x:Name="EmptyText" Theme="{StaticResource MatText.Muted}" HorizontalAlignment="Center" TextAlignment="Center" />
+        </StackPanel>
+      </Panel>
+
+      <!-- The actions of the chosen app: below the list, left-aligned, positive to negative, delete after a gap -->
+      <controls:ActionBar Grid.Row="4" x:Name="Actions" Margin="0,8,0,0">
+        <Button x:Name="PrimaryButton" Theme="{StaticResource MatButton.Primary}" Click="OnPrimaryClick">
+          <controls:IconLabel x:Name="PrimaryLabel" Icon="play" Text="Öffnen" />
+        </Button>
+        <Button x:Name="SecondaryButton" Click="OnSecondaryClick">
+          <controls:IconLabel x:Name="SecondaryLabel" Icon="play" Text="Öffnen" />
+        </Button>
+        <Button x:Name="DetailsButton" Click="OnDetailsClick" ToolTip.Tip="Details (Enter)">
+          <controls:IconLabel Icon="info" Text="Details" />
+        </Button>
+        <Button x:Name="UninstallButton" Theme="{StaticResource MatButton.Danger}" controls:ActionBar.Separated="True" Click="OnUninstallClick">
+          <controls:IconLabel Icon="trash" Text="Deinstallieren" />
+        </Button>
+      </controls:ActionBar>
+    </Grid>
+  </Border>
+</UserControl>

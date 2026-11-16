@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Models, business layer (static classes), infrastructure (release feeds, settings, logs) and the platform parts
+    (installing, removing and starting the Thix apps on Windows and macOS). No UI. Windows-only code is guarded by
+    OperatingSystem.IsWindows() or [SupportedOSPlatform("windows")].
+  -->
+  <PropertyGroup>
+    <RootNamespace>ThixLauncher.Core</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <SupportedOSPlatformVersion Condition="'$(OS)' == 'Windows_NT'">10.0.17763.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="ThixLauncher.Tests" />
+    <InternalsVisibleTo Include="ThixLauncher" />
+  </ItemGroup>
+
+</Project>

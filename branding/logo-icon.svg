@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <!--
+    ThixLauncher app icon, full detail (48 px and larger): the apps as a grid of four tiles on the blue tile of the Thix
+    family; the fourth tile is dark and starts what it holds (a play sign: install and launch). Geometry on a 256 grid;
+    tools/render-icons.js renders the PNG, ICO and ICNS files from it.
+  -->
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#5A9CFF"/>
+      <stop offset="1" stop-color="#1E5BE6"/>
+    </linearGradient>
+    <linearGradient id="sheet" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#EAF1FF"/>
+    </linearGradient>
+  </defs>
+  <rect x="16" y="16" width="224" height="224" rx="52" fill="url(#tile)"/>
+  <rect x="50" y="50" width="70" height="70" rx="20" fill="url(#sheet)"/>
+  <rect x="136" y="50" width="70" height="70" rx="20" fill="#FFFFFF" fill-opacity="0.55"/>
+  <rect x="50" y="136" width="70" height="70" rx="20" fill="#FFFFFF" fill-opacity="0.55"/>
+  <rect x="136" y="136" width="70" height="70" rx="20" fill="#163E9E"/>
+  <path d="M161 156.5v29a5 5 0 0 0 7.6 4.3l24-14.5a5 5 0 0 0 0-8.6l-24-14.5a5 5 0 0 0-7.6 4.3z" fill="#FFFFFF"/>
+</svg>

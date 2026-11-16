@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ThixLauncher.Core/ThixLauncher.Core.csproj" />
+    <Project Path="src/ThixLauncher/ThixLauncher.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ThixLauncher.Tests/ThixLauncher.Tests.csproj" />
+  </Folder>
+</Solution>

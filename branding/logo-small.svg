@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 256 256">
+  <!-- ThixLauncher favicon / small icon (16-32 px): full-bleed tile, four thick tiles, the fourth dark with a bold play sign. -->
+  <rect x="0" y="0" width="256" height="256" rx="60" fill="#2F6FED"/>
+  <rect x="34" y="34" width="84" height="84" rx="20" fill="#FFFFFF"/>
+  <rect x="138" y="34" width="84" height="84" rx="20" fill="#FFFFFF" fill-opacity="0.7"/>
+  <rect x="34" y="138" width="84" height="84" rx="20" fill="#FFFFFF" fill-opacity="0.7"/>
+  <rect x="138" y="138" width="84" height="84" rx="20" fill="#163E9E"/>
+  <path d="M164 158v44l38-22z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="10" stroke-linejoin="round"/>
+</svg>

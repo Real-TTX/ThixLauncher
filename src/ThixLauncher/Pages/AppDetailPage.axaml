@@ -1,0 +1,96 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mat="using:MatDesktop"
+             xmlns:controls="using:ThixLauncher.Controls"
+             x:Class="ThixLauncher.Pages.AppDetailPage">
+  <!--
+    One app (the single page of an item): the header card with logo, name, line, state and version, the areas in tabs
+    (Übersicht | Details), and the actions below in one row from positive to negative – the main action, Öffnen, Projekt,
+    Zurück – and Deinstallieren after a gap.
+  -->
+  <Border Background="{DynamicResource Mat.Surface}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel Margin="28,22,28,28" MaxWidth="860" HorizontalAlignment="Left" Spacing="16">
+        <Button x:Name="BackLink" Theme="{StaticResource MatButton.Link}" Click="OnBackClick" HorizontalAlignment="Left" ToolTip.Tip="Zurück zu den Apps (Esc)">
+          <controls:IconLabel Icon="chevron-left" Text="Alle Apps" />
+        </Button>
+
+        <!-- The header card -->
+        <Border Theme="{StaticResource MatCard}" Padding="22">
+          <Grid ColumnDefinitions="Auto,*">
+            <controls:AppLogo x:Name="Logo" Size="96" Margin="0,0,22,0" />
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="6">
+              <TextBlock x:Name="NameText" FontSize="{DynamicResource Mat.FontSize2xl}" FontWeight="SemiBold" />
+              <TextBlock x:Name="TaglineText" Theme="{StaticResource MatText.Muted}" />
+              <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,4,0,0">
+                <controls:StateBadge x:Name="Badge" />
+                <TextBlock x:Name="VersionText" Theme="{StaticResource MatText.Muted}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+              </StackPanel>
+              <ProgressBar x:Name="Progress" Theme="{StaticResource MatProgress}" Maximum="1" IsVisible="False" MaxWidth="420" HorizontalAlignment="Left" Margin="0,6,0,0" />
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <controls:InfoBar x:Name="PageMessage" Margin="0" />
+
+        <TabControl x:Name="Tabs">
+          <TabItem x:Name="OverviewTab" Header="Übersicht">
+            <StackPanel Spacing="16">
+              <TextBlock x:Name="DescriptionText" TextWrapping="Wrap" LineHeight="21" MaxWidth="720" HorizontalAlignment="Left" />
+              <Border Theme="{StaticResource MatCard}" HorizontalAlignment="Left" MinWidth="460">
+                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+                  <TextBlock Text="Installiert" Theme="{StaticResource MatText.Muted}" Margin="0,4,28,4" />
+                  <TextBlock Grid.Column="1" x:Name="InstalledText" Margin="0,4" />
+                  <TextBlock Grid.Row="1" Text="Verfügbar" Theme="{StaticResource MatText.Muted}" Margin="0,4,28,4" />
+                  <TextBlock Grid.Row="1" Grid.Column="1" x:Name="AvailableText" Margin="0,4" TextWrapping="Wrap" />
+                  <TextBlock Grid.Row="2" Text="Kanal" Theme="{StaticResource MatText.Muted}" Margin="0,4,28,4" />
+                  <TextBlock Grid.Row="2" Grid.Column="1" x:Name="ChannelText" Margin="0,4" />
+                  <TextBlock Grid.Row="3" Text="Veröffentlicht" Theme="{StaticResource MatText.Muted}" Margin="0,4,28,4" />
+                  <TextBlock Grid.Row="3" Grid.Column="1" x:Name="PublishedText" Margin="0,4" />
+                  <TextBlock Grid.Row="4" Text="Installation" Theme="{StaticResource MatText.Muted}" Margin="0,4,28,4" />
+                  <TextBlock Grid.Row="4" Grid.Column="1" x:Name="SetupText" Margin="0,4" TextWrapping="Wrap" />
+                </Grid>
+              </Border>
+            </StackPanel>
+          </TabItem>
+
+          <TabItem x:Name="DetailsTab" Header="Details">
+            <Border Theme="{StaticResource MatCard}" HorizontalAlignment="Left" MinWidth="460">
+              <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+                <TextBlock Text="Ort" Theme="{StaticResource MatText.Muted}" Margin="0,4,28,4" />
+                <SelectableTextBlock Grid.Column="1" x:Name="LocationText" Margin="0,4" TextWrapping="Wrap" FontFamily="{DynamicResource Mat.Mono}" FontSize="{DynamicResource Mat.FontSizeSm}" />
+                <TextBlock Grid.Row="1" Text="Paket" Theme="{StaticResource MatText.Muted}" Margin="0,4,28,4" />
+                <SelectableTextBlock Grid.Row="1" Grid.Column="1" x:Name="PackageText" Margin="0,4" TextWrapping="Wrap" FontFamily="{DynamicResource Mat.Mono}" FontSize="{DynamicResource Mat.FontSizeSm}" />
+                <TextBlock Grid.Row="2" Text="SHA-256" Theme="{StaticResource MatText.Muted}" Margin="0,4,28,4" />
+                <SelectableTextBlock Grid.Row="2" Grid.Column="1" x:Name="ChecksumText" Margin="0,4" TextWrapping="Wrap" FontFamily="{DynamicResource Mat.Mono}" FontSize="{DynamicResource Mat.FontSizeSm}" />
+                <TextBlock Grid.Row="3" Text="Quelle" Theme="{StaticResource MatText.Muted}" Margin="0,4,28,4" />
+                <SelectableTextBlock Grid.Row="3" Grid.Column="1" x:Name="SourceText" Margin="0,4" TextWrapping="Wrap" />
+                <TextBlock Grid.Row="4" Text="Hinweis" Theme="{StaticResource MatText.Muted}" Margin="0,4,28,4" x:Name="FeedErrorLabel" />
+                <TextBlock Grid.Row="4" Grid.Column="1" x:Name="FeedErrorText" Margin="0,4" TextWrapping="Wrap" />
+              </Grid>
+            </Border>
+          </TabItem>
+        </TabControl>
+
+        <!-- One row: positive to negative, Deinstallieren after a gap -->
+        <controls:ActionBar>
+          <Button x:Name="PrimaryButton" Theme="{StaticResource MatButton.Primary}" Click="OnPrimaryClick">
+            <controls:IconLabel x:Name="PrimaryLabel" Icon="play" Text="Öffnen" />
+          </Button>
+          <Button x:Name="SecondaryButton" Click="OnSecondaryClick">
+            <controls:IconLabel x:Name="SecondaryLabel" Icon="play" Text="Öffnen" />
+          </Button>
+          <Button x:Name="ProjectButton" Click="OnProjectClick">
+            <controls:IconLabel Icon="external" Text="Projekt auf GitHub" />
+          </Button>
+          <Button x:Name="BackButton" Click="OnBackClick">
+            <controls:IconLabel Icon="back" Text="Zurück" />
+          </Button>
+          <Button x:Name="UninstallButton" Theme="{StaticResource MatButton.Danger}" controls:ActionBar.Separated="True" Click="OnUninstallClick">
+            <controls:IconLabel Icon="trash" Text="Deinstallieren" />
+          </Button>
+        </controls:ActionBar>
+      </StackPanel>
+    </ScrollViewer>
+  </Border>
+</UserControl>
