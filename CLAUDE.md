@@ -8,7 +8,9 @@ The launcher of the Thix apps for **Windows and macOS** (desktop app, tray / men
 click, keeps them up to date, starts them and removes them. The catalog has **ThixClip**, **ThixFred** and **ThixNote**
 (`AppCatalog`); a new app is one entry there plus its logo in `src/ThixLauncher/Assets/apps/<id>.png`. The apps come
 straight from their GitHub releases (public, no token), every package is checked by **SHA-256** before it runs.
-UI language German; code, comments and identifiers English. The sister projects are the reference: ThixClip
+With **MatCloud** (`../MatCloud`, the cloud of the Thix apps) the launcher signs in once and
+hands its sign-in to every app it installs (`CloudService`, contract `POST /api/v1/devices/handoff` + `CloudHandoff`); the cloud never holds up
+an installation. UI language German; code, comments and identifiers English. The sister projects are the reference: ThixClip
 (`../ThixClip`, structure, setup, update) and MatDesign (`../MatDesign`, MatDesktop and the rules DESK, TRAY, SETUP).
 
 Stack: **.NET 10**, C#, **Avalonia 11.3** with **MatDesktop 0.2.0** (copied from MatDesign). No database: the state of the
@@ -18,22 +20,28 @@ apps is read from the system and GitHub; settings are `settings.json`.
 
 - `dotnet build ThixLauncher.slnx` – expected: 0 warnings, 0 errors.
 - `dotnet test tests/ThixLauncher.Tests` – versions, the platforms' text rules, the feeds, install / update / remove / start
-  against **GitHub in memory** (`SampleGitHub`) and **a computer in memory** (`SampleAppSystem`), settings and policies,
+  against **GitHub in memory** (`SampleGitHub`), **a computer in memory** (`SampleAppSystem`) and **MatCloud in memory** (`SampleCloud`:
+  sign-in, hand-over, unreachable, removed device), settings and policies,
   the self update, and the **UI rendered headless** (`UiTests`; `THIXLAUNCHER_SCREENSHOTS=<folder>` keeps the pictures).
-  Tests never touch the network, the real apps, registry values or LaunchAgents (`TestData`).
+  Tests never touch the network, the real apps, registry values, the Keychain, the real hand-over folder, a browser or LaunchAgents (`TestData`,
+  `Ui.OpenExternalForTests`).
   `THIXLAUNCHER_LIVE_FEEDS=1` enables `LiveFeedTests` (reads the real feeds of every app, downloads nothing).
 - Run: `dotnet run --project src/ThixLauncher` (with `THIXLAUNCHER_DATA_DIR=<folder>` an instance of its own). A development
   run works on the real computer: Installieren really installs the app.
 - **Snapshots:** `dotnet run --project src/ThixLauncher -- --snapshot docs/images` draws every window headless from sample
   data (ThixClip 0.1.9 installed with 0.1.12 waiting, ThixNote 1.1.1 offered, pinned clock 16.11.2026 14:32, version 1.0.0,
-  ANNA-PC) in light and dark: `setup-*`, `main-{apps,installing,detail,settings,about,folded}`, `dialog-uninstall`, `toast`,
+  ANNA-PC) in light and dark: `setup-*`, `main-{apps,installing,detail,settings,settings-cloud-code,settings-cloud,about,folded}` (the cloud tab against `SampleCloud`), `dialog-uninstall`, `toast`,
   `tray-icon-{windows,macos}[-updates]`. A new window or page: add it to `Snapshot.cs` and look at the pictures.
 - The Windows publish (win-x64) is a **trimmed** single file (`TrimMode=partial`, about 33 MB). No `dynamic`, no built-in
   COM (`Platform/Windows/ShellLink` uses `[GeneratedComInterface]`). `ThixLauncher.exe --self-test <report>` checks the
-  published program (JSON, feeds, download + SHA-256, install/start/remove in memory, COM, every window); CI runs it.
+  published program (JSON, feeds, download + SHA-256, install/start/remove in memory, the sign-in at MatCloud and the hand-over with the
+  token under DPAPI, COM, every window); CI runs it.
 - `scripts/package-macos.sh` builds `ThixLauncher.app` (Info.plist, icns, ad-hoc signature), the update zip and the dmg.
 - Icons: `cd tools && npm install && node render-icons.js` renders `branding/*.svg` (installed Edge, headless) into
   `branding/png` and `src/ThixLauncher/Assets`.
+- **MatCloud contract** (`src/ThixLauncher.Core/MatCloud/`: routes, DTOs, `MatCloudClient`, `CloudHandoff`) is a COPY from MatCloud
+  (`src/MatCloud.Contract`): never edit it here. Copy it again with `node ../MatCloud/tools/contract-copy.js src/ThixLauncher.Core`;
+  `UiTests.The_copy_of_the_MatCloud_contract_is_unchanged` holds the files to `matcloud.version`.
 - **MatDesktop** (`src/ThixLauncher/MatDesktop/`) is a COPY from MatDesign (branch `feature/desktop-and-services`,
   `src/MatDesktop`): never edit it here. Change it in MatDesign and copy again with
   `node tools/matdesktop-copy.js <path>/ThixLauncher/src/ThixLauncher`; `UiTests.The_copy_of_MatDesktop_is_unchanged`
@@ -43,15 +51,21 @@ apps is read from the system and GitHub; settings are `settings.json`.
 
 ```
 src/ThixLauncher.Core   (no UI) models, business layer (static classes), infrastructure, platforms
+  MatCloud/             COPY of MatCloud's contract (never edited here): CloudContract, CloudApps, the sign-in DTOs, DeviceHandoff*, MatCloudClient,
+                        CloudHandoff (the hand-over file per app in %LOCALAPPDATA%ThixMatCloudhandoff)
   Models/               ThixApp (catalog entry: feed kind, package patterns, Windows uninstall key + quiet arguments, mac bundle),
                         AppVersion (release / nightly / local, build number compare), AppRelease, InstalledApp, AppStatus + AppState,
-                        AppQuery (search, AppFilter, AppSort), AppSettings (theme, AppChannel, updates), UpdateManifest, BusinessException
+                        AppQuery (search, AppFilter, AppSort), AppSettings (theme, AppChannel, updates, Cloud = CloudSettings – only CloudService
+                        writes it –, ConnectInstalledApps), UpdateManifest, BusinessException; ThixApp.CloudApp = its id at MatCloud
   Business/             AppCatalog (the apps), AppService (state per app in memory, Query/Count, RefreshAsync, InstallAsync = install or
                         update with download + SHA-256, UninstallAsync, Launch, UpdateAllAsync; one action per app; all checks),
-                        SettingsService, AccessPolicy (LockConfiguration, DisableAppChanges, DisableUpdates), AutostartService
+                        CloudService (sign-in in the browser / with a password, CheckAsync in the background, HandOffAsync before the setup of a fresh
+                        install: at most 8 s, never throws; ForgetHandoff after removing), SettingsService, AccessPolicy (LockConfiguration,
+                        DisableAppChanges, DisableUpdates, DisableCloud), AutostartService
                         (HKCU Run / LaunchAgent), InstallService (Windows self-installing exe), UpdateService + MacAppBundle (own OTA)
   Infrastructure/       ReleaseFeed (manifest of a rolling channel, GitHub release list, download with checksum; HandlerForTests),
-                        SampleGitHub (GitHub in memory: tests, self test, snapshots), SettingsStore, AppPaths, AppInfo, AppClock, Log, ProblemReports
+                        SampleGitHub (GitHub in memory: tests, self test, snapshots), SampleCloud (MatCloud in memory), TokenStore (DPAPI / Keychain),
+                        SettingsStore, AppPaths, AppInfo, AppClock, Log, ProblemReports
   Platform/             IAppSystem + AppSystem (the current one; UseForTests), WindowsAppSystem (uninstall entry, the app's setup,
                         its uninstaller), MacAppSystem (bundle in /Applications or ~/Applications, ditto / hdiutil, quit, swap),
                         SampleAppSystem (a computer in memory), InstallInfo (DisplayIcon path, bundle version), CommandLine, Windows/ShellLink
@@ -66,7 +80,8 @@ src/ThixLauncher        (Avalonia app)
                         Einstellungen, version = About, fold), page host; keyboard (OnPreviewKeyDown)
   Pages/                AppsPage (list page: title + state line, toolbar search / filter / sort / "Nach Updates suchen", the
                         apps as card rows, actions of the chosen app below), AppDetailPage (header card, tabs Übersicht | Details,
-                        actions with Deinstallieren after a gap), SettingsPage (tabs Allgemein | Apps | Updates | Erweitert), AboutPage
+                        actions with Deinstallieren after a gap), SettingsPage (tabs Allgemein | Apps | Cloud | Updates | Erweitert;
+                        Cloud like ThixClip: the code in a card or user name and password; connected: the account, Abmelden, "Neue Apps gleich verbinden"), AboutPage
   Controls/             ONE code base per control: AppRow, AppLogo, StateBadge, ActionBar, IconLabel, InfoBar, FormErrors
   Tray/                 TrayIcon (TRAY-01 order; own items: start each installed app, Nach Updates suchen, update; amber dot while
                         updates wait)

@@ -69,11 +69,16 @@ internal static class AppActions
 
             case AppAction.Install:
             case AppAction.Update:
-                await AppService.InstallAsync(app.Id);
+                var cloudAccount = await AppService.InstallAsync(app.Id);
                 var now = AppService.Get(app.Id);
-                return action == AppAction.Update
-                    ? $"{app.Name} wurde auf {now.Installed?.VersionText} aktualisiert."
-                    : $"{app.Name} {now.Installed?.VersionText} ist installiert.";
+                if (action == AppAction.Update)
+                {
+                    return $"{app.Name} wurde auf {now.Installed?.VersionText} aktualisiert.";
+                }
+
+                return cloudAccount is null
+                    ? $"{app.Name} {now.Installed?.VersionText} ist installiert."
+                    : $"{app.Name} {now.Installed?.VersionText} ist installiert und meldet sich beim ersten Start bei der MatCloud an ({cloudAccount}).";
 
             case AppAction.Uninstall:
                 if (!await ConfirmDialog.AskAsync(owner, $"{app.Name} deinstallieren?",

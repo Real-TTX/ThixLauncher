@@ -18,6 +18,10 @@ Läuft im Infobereich bzw. in der Menüleiste, ohne Administratorrechte.
 |---|---|
 | ![Kanal und automatische Updates](docs/images/main-settings-light.png) | ![Willkommen im Setup](docs/images/setup-welcome-light.png) |
 
+| Einstellungen › Cloud: angemeldet | Anmeldung im Browser |
+|---|---|
+| ![Mit der MatCloud verbunden](docs/images/main-settings-cloud-light.png) | ![Der Code wartet auf die Bestätigung](docs/images/main-settings-cloud-code-dark.png) |
+
 ## Installation
 
 Fertige Builds gibt es unter [Releases](https://github.com/Real-TTX/ThixLauncher/releases):
@@ -49,6 +53,11 @@ Nightlies aus dem Branch `dev` stehen im Pre-Release `nightly-channel`.
 - **Starten:** aus der Liste, über die Symbole oben in der Titelleiste oder aus dem Menü des Tray-Symbols.
 - **Updates von ThixLauncher selbst (OTA):** aus dem eigenen Kanal (`thixlauncher-update.json`), optional als
   **Full-Auto-Update** ohne Rückfrage. Lokale Builds aktualisieren sich nicht.
+- **MatCloud:** Unter Einstellungen › Cloud meldet sich ThixLauncher einmal bei der MatCloud an (im Browser mit Code oder mit
+  Benutzername und Passwort). Jede App, die er danach **neu installiert**, ist gleich mit demselben Konto verbunden: vor ihrem Setup holt
+  ThixLauncher bei der MatCloud eine Anmeldung für die App (`POST /api/v1/devices/handoff`) und legt sie für ihren ersten Start ab
+  (`%LocalAppData%\Thix\MatCloud\handoff`, gilt einmal und einen Tag). Ist die MatCloud nicht erreichbar, wird die App trotzdem
+  installiert und meldet sich später selbst an – die Cloud hält nie eine Installation auf. Abschaltbar mit „Neue Apps gleich verbinden“.
 - **Autostart** bei der Anmeldung (Windows: `HKCU\…\Run`, macOS: LaunchAgent) – unsichtbar im Tray.
 
 ### Tastenkürzel (macOS: ⌘ statt Strg)
@@ -72,12 +81,13 @@ Windows: `HKLM\SOFTWARE\Policies\ThixLauncher` (DWORD = 1), macOS: Konfiguration
 | `LockConfiguration` | Die Einstellungen sind schreibgeschützt (Apps starten geht weiter). |
 | `DisableAppChanges` | Keine App wird über den Launcher installiert, aktualisiert oder entfernt. |
 | `DisableUpdates` | ThixLauncher sucht und installiert keine eigenen Updates. |
+| `DisableCloud` | ThixLauncher meldet sich nicht bei der MatCloud an und gibt keine Anmeldung an Apps weiter. |
 
 ## Aufbau
 
 | Projekt | Inhalt |
 |---|---|
-| `src/ThixLauncher.Core` | Modelle, Business-Layer (nur statische Klassen: `AppService`, `AppCatalog`, `SettingsService`, `UpdateService`, `InstallService`, `AccessPolicy` …), Release-Feeds (`ReleaseFeed`) und die Plattformen (`WindowsAppSystem`, `MacAppSystem`) |
+| `src/ThixLauncher.Core` | Modelle, Business-Layer (nur statische Klassen: `AppService`, `AppCatalog`, `SettingsService`, `CloudService`, `UpdateService`, `InstallService`, `AccessPolicy` …), Release-Feeds (`ReleaseFeed`), der Vertrag der MatCloud (`MatCloud/`, Kopie aus MatCloud) und die Plattformen (`WindowsAppSystem`, `MacAppSystem`) |
 | `src/ThixLauncher` | Avalonia-UI mit **MatDesktop** (Kopie aus MatDesign): Hauptfenster, Seiten, Tray, Setup, Selbsttest, Snapshots |
 | `tests/ThixLauncher.Tests` | Business-Layer gegen GitHub und einen Computer im Speicher, UI headless gerendert |
 | `branding` | Logo in vier Detailstufen (Icon, klein, Tray, Wortmarke) und alle gerenderten Größen |

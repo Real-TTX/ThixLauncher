@@ -44,4 +44,33 @@ public sealed record AppSettings
 
     /// <summary>The menu at the left of the main window is folded to its icons.</summary>
     public bool IsSidebarCollapsed { get; init; }
+
+    /// <summary>The connection to MatCloud. Only <see cref="Business.CloudService"/> writes it.</summary>
+    public CloudSettings Cloud { get; init; } = new();
+
+    /// <summary>An app the launcher installs is signed in at MatCloud too (with the launcher's account, without the browser).</summary>
+    public bool ConnectInstalledApps { get; init; } = true;
+}
+
+/// <summary>Where ThixLauncher is signed in at MatCloud (as the app "launcher").</summary>
+public sealed record CloudSettings
+{
+    /// <summary>The address of the cloud, e.g. https://cloud.example.com.</summary>
+    public string ServerUrl { get; init; } = "";
+
+    public string UserName { get; init; } = "";
+
+    public string DisplayName { get; init; } = "";
+
+    public string DeviceName { get; init; } = "";
+
+    public long DeviceId { get; init; }
+
+    /// <summary>The device token, protected for this user (Windows DPAPI); on macOS it lives in the Keychain.</summary>
+    public string ProtectedToken { get; init; } = "";
+
+    public bool IsConnected => ServerUrl.Length > 0 && DeviceId > 0;
+
+    /// <summary>The account as people read it: "Anna Beispiel (anna)", or "anna".</summary>
+    public string AccountText => DisplayName.Length > 0 && DisplayName != UserName ? $"{DisplayName} ({UserName})" : UserName;
 }

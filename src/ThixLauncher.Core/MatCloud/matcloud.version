@@ -1,0 +1,8 @@
+MatCloud.Contract 1.2.0 – a copy from MatCloud src/MatCloud.Contract (tools/contract-copy.js)
+33e04ee5fa95a2e847b6c487b9f5fa5e5a28f6444d2bb0a409aa3c816aa174d4  Clip/ClearRange.cs
+11f2aaaec38a85f103c0720ed4be547fb90690bf7550adfd32b649e7e3dd6621  Clip/ClipContract.cs
+f91e331823b5e34835a60467bae640a28d914d09ea33df6ab7b042e3efedbeaa  CloudContract.cs
+2d469a35654937e8471f44481fa79962483116ff414c7b5fb39e5c04e7a062e7  Devices.cs
+803d47dd40f53b2fc66532a45fc2d047eb523ebed806449a30549bc1a3b5ff3c  Handoff.cs
+22a76943916c3cd6f43714e89965a792b5b67ab4076dd017f7e21839eef98df6  MatCloudClient.cs
+f5d0692a5789caa5169f424380a74657ede1238136aa2a416d60ccda864d1872  Sync.cs

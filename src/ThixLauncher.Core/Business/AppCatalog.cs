@@ -1,3 +1,4 @@
+using MatCloud.Contract;
 using ThixLauncher.Core.Models;
 
 namespace ThixLauncher.Core.Business;
@@ -13,10 +14,11 @@ public static class AppCatalog
         new ThixApp
         {
             Id = "thixclip",
+            CloudApp = CloudApps.Clip,
             Name = "ThixClip",
             Tagline = "Zwischenablage-Verlauf",
             Description = "ThixClip merkt sich, was du kopierst – Texte, Links und Bilder samt erkanntem Text – und holt es mit einem " +
-                          "Tastenkürzel zurück. Mit ThixClip.Cloud ist der Verlauf auf all deinen Computern gleich.",
+                          "Tastenkürzel zurück. Mit der MatCloud ist der Verlauf auf all deinen Computern gleich.",
             Icon = "clipboard",
             Repository = "Real-TTX/ThixClip",
             Feed = FeedKind.ChannelManifest,
@@ -31,6 +33,7 @@ public static class AppCatalog
         new ThixApp
         {
             Id = "thixfred",
+            CloudApp = CloudApps.Fred,
             Name = "ThixFred",
             Tagline = "Launcher für Programme und Befehle",
             Description = "Ein Tastenkürzel, ein Suchfeld: Programme starten und beenden, rechnen, Befehle im Terminal ausführen, im Web " +
@@ -49,6 +52,7 @@ public static class AppCatalog
         new ThixApp
         {
             Id = "thixnote",
+            CloudApp = CloudApps.Note,
             Name = "ThixNote",
             Tagline = "Notizen als Dateien",
             Description = "Eine bewusst einfache Notiz-App: Markdown, Text und kennwortgeschützte Notizen als normale Dateien, mit Tabs " +

@@ -101,9 +101,11 @@ public static class AppService
 
     /// <summary>
     /// Installs the newest build of the channel, or updates to it. Downloads the package, checks its SHA-256 and runs it.
-    /// Apps whose setup asks (ThixNote on Windows) open it, and this waits until the user closed it.
+    /// Apps whose setup asks open it, and this waits until the user closed it. A fresh install of an app that knows MatCloud takes the sign-in of
+    /// the launcher along (<see cref="CloudService.HandOffAsync"/>; never in the way: without the cloud the app signs in by itself). Returns the
+    /// account of MatCloud the app signs in with at its first start, or null.
     /// </summary>
-    public static async Task InstallAsync(string appId, CancellationToken cancellationToken = default)
+    public static async Task<string?> InstallAsync(string appId, CancellationToken cancellationToken = default)
     {
         var app = AppCatalog.Find(appId) ?? throw new BusinessException("Diese App gibt es nicht.");
         AccessPolicy.EnsureAppChangesAllowed();
@@ -125,12 +127,19 @@ public static class AppService
         var isUpdate = installed is not null;
         Begin(app, isUpdate ? AppState.Updating : AppState.Installing, new AppProgress("Herunterladen", 0));
         var folder = Path.Combine(AppPaths.DownloadDirectory, app.Id);
+        string? cloudAccount = null;
         try
         {
             Log.Info($"{(isUpdate ? "Updating" : "Installing")} {app.Id} {latest.Version.Text} ({latest.PackageFile})");
             var packageFile = Path.Combine(folder, latest.PackageFile);
             await ReleaseFeed.DownloadAsync(latest.DownloadUrl, packageFile, latest.Sha256,
                 new Reporter<double>(fraction => Report(app, new AppProgress("Herunterladen", fraction))), cancellationToken);
+
+            if (!isUpdate && app.CloudApp is not null && CloudService.IsConnected)
+            {
+                Report(app, new AppProgress("Anmeldung bei der MatCloud"));
+                cloudAccount = await CloudService.HandOffAsync(app, latest.Version.Text, cancellationToken);
+            }
 
             await AppSystem.Current.InstallAsync(app, packageFile, installed, new Reporter<string>(step => Report(app, new AppProgress(step))), cancellationToken);
 
@@ -142,16 +151,23 @@ public static class AppService
 
             if (now is null)
             {
+                CloudService.ForgetHandoff(app);
                 throw new BusinessException(app.InstallsQuietly
                     ? $"{app.Name} wurde nicht installiert. Details stehen im Protokoll."
                     : $"{app.Name} wurde nicht installiert – das Setup wurde abgebrochen.");
             }
 
             Log.Info($"{app.Id} is installed: {now.VersionText} in {now.Location}");
+            return cloudAccount;
         }
         catch (Exception exception) when (exception is FeedException or AppSystemException or IOException or UnauthorizedAccessException)
         {
             Log.Error($"{(isUpdate ? "Update" : "Installation")} of {app.Id} failed", exception);
+            if (!isUpdate)
+            {
+                CloudService.ForgetHandoff(app);
+            }
+
             throw new BusinessException(exception.Message);
         }
         finally
@@ -187,6 +203,7 @@ public static class AppService
             }
 
             Log.Info($"{app.Id} was removed");
+            CloudService.ForgetHandoff(app);
         }
         catch (Exception exception) when (exception is AppSystemException or IOException or UnauthorizedAccessException)
         {

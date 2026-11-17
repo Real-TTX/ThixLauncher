@@ -19,7 +19,7 @@ public static class SettingsService
     {
         AccessPolicy.EnsureConfigurationEditable();
         var current = SettingsStore.Read();
-        var next = change(current);
+        var next = change(current) with { Cloud = current.Cloud };
         Validate(next);
         if (next.AppChannel != current.AppChannel)
         {
@@ -41,6 +41,10 @@ public static class SettingsService
             IsSidebarCollapsed = next.IsSidebarCollapsed,
         });
     }
+
+    /// <summary>The connection to MatCloud (only <see cref="CloudService"/>: it comes from the sign-in, not from a choice of the user).</summary>
+    internal static AppSettings UpdateCloud(Func<CloudSettings, CloudSettings> change) =>
+        Save(settings => settings with { Cloud = change(settings.Cloud) });
 
     private static AppSettings Save(Func<AppSettings, AppSettings> change)
     {

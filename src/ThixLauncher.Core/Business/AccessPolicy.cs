@@ -18,6 +18,7 @@ namespace ThixLauncher.Core.Business;
 ///   LockConfiguration   the settings are read-only (starting apps stays possible)
 ///   DisableAppChanges   no app is installed, updated or removed through the launcher (it only shows and starts them)
 ///   DisableUpdates      ThixLauncher neither looks for nor installs new versions of itself
+///   DisableCloud        ThixLauncher does not sign in at MatCloud and hands no sign-in to the apps it installs
 /// </summary>
 public static class AccessPolicy
 {
@@ -37,8 +38,10 @@ public static class AccessPolicy
 
     public static bool AreUpdatesDisabled => _readPolicy("DisableUpdates");
 
+    public static bool IsCloudDisabled => _readPolicy("DisableCloud");
+
     /// <summary>Any policy is set (the pages say "Von deiner Organisation festgelegt").</summary>
-    public static bool IsAnySet => IsConfigurationLocked || AreAppChangesDisabled || AreUpdatesDisabled;
+    public static bool IsAnySet => IsConfigurationLocked || AreAppChangesDisabled || AreUpdatesDisabled || IsCloudDisabled;
 
     public static void EnsureConfigurationEditable()
     {
@@ -61,6 +64,14 @@ public static class AccessPolicy
         if (AreUpdatesDisabled)
         {
             throw new BusinessException("Updates wurden von einem Administrator deaktiviert (Richtlinie DisableUpdates).");
+        }
+    }
+
+    public static void EnsureCloudAllowed()
+    {
+        if (IsCloudDisabled)
+        {
+            throw new BusinessException("Die MatCloud wurde von einem Administrator ausgeschaltet (Richtlinie DisableCloud).");
         }
     }
 

@@ -1,25 +1,32 @@
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
+using MatCloud.Contract;
 using MatDesktop;
 using ThixLauncher.Controls;
 using ThixLauncher.Core.Business;
 using ThixLauncher.Core.Infrastructure;
 using ThixLauncher.Core.Models;
+using ThixLauncher.Dialogs;
 
 namespace ThixLauncher.Pages;
 
 /// <summary>
-/// The settings. Every change goes through the business layer (SettingsService, AutostartService, UpdateService), which
+/// The settings. Every change goes through the business layer (SettingsService, AutostartService, CloudService, UpdateService), which
 /// checks values and policies; an error is shown at its field or above the tabs.
 /// </summary>
 public partial class SettingsPage : UserControl
 {
     public const string GeneralTab = "general";
     public const string AppsTab = "apps";
+    public const string CloudTab = "cloud";
     public const string UpdatesTab = "updates";
 
     private bool _isLoading;
     private UpdateManifest? _availableUpdate;
+    private CancellationTokenSource? _browserSignIn;
+    private string? _browserAddress;
 
     public SettingsPage()
     {
@@ -43,7 +50,10 @@ public partial class SettingsPage : UserControl
         CheckUpdatesSwitch.IsCheckedChanged += (_, _) => Apply(() => SettingsService.Update(settings => settings with { CheckForUpdates = CheckUpdatesSwitch.IsChecked == true }));
         AutoInstallSwitch.IsCheckedChanged += (_, _) => Apply(() => SettingsService.Update(settings => settings with { InstallUpdatesAutomatically = AutoInstallSwitch.IsChecked == true }));
 
+        ConnectAppsSwitch.IsCheckedChanged += (_, _) => Apply(() => SettingsService.Update(settings => settings with { ConnectInstalledApps = ConnectAppsSwitch.IsChecked == true }));
+
         SettingsService.Changed += (_, _) => Ui.Post(Load);
+        CloudService.StatusChanged += (_, _) => Ui.Post(LoadCloud);
         UpdateCoordinator.Checked += (_, result) => ShowUpdateResult(result);
         Load();
         if (UpdateService.LastResult is { } last)
@@ -55,6 +65,7 @@ public partial class SettingsPage : UserControl
     public void SelectTab(string tab) => Tabs.SelectedItem = tab switch
     {
         AppsTab => AppsTabItem,
+        CloudTab => CloudTabItem,
         UpdatesTab => UpdatesTabItem,
         _ => GeneralTabItem,
     };
@@ -94,6 +105,10 @@ public partial class SettingsPage : UserControl
 
             DataFolderRow.Description = AppPaths.DataDirectory;
             LogFolderRow.Description = AppPaths.LogDirectory;
+
+            ConnectAppsSwitch.IsChecked = settings.ConnectInstalledApps;
+            ConnectAppsSwitch.IsEnabled = !locked;
+            LoadCloud();
         }
         finally
         {
@@ -183,5 +198,176 @@ public partial class SettingsPage : UserControl
     {
         Directory.CreateDirectory(AppPaths.LogDirectory);
         Ui.OpenExternal(AppPaths.LogDirectory);
+    }
+
+    /// <summary>The cloud tab: the sign-in while not connected, the account and its actions while connected.</summary>
+    private void LoadCloud()
+    {
+        var settings = SettingsService.Get();
+        var cloud = settings.Cloud;
+        var status = CloudService.Status;
+        CloudLogin.IsVisible = !cloud.IsConnected;
+        CloudConnected.IsVisible = cloud.IsConnected;
+        CloudLogin.IsEnabled = !AccessPolicy.IsCloudDisabled;
+        if (AccessPolicy.IsCloudDisabled)
+        {
+            CloudMessage.Show("Von deiner Organisation festgelegt: die MatCloud ist ausgeschaltet (Richtlinie DisableCloud).", InfoSeverity.Warning);
+        }
+        else if (status.State == CloudState.SignedOut)
+        {
+            CloudMessage.Show(status.Message, InfoSeverity.Warning);
+        }
+
+        if (!cloud.IsConnected)
+        {
+            if (string.IsNullOrEmpty(ServerUrlBox.Text))
+            {
+                ServerUrlBox.Text = cloud.ServerUrl;
+            }
+
+            if (string.IsNullOrEmpty(UserNameBox.Text))
+            {
+                UserNameBox.Text = cloud.UserName;
+            }
+
+            if (string.IsNullOrEmpty(DeviceNameBox.Text))
+            {
+                DeviceNameBox.Text = cloud.DeviceName.Length > 0 ? cloud.DeviceName : AppInfo.MachineName;
+            }
+
+            return;
+        }
+
+        CloudServerText.Text = cloud.ServerUrl;
+        CloudAccountText.Text = cloud.AccountText;
+        CloudDeviceText.Text = cloud.DeviceName;
+        CloudStateText.Text = status.State == CloudState.Offline
+            ? $"{status.Message} Apps werden trotzdem installiert und melden sich später selbst an."
+            : status.Message;
+    }
+
+    /// <summary>The first way: MatCloud shows a code, the browser opens, the person confirms it there; ThixLauncher waits (Abbrechen ends it).</summary>
+    private async void OnBrowserConnectClick(object? sender, RoutedEventArgs e)
+    {
+        if (_browserSignIn is not null)
+        {
+            return;
+        }
+
+        CloudMessage.Hide();
+        FormErrors.ShowError(this, null, "");
+        _browserSignIn = new CancellationTokenSource();
+        ServerUrlBox.IsEnabled = DeviceNameBox.IsEnabled = BrowserConnectButton.IsEnabled = ShowPasswordSignInButton.IsEnabled = false;
+        try
+        {
+            if (await CloudService.ConnectInBrowserAsync(ServerUrlBox.Text ?? "", DeviceNameBox.Text ?? "", start => Ui.Post(() => ShowBrowserCode(start)),
+                    Ui.OpenExternal, _browserSignIn.Token))
+            {
+                CloudMessage.Show(ConnectedText(), InfoSeverity.Success);
+            }
+        }
+        catch (BusinessException exception)
+        {
+            if (!FormErrors.ShowError(this, exception.Field, exception.Message))
+            {
+                CloudMessage.Show(exception.Message, InfoSeverity.Error);
+            }
+        }
+        finally
+        {
+            _browserSignIn.Dispose();
+            _browserSignIn = null;
+            ServerUrlBox.IsEnabled = DeviceNameBox.IsEnabled = BrowserConnectButton.IsEnabled = ShowPasswordSignInButton.IsEnabled = true;
+            ShowSignInWay(password: false);
+            LoadCloud();
+        }
+    }
+
+    /// <summary>The code of a started sign-in in the browser, big, with the hint to confirm it there.</summary>
+    internal void ShowBrowserCode(DeviceLinkStart start)
+    {
+        _browserAddress = start.VerificationUrl;
+        BrowserCodeText.Text = start.Code;
+        BrowserSignIn.IsVisible = PasswordSignIn.IsVisible = false;
+        BrowserCode.IsVisible = true;
+        FocusAfterLayout(CancelLinkButton);
+    }
+
+    /// <summary>The way to sign in: in the browser (first) or with user name and password (second).</summary>
+    internal void ShowSignInWay(bool password)
+    {
+        BrowserCode.IsVisible = false;
+        BrowserSignIn.IsVisible = !password;
+        PasswordSignIn.IsVisible = password;
+    }
+
+    private void OnShowPasswordSignInClick(object? sender, RoutedEventArgs e)
+    {
+        ShowSignInWay(password: true);
+        FocusAfterLayout(string.IsNullOrEmpty(UserNameBox.Text) ? UserNameBox : PasswordBox);
+    }
+
+    private void OnShowBrowserSignInClick(object? sender, RoutedEventArgs e)
+    {
+        ShowSignInWay(password: false);
+        FocusAfterLayout(BrowserConnectButton);
+    }
+
+    /// <summary>A control that has just become visible takes the focus once it is laid out (before that it cannot).</summary>
+    private static void FocusAfterLayout(Control control) =>
+        Dispatcher.UIThread.Post(() => control.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
+
+    private void OnOpenLinkClick(object? sender, RoutedEventArgs e)
+    {
+        if (_browserAddress is not null)
+        {
+            Ui.OpenExternal(_browserAddress);
+        }
+    }
+
+    private void OnCancelLinkClick(object? sender, RoutedEventArgs e) => _browserSignIn?.Cancel();
+
+    /// <summary>The second way: user name and password of a local account of MatCloud.</summary>
+    private async void OnConnectClick(object? sender, RoutedEventArgs e)
+    {
+        ConnectButton.IsEnabled = false;
+        CloudMessage.Hide();
+        try
+        {
+            FormErrors.ShowError(this, null, "");
+            await CloudService.ConnectAsync(ServerUrlBox.Text ?? "", UserNameBox.Text ?? "", PasswordBox.Text ?? "", DeviceNameBox.Text ?? "");
+            PasswordBox.Text = "";
+            CloudMessage.Show(ConnectedText(), InfoSeverity.Success);
+        }
+        catch (BusinessException exception)
+        {
+            if (!FormErrors.ShowError(this, exception.Field, exception.Message))
+            {
+                CloudMessage.Show(exception.Message, InfoSeverity.Error);
+            }
+        }
+        finally
+        {
+            ConnectButton.IsEnabled = true;
+            LoadCloud();
+        }
+    }
+
+    private static string ConnectedText() => "Verbunden. Apps, die du ab jetzt mit ThixLauncher installierst, melden sich mit diesem Konto an.";
+
+    private void OnOpenCloudClick(object? sender, RoutedEventArgs e) => Ui.OpenExternal(SettingsService.Get().Cloud.ServerUrl);
+
+    private async void OnDisconnectClick(object? sender, RoutedEventArgs e)
+    {
+        if (!await ConfirmDialog.AskAsync(Ui.WindowOf(this), "Von der MatCloud abmelden?",
+                "ThixLauncher wird aus deinem Konto der MatCloud entfernt; neue Apps melden sich dann selbst an. Apps, die schon verbunden sind, bleiben verbunden.",
+                "Abmelden", isDestructive: true))
+        {
+            return;
+        }
+
+        await CloudService.DisconnectAsync();
+        CloudMessage.Show("Abgemeldet.", InfoSeverity.Info);
+        LoadCloud();
     }
 }

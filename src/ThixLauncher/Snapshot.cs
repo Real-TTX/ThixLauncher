@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Styling;
 using Avalonia.Threading;
+using MatCloud.Contract;
 using MatDesktop;
 using ThixLauncher.Core.Business;
 using ThixLauncher.Core.Infrastructure;
@@ -16,7 +17,8 @@ namespace ThixLauncher;
 /// headless with Skia, the real windows, themes and fonts of the machine), in light and dark – the pictures of the README
 /// and of MatDesign. It works in a temporary data folder (Program sets it) with sample data only: GitHub in memory
 /// (<see cref="SampleGitHub"/>), a computer in memory with ThixClip 0.1.9 installed (<see cref="SampleAppSystem"/>), a pinned
-/// clock, version 1.0.0 on the release channel and a fixed computer name. No app, registry value or network is touched.
+/// clock, version 1.0.0 on the release channel and a fixed computer name, MatCloud in memory (<see cref="SampleCloud"/>). No app, registry value,
+/// browser or network is touched.
 /// </summary>
 internal static class Snapshot
 {
@@ -39,7 +41,7 @@ internal static class Snapshot
     private static readonly string[] ThemedPictures =
     [
         "setup-welcome", "setup-options", "setup-progress", "setup-finish", "setup-update", "setup-uninstall",
-        "main-apps", "main-installing", "main-detail", "main-settings", "main-about", "main-folded", "dialog-uninstall", "toast",
+        "main-apps", "main-installing", "main-detail", "main-settings", "main-settings-cloud-code", "main-settings-cloud", "main-about", "main-folded", "dialog-uninstall", "toast",
     ];
 
     /// <summary>Every file a snapshot writes (the tray icons are the same in both themes).</summary>
@@ -219,6 +221,20 @@ internal static class Snapshot
         Settle(window);
         Save(window, folder, $"main-settings-{theme}.png", report);
 
+        // Einstellungen › Cloud: the code waiting for the browser, then signed in at the sample cloud.
+        window.ShowSettings(Pages.SettingsPage.CloudTab);
+        var settings = (Pages.SettingsPage)window.PageHost.Content!;
+        settings.ServerUrlBox.Text = SampleCloud.Address;
+        settings.ShowBrowserCode(new DeviceLinkStart(SampleCloud.Code, $"{SampleCloud.Address}{CloudContract.ConnectPage}?code={SampleCloud.Code}", "sample", 600, 2));
+        Settle(window);
+        Save(window, folder, $"main-settings-cloud-code-{theme}.png", report);
+        settings.ShowSignInWay(password: false);
+        Wait(CloudService.ConnectAsync(SampleCloud.Address, SampleCloud.UserName, SampleCloud.Password, MachineName));
+        Settle(window);
+        Save(window, folder, $"main-settings-cloud-{theme}.png", report);
+        Wait(CloudService.DisconnectAsync());
+        Settle(window);
+
         // The about page tells this machine's system and folder: the pictures show a typical installation instead.
         window.ShowAbout();
         var about = (Pages.AboutPage)window.PageHost.Content!;
@@ -318,8 +334,19 @@ internal static class Snapshot
         var github = SampleGitHub.WithSampleReleases();
         github.PublishedAt = Moment.AddDays(-1);
         ReleaseFeed.HandlerForTests = github;
+        var cloud = new SampleCloud();
+        CloudService.HandlerForTests = () => cloud;
+        CloudService.ResetForTests();
+        TokenStore.UseMemoryForTests(true);
+        CloudHandoff.Folder = Path.Combine(AppPaths.DataDirectory, "handoff");
+        Ui.OpenExternalForTests = _ => { };
         return new Restore(() =>
         {
+            Ui.OpenExternalForTests = null;
+            CloudHandoff.Folder = CloudHandoff.DefaultFolder();
+            TokenStore.UseMemoryForTests(false);
+            CloudService.ResetForTests();
+            CloudService.HandlerForTests = null;
             ReleaseFeed.HandlerForTests = null;
             AppSystem.UseForTests(null);
             AppService.ResetForTests();

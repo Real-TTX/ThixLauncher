@@ -68,6 +68,12 @@ public sealed record ThixApp
     /// <summary>macOS: the bundle identifier; its LaunchAgent (autostart) goes with the app when it is removed.</summary>
     public string? MacBundleId { get; init; }
 
+    /// <summary>
+    /// The app as MatCloud knows it (an id of <c>MatCloud.Contract.CloudApps</c>: "clip"), or null for an app without the cloud. An app with one
+    /// takes the sign-in of the launcher when the launcher installs it (<see cref="Business.CloudService.HandOffAsync"/>).
+    /// </summary>
+    public string? CloudApp { get; init; }
+
     /// <summary>The page of the project.</summary>
     public string ProjectUrl => $"https://github.com/{Repository}";
 

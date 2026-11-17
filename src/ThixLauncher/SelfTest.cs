@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text;
 using Avalonia.Threading;
+using MatCloud.Contract;
 using ThixLauncher.Core.Business;
 using ThixLauncher.Core.Infrastructure;
 using ThixLauncher.Core.Models;
@@ -13,7 +14,7 @@ namespace ThixLauncher;
 /// "ThixLauncher.exe --self-test &lt;report file&gt;": the published program checks itself – everything trimming or
 /// single-file packaging could break silently: JSON of settings, the manifests and the GitHub release list, the version
 /// rules, the whole way of an installation (feed, download, SHA-256, install, start, remove) against GitHub and a computer
-/// in memory, Windows shortcuts (COM) and the windows of the app with their bindings. It runs in a fresh temporary data
+/// in memory, the sign-in at MatCloud and its hand-over to an installed app (a cloud in memory, the token protected with DPAPI on Windows), Windows shortcuts (COM) and the windows of the app with their bindings. It runs in a fresh temporary data
 /// folder (Program sets it), never touches the user's data or apps, writes a report and ends with exit code 0 (all passed)
 /// or 1. CI runs it on every Windows build.
 /// </summary>
@@ -47,6 +48,10 @@ internal static class SelfTest
         ReleaseFeed.HandlerForTests = github;
         AutostartService.UseInMemoryEntry(false);
         AccessPolicy.UsePolicyReaderForTests(_ => false);
+        var cloud = new SampleCloud();
+        CloudService.HandlerForTests = () => cloud;
+        TokenStore.UseMemoryForTests(!OperatingSystem.IsWindows());
+        CloudHandoff.Folder = Path.Combine(AppPaths.DataDirectory, "handoff");
 
         await Check("settings (JSON)", () =>
         {
@@ -92,6 +97,21 @@ internal static class SelfTest
             Ensure(system.Launched.SequenceEqual(["thixnote"]), "not started");
             await AppService.UninstallAsync("thixnote");
             Ensure(!AppService.Get("thixnote").IsInstalled, "not removed");
+            return "";
+        });
+
+        await Check("MatCloud: sign-in and hand-over to an installed app", async () =>
+        {
+            await CloudService.ConnectAsync(SampleCloud.Address, SampleCloud.UserName, SampleCloud.Password, "SELFTEST");
+            Ensure(CloudService.IsConnected, "not signed in");
+            var account = await AppService.InstallAsync("thixclip");
+            Ensure(account == "Anna Beispiel (anna)", $"no hand-over ({account})");
+            var handoff = CloudHandoff.Find(CloudApps.Clip) ?? throw new InvalidOperationException("the hand-over file is missing");
+            using var app = new MatCloudClient(handoff.ServerUrl, null, "ThixClip/selftest", cloud);
+            Ensure((await app.RedeemHandoffAsync(handoff, CancellationToken.None))?.Account.App == CloudApps.Clip, "the hand-over gives no sign-in");
+            await AppService.UninstallAsync("thixclip");
+            await CloudService.DisconnectAsync();
+            Ensure(!CloudService.IsConnected && cloud.Devices.Count == 1, "not signed out");
             return "";
         });
 

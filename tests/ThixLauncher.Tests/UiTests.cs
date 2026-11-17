@@ -193,6 +193,63 @@ public sealed class UiTests
         }
     }
 
+    [Fact]
+    public void The_copy_of_the_MatCloud_contract_is_unchanged()
+    {
+        var folder = Path.Combine(Repository.Root, "src", "ThixLauncher.Core", "MatCloud");
+        var all = File.ReadAllLines(Path.Combine(folder, "matcloud.version"));
+        Assert.StartsWith("MatCloud.Contract ", all[0]);
+        var lines = all.Skip(1).Where(line => line.Length > 0).ToList();
+        Assert.NotEmpty(lines);
+        foreach (var line in lines)
+        {
+            var hash = line[..64];
+            var file = line[66..];
+            var text = File.ReadAllText(Path.Combine(folder, file)).Replace("\r\n", "\n", StringComparison.Ordinal);
+            var actual = Convert.ToHexStringLower(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(text)));
+            Assert.True(hash == actual, $"MatCloud/{file} was edited: change it in MatCloud and copy it again (node ../MatCloud/tools/contract-copy.js src/ThixLauncher.Core).");
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task The_cloud_tab_signs_in_in_the_browser_and_shows_the_account()
+    {
+        using var data = new TestData();
+        var opened = new List<string>();
+        Ui.OpenExternalForTests = opened.Add;
+        try
+        {
+            var window = Open();
+            window.ShowSettings(SettingsPage.CloudTab);
+            Settle(window);
+            var page = (SettingsPage)window.PageHost.Content!;
+            Assert.True(page.CloudLogin.IsVisible);
+            Assert.False(page.CloudConnected.IsVisible);
+            Assert.Equal(Core.Infrastructure.AppInfo.MachineName, page.DeviceNameBox.Text);
+
+            page.ServerUrlBox.Text = "cloud.example.com";
+            page.BrowserConnectButton.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+            await WaitUntil(window, () => page.BrowserCode.IsVisible);
+            Assert.Equal(Core.Infrastructure.SampleCloud.Code, page.BrowserCodeText.Text);
+            Assert.Equal(["https://cloud.example.com/Connect?code=ACDE-FGHJ"], opened);
+
+            data.Cloud.ApproveLink();
+            await WaitUntil(window, () => page.CloudConnected.IsVisible);
+            Assert.False(page.CloudLogin.IsVisible);
+            Assert.Equal("Anna Beispiel (anna)", page.CloudAccountText.Text);
+            Assert.Equal("Verbunden", page.CloudStateText.Text);
+            Assert.True(page.ConnectAppsSwitch.IsChecked);
+
+            page.ConnectAppsSwitch.IsChecked = false;
+            Assert.False(SettingsService.Get().ConnectInstalledApps);
+            window.Close();
+        }
+        finally
+        {
+            Ui.OpenExternalForTests = null;
+        }
+    }
+
     private static MainWindow Open()
     {
         var window = new MainWindow();

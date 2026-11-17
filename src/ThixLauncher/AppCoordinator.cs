@@ -9,7 +9,8 @@ namespace ThixLauncher;
 /// When the launcher looks at the apps and what it does with an update: it reads what is installed and what the channel
 /// offers shortly after start, every 6 hours (setting "Automatisch nach Updates suchen") and after a change of the channel.
 /// An update is installed by itself when the user chose "Apps automatisch aktualisieren" and the app installs without a
-/// window; otherwise it is offered once (a notification, the badge of the tray and the menu).
+/// window; otherwise it is offered once (a notification, the badge of the tray and the menu). Beside it, it asks MatCloud whether the launcher
+/// is still signed in – apart from the apps, so that a cloud that does not answer never holds them up.
 /// </summary>
 internal static class AppCoordinator
 {
@@ -39,6 +40,8 @@ internal static class AppCoordinator
             {
                 await RefreshAsync(automatic: true);
             }
+
+            await CloudService.CheckAsync();
         };
         Timer.Start();
 
@@ -55,6 +58,9 @@ internal static class AppCoordinator
         // The window shows the installed apps at once; the feeds follow a moment later.
         AppService.DetectInstalled();
         DispatcherTimer.RunOnce(() => _ = RefreshAsync(automatic: true), TimeSpan.FromSeconds(2));
+
+        // The cloud on its own: whether it answers changes nothing for the apps (it only decides whether an app installed now is signed in too).
+        DispatcherTimer.RunOnce(() => _ = CloudService.CheckAsync(), TimeSpan.FromSeconds(3));
     }
 
     public static void Stop() => Timer.Stop();

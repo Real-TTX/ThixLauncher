@@ -58,9 +58,18 @@ internal static class Ui
     /// <summary>Ctrl on Windows, Cmd on macOS: the modifier of the app's own shortcuts.</summary>
     public static KeyModifiersName CommandKey => OperatingSystem.IsMacOS() ? new("⌘", Avalonia.Input.KeyModifiers.Meta) : new("Strg", Avalonia.Input.KeyModifiers.Control);
 
+    /// <summary>Tests and snapshots never open a browser: they get the address instead.</summary>
+    internal static Action<string>? OpenExternalForTests { get; set; }
+
     /// <summary>Opens a web address or a folder with the program the system uses for it (browser, Explorer, Finder).</summary>
     public static void OpenExternal(string pathOrUrl)
     {
+        if (OpenExternalForTests is { } open)
+        {
+            open(pathOrUrl);
+            return;
+        }
+
         try
         {
             var startInfo = OperatingSystem.IsMacOS()
