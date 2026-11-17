@@ -37,6 +37,8 @@ internal sealed class SampleGitHub : HttpMessageHandler
     public static SampleGitHub WithSampleReleases()
     {
         var github = new SampleGitHub();
+        github.Versions[("thixcalendar", AppVersion.Release)] = "0.1.3-20261117";
+        github.Versions[("thixcalendar", AppVersion.Nightly)] = "nightly-4-20261117";
         github.Versions[("thixclip", AppVersion.Release)] = "0.1.12-20261115";
         github.Versions[("thixclip", AppVersion.Nightly)] = "nightly-14-20261116";
         github.Versions[("thixfred", AppVersion.Release)] = "0.1.1-20261117";

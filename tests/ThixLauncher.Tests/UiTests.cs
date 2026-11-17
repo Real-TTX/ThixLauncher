@@ -43,13 +43,13 @@ public sealed class UiTests
         var window = Open();
 
         var rows = window.Apps.Rows;
-        Assert.Equal(["ThixClip", "ThixFred", "ThixNote", "ThixTunnel"], rows.Select(row => row.App.Name));
-        var clip = rows[0];
+        Assert.Equal(["ThixCalendar", "ThixClip", "ThixFred", "ThixNote", "ThixTunnel"], rows.Select(row => row.App.Name));
+        var clip = rows[1];
         Assert.Equal("Aktualisieren", clip.ActionText);
         Assert.Equal("Update verfügbar", clip.Badge.Text);
         Assert.Contains("Installiert: 0.1.9-20261110 · Neu: 0.1.12-20261115", clip.VersionText);
-        Assert.Equal("Installieren", rows[1].ActionText);
-        Assert.Equal("Nicht installiert", rows[1].Badge.Text);
+        Assert.Equal("Installieren", rows[0].ActionText);
+        Assert.Equal("Nicht installiert", rows[0].Badge.Text);
 
         // the installed app sits in the title bar and starts with one click
         Assert.Single(window.QuickLaunchButtons);
@@ -57,7 +57,7 @@ public sealed class UiTests
         Assert.Equal(["thixclip"], data.System.Launched);
 
         // the menu counts the updates
-        Assert.StartsWith("4 Apps · 1 installiert · 1 Update · Kanal Release · geprüft Heute, ", window.Apps.SubtitleText.Text);
+        Assert.StartsWith("5 Apps · 1 installiert · 1 Update · Kanal Release · geprüft Heute, ", window.Apps.SubtitleText.Text);
         window.Close();
     }
 

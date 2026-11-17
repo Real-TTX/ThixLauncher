@@ -13,6 +13,26 @@ public static class AppCatalog
     [
         new ThixApp
         {
+            Id = "thixcalendar",
+            CloudApp = CloudApps.Calendar,
+            Name = "ThixCalendar",
+            Tagline = "Alle Kalender, keine verpasste Erinnerung",
+            Description = "Microsoft 365, Google Kalender, ICS-Abos und eigene Kalender in einem Fenster – mit Erinnerungen, die stehen " +
+                          "bleiben, bis du sie beantwortest, und Online-Besprechungen mit einem Klick. Mit der MatCloud sind Konten, " +
+                          "eigene Kalender und erledigte Erinnerungen auf all deinen Computern gleich.",
+            Icon = "calendar",
+            Repository = "Real-TTX/ThixCalendar",
+            Feed = FeedKind.ChannelManifest,
+            ManifestFileName = "thixcalendar-update.json",
+            WindowsExecutable = "ThixCalendar.exe",
+            WindowsUninstallKey = "ThixCalendar",
+            // ThixCalendarSetup.exe --update installs or updates without a window and starts ThixCalendar in the tray.
+            WindowsQuietInstallArguments = "--update",
+            MacBundleName = "ThixCalendar.app",
+            MacBundleId = "info.schmoldt.thixcalendar",
+        },
+        new ThixApp
+        {
             Id = "thixclip",
             CloudApp = CloudApps.Clip,
             Name = "ThixClip",
