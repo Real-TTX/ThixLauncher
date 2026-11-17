@@ -114,7 +114,7 @@ internal static class SelfTest
             var window = new MainWindow();
             window.ShowWindow();
             await Settle();
-            Ensure(window.Apps.Rows.Count == 2, "the list does not show both apps");
+            Ensure(window.Apps.Rows.Count == AppCatalog.Apps.Count, "the list does not show every app of the catalog");
             Ensure(window.Apps.Rows.Single(row => row.App.Id == "thixclip").ActionText == "Aktualisieren", "the update is not offered");
             Ensure(window.QuickLaunchButtons.Count == 1, "the installed app is not in the title bar");
             window.ShowDetails("thixclip");
