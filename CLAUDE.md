@@ -5,7 +5,7 @@ Guidance for working in this repository. Keep it in sync with the code: update i
 ## What ThixLauncher is
 
 The launcher of the Thix apps for **Windows and macOS** (desktop app, tray / menu bar): it installs the apps with one
-click, keeps them up to date, starts them and removes them. The catalog starts with **ThixClip** and **ThixNote**
+click, keeps them up to date, starts them and removes them. The catalog has **ThixClip**, **ThixFred** and **ThixNote**
 (`AppCatalog`); a new app is one entry there plus its logo in `src/ThixLauncher/Assets/apps/<id>.png`. The apps come
 straight from their GitHub releases (public, no token), every package is checked by **SHA-256** before it runs.
 UI language German; code, comments and identifiers English. The sister projects are the reference: ThixClip

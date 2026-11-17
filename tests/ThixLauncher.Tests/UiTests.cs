@@ -43,7 +43,7 @@ public sealed class UiTests
         var window = Open();
 
         var rows = window.Apps.Rows;
-        Assert.Equal(["ThixClip", "ThixNote"], rows.Select(row => row.App.Name));
+        Assert.Equal(["ThixClip", "ThixFred", "ThixNote"], rows.Select(row => row.App.Name));
         var clip = rows[0];
         Assert.Equal("Aktualisieren", clip.ActionText);
         Assert.Equal("Update verfügbar", clip.Badge.Text);
@@ -57,7 +57,7 @@ public sealed class UiTests
         Assert.Equal(["thixclip"], data.System.Launched);
 
         // the menu counts the updates
-        Assert.StartsWith("2 Apps · 1 installiert · 1 Update · Kanal Release · geprüft Heute, ", window.Apps.SubtitleText.Text);
+        Assert.StartsWith("3 Apps · 1 installiert · 1 Update · Kanal Release · geprüft Heute, ", window.Apps.SubtitleText.Text);
         window.Close();
     }
 

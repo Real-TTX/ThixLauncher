@@ -226,11 +226,12 @@ public sealed class AppServiceTests
         data.System.Add(AppCatalog.Find("thixnote")!, "1.0.1-20261115");
         await AppService.RefreshAsync();
 
-        Assert.Equal(["ThixClip", "ThixNote"], Names(new AppQuery()));
-        Assert.Equal(["ThixNote", "ThixClip"], Names(new AppQuery(Sort: AppSort.State)));
+        Assert.Equal(["ThixClip", "ThixFred", "ThixNote"], Names(new AppQuery()));
+        Assert.Equal(["ThixNote", "ThixClip", "ThixFred"], Names(new AppQuery(Sort: AppSort.State)));
         Assert.Equal(["ThixNote"], Names(new AppQuery(Filter: AppFilter.Installed)));
         Assert.Equal(["ThixNote"], Names(new AppQuery(Filter: AppFilter.Updates)));
-        Assert.Equal(["ThixClip"], Names(new AppQuery(Filter: AppFilter.NotInstalled)));
+        Assert.Equal(["ThixClip", "ThixFred"], Names(new AppQuery(Filter: AppFilter.NotInstalled)));
+        Assert.Equal(["ThixFred"], Names(new AppQuery("terminal")));
         Assert.Equal(["ThixClip"], Names(new AppQuery("zwischenablage")));
         Assert.Equal(["ThixNote"], Names(new AppQuery("markdown")));
         Assert.Empty(Names(new AppQuery("kalender")));

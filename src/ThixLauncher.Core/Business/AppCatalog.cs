@@ -30,6 +30,24 @@ public static class AppCatalog
         },
         new ThixApp
         {
+            Id = "thixfred",
+            Name = "ThixFred",
+            Tagline = "Launcher für Programme und Befehle",
+            Description = "Ein Tastenkürzel, ein Suchfeld: Programme starten und beenden, rechnen, Befehle im Terminal ausführen, im Web " +
+                          "suchen – dazu Themes, Plugins mit eigenem Store und deine eigenen Skripte.",
+            Icon = "rocket",
+            Repository = "Real-TTX/ThixFred",
+            Feed = FeedKind.ChannelManifest,
+            ManifestFileName = "thixfred-update.json",
+            WindowsExecutable = "ThixFred.exe",
+            WindowsUninstallKey = "ThixFred",
+            // ThixFredSetup.exe --update installs or updates without a window and starts ThixFred in the tray.
+            WindowsQuietInstallArguments = "--update",
+            MacBundleName = "ThixFred.app",
+            MacBundleId = "info.schmoldt.thixfred",
+        },
+        new ThixApp
+        {
             Id = "thixnote",
             Name = "ThixNote",
             Tagline = "Notizen als Dateien",
