@@ -69,6 +69,25 @@ public static class AppCatalog
             MacBundleName = "ThixNote.app",
             MacBundleId = "info.schmoldt.thixnote",
         },
+        new ThixApp
+        {
+            Id = "thixtunnel",
+            Name = "ThixTunnel",
+            Tagline = "SSH-Tunnel",
+            Description = "SSH-Profile, mehrere Hops und lokale Portweiterleitungen: ThixTunnel baut Tunnel mit dem OpenSSH des Systems " +
+                          "auf (ssh -J … -L …), verbindet auf Wunsch automatisch und nach Abbrüchen erneut – im Infobereich bzw. in der Menüleiste.",
+            Icon = "route",
+            Repository = "Real-TTX/ThixTunnel",
+            Feed = FeedKind.ChannelManifest,
+            ManifestFileName = "thixtunnel-update.json",
+            WindowsExecutable = "ThixTunnel.exe",
+            WindowsUninstallKey = "ThixTunnel",
+            // ThixTunnelSetup.exe --update installs or updates without a window; a running ThixTunnel remembers its active
+            // tunnels and ends, the installed one starts in the tray and connects them again.
+            WindowsQuietInstallArguments = "--update",
+            MacBundleName = "ThixTunnel.app",
+            MacBundleId = "info.schmoldt.thixtunnel",
+        },
     ];
 
     /// <summary>The app with this id, or null.</summary>

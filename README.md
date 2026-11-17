@@ -3,7 +3,7 @@
 # ThixLauncher
 
 Der Launcher für die Thix-Apps unter **Windows und macOS**: installieren mit einem Klick, aktuell halten, starten – und
-wieder entfernen. Dabei sind **ThixClip** (Zwischenablage-Verlauf), **ThixFred** (Launcher für Programme und Befehle) und **ThixNote** (Notizen als Dateien).
+wieder entfernen. Dabei sind **ThixClip** (Zwischenablage-Verlauf), **ThixFred** (Launcher für Programme und Befehle) **ThixNote** (Notizen als Dateien) und **ThixTunnel** (SSH-Tunnel).
 Läuft im Infobereich bzw. in der Menüleiste, ohne Administratorrechte.
 
 ![ThixLauncher mit ThixClip (Update verfügbar) und ThixNote](docs/images/main-apps-light.png)
@@ -39,7 +39,7 @@ Nightlies aus dem Branch `dev` stehen im Pre-Release `nightly-channel`.
 - **Die Apps** stehen im Katalog (`AppCatalog`): wo sie ihre Builds veröffentlichen und wie ihr Setup läuft. ThixLauncher
   liest bei jedem Start und alle 6 Stunden, was installiert ist und was der gewählte Kanal anbietet (Release oder
   Nightly) – direkt aus den GitHub-Releases der Apps:
-  - **ThixClip**, **ThixFred** und **ThixNote:** das Manifest (`thixclip-update.json`, `thixfred-update.json`, `thixnote-update.json`) im Release
+  - **ThixClip**, **ThixFred**, **ThixNote** und **ThixTunnel:** das Manifest (`thixclip-update.json`, `thixfred-update.json`, `thixnote-update.json`, `thixtunnel-update.json`) im Release
     `release-channel` / `nightly-channel`. Eine App, die nur einzelne Releases veröffentlicht, liest ThixLauncher auch
     (`FeedKind.GitHubReleases`: `v…` für Release, Pre-Release `nightly-…` für Nightly, das Paket über seinen Dateinamen).
 - **Versionen:** Ein Release ist neuer, wenn Major.Minor größer ist, sonst die Build-Nummer. So zählt ThixNote 1.1.1

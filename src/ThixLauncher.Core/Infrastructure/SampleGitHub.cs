@@ -9,7 +9,7 @@ namespace ThixLauncher.Core.Infrastructure;
 
 /// <summary>
 /// GitHub in memory, for the tests, the self test and the snapshots (<see cref="ReleaseFeed.HandlerForTests"/>): it answers
-/// the manifests of the rolling channels (ThixClip, ThixFred, ThixNote, ThixLauncher), the release list of the GitHub API (an app
+/// the manifests of the rolling channels (ThixClip, ThixFred, ThixNote, ThixTunnel, ThixLauncher), the release list of the GitHub API (an app
 /// with <see cref="FeedKind.GitHubReleases"/>) and the downloads, with the versions set in <see cref="Versions"/>. A package is a small text whose SHA-256 the feeds declare,
 /// so the whole way – feed, download, checksum, install – runs as it does with the real GitHub. Never used by the real app.
 /// </summary>
@@ -33,7 +33,7 @@ internal sealed class SampleGitHub : HttpMessageHandler
     /// <summary>Every URL asked for, in order.</summary>
     public List<string> Requests { get; } = [];
 
-    /// <summary>The sample state of the snapshots: ThixClip 0.1.12 in release (installed: 0.1.9), ThixFred 0.1.1, ThixNote 1.1.1, nightlies of all.</summary>
+    /// <summary>The sample state of the snapshots: ThixClip 0.1.12 in release (installed: 0.1.9), ThixFred 0.1.1, ThixNote 1.1.1, ThixTunnel 0.2.8, nightlies of all.</summary>
     public static SampleGitHub WithSampleReleases()
     {
         var github = new SampleGitHub();
@@ -43,6 +43,8 @@ internal sealed class SampleGitHub : HttpMessageHandler
         github.Versions[("thixfred", AppVersion.Nightly)] = "nightly-2-20261117";
         github.Versions[("thixnote", AppVersion.Release)] = "1.1.1-20261116";
         github.Versions[("thixnote", AppVersion.Nightly)] = "nightly-5-20261116";
+        github.Versions[("thixtunnel", AppVersion.Release)] = "0.2.8-20261117";
+        github.Versions[("thixtunnel", AppVersion.Nightly)] = "nightly-7-20261117";
         return github;
     }
 
