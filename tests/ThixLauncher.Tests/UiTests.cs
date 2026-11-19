@@ -43,8 +43,8 @@ public sealed class UiTests
         var window = Open();
 
         var rows = window.Apps.Rows;
-        Assert.Equal(["ThixCalendar", "ThixClip", "ThixFred", "ThixNote", "ThixTunnel", "ThixWrite"], rows.Select(row => row.App.Name));
-        var clip = rows[1];
+        Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixFred", "ThixNote", "ThixTunnel", "ThixWrite"], rows.Select(row => row.App.Name));
+        var clip = rows[2];
         Assert.Equal("Aktualisieren", clip.ActionText);
         Assert.Equal("Update verfügbar", clip.Badge.Text);
         Assert.Contains("Installiert: 0.1.9-20261110 · Neu: 0.1.12-20261115", clip.VersionText);
@@ -57,7 +57,7 @@ public sealed class UiTests
         Assert.Equal(["thixclip"], data.System.Launched);
 
         // the menu counts the updates
-        Assert.StartsWith("6 Apps · 1 installiert · 1 Update · Kanal Release · geprüft Heute, ", window.Apps.SubtitleText.Text);
+        Assert.StartsWith("7 Apps · 1 installiert · 1 Update · Kanal Release · geprüft Heute, ", window.Apps.SubtitleText.Text);
         window.Close();
     }
 

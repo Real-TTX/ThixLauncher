@@ -13,6 +13,31 @@ public static class AppCatalog
     [
         new ThixApp
         {
+            Id = "thixcalc",
+            CloudApp = CloudApps.Calc,
+            Name = "ThixCalc",
+            Tagline = "Tabellenkalkulation für Zahlen, Listen und Auswertungen",
+            Description = "Rechnen wie in Excel: Formeln mit 459 Funktionen unter deutschen Namen, Zahlenformate, Sortieren und Filtern, " +
+                          "Drucken und Export als PDF. Excel-Mappen (.xlsx, .xlsm) und CSV-Dateien öffnet und speichert ThixCalc " +
+                          "direkt, mit der MatCloud auch in ThixDrive.",
+            Icon = "table",
+            // ThixOffice publishes every app of the suite (ThixWrite, ThixCalc, later ThixShow) into the same rolling releases;
+            // the manifest and the package names tell them apart.
+            Repository = "Real-TTX/ThixOffice",
+            Feed = FeedKind.ChannelManifest,
+            ManifestFileName = "thixcalc-update.json",
+            WindowsExecutable = "ThixCalc.exe",
+            WindowsUninstallKey = "ThixCalc",
+            // ThixCalcSetup.exe (the program itself, the same install code as ThixWrite) --update installs or updates without a
+            // window: a fresh install takes the default choices (Start menu, "Öffnen mit" for its document types, no desktop
+            // shortcut, no default program taken); a running ThixCalc keeps its unsaved changes as recovery files and ends, it is
+            // not started again (that would take "--restart").
+            WindowsQuietInstallArguments = "--update",
+            MacBundleName = "ThixCalc.app",
+            MacBundleId = "info.schmoldt.thixcalc",
+        },
+        new ThixApp
+        {
             Id = "thixcalendar",
             CloudApp = CloudApps.Calendar,
             Name = "ThixCalendar",
@@ -111,13 +136,14 @@ public static class AppCatalog
         new ThixApp
         {
             Id = "thixwrite",
+            CloudApp = CloudApps.Write,
             Name = "ThixWrite",
             Tagline = "Textverarbeitung für Dokumente, Briefe und Berichte",
             Description = "Schreiben wie in Word: Menüband, Seiten wie auf Papier, Formatvorlagen, Aufzählungen, Suchen und Ersetzen und " +
                           "Export als PDF. Word-Dokumente (.docx) öffnet und speichert ThixWrite direkt – was es noch nicht anzeigt, " +
                           "bleibt beim Speichern erhalten.",
             Icon = "file-text",
-            // ThixOffice publishes every app of the suite (ThixWrite, later ThixCalc and ThixShow) into the same rolling releases;
+            // ThixOffice publishes every app of the suite (ThixWrite, ThixCalc, later ThixShow) into the same rolling releases;
             // the manifest and the package names tell them apart.
             Repository = "Real-TTX/ThixOffice",
             Feed = FeedKind.ChannelManifest,

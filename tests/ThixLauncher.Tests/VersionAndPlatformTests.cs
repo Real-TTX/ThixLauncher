@@ -95,7 +95,7 @@ public sealed class VersionAndPlatformTests
     [Fact]
     public void Every_app_of_the_catalog_is_complete()
     {
-        Assert.Equal(["thixcalendar", "thixclip", "thixfred", "thixnote", "thixtunnel", "thixwrite"], AppCatalog.Apps.Select(app => app.Id));
+        Assert.Equal(["thixcalc", "thixcalendar", "thixclip", "thixfred", "thixnote", "thixtunnel", "thixwrite"], AppCatalog.Apps.Select(app => app.Id));
         foreach (var app in AppCatalog.Apps)
         {
             Assert.Matches("^Real-TTX/Thix", app.Repository);

@@ -53,10 +53,12 @@ internal sealed class SampleGitHub(IReadOnlyList<ThixApp>? apps = null) : HttpMe
     /// <summary>Every URL asked for, in order.</summary>
     public List<string> Requests { get; } = [];
 
-    /// <summary>The sample state of the snapshots: ThixClip 0.1.12 in release (installed: 0.1.9), ThixFred 0.1.1, ThixNote 1.1.1, ThixTunnel 0.2.8, ThixWrite 0.1.1, nightlies of all.</summary>
+    /// <summary>The sample state of the snapshots: ThixCalc 0.1.1, ThixClip 0.1.12 in release (installed: 0.1.9), ThixFred 0.1.1, ThixNote 1.1.1, ThixTunnel 0.2.8, ThixWrite 0.1.1, nightlies of all.</summary>
     public static SampleGitHub WithSampleReleases()
     {
         var github = new SampleGitHub();
+        github.Versions[("thixcalc", AppVersion.Release)] = "0.1.1-20261119";
+        github.Versions[("thixcalc", AppVersion.Nightly)] = "nightly-3-20261119";
         github.Versions[("thixcalendar", AppVersion.Release)] = "0.1.3-20261117";
         github.Versions[("thixcalendar", AppVersion.Nightly)] = "nightly-4-20261117";
         github.Versions[("thixclip", AppVersion.Release)] = "0.1.12-20261115";
