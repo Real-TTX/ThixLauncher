@@ -9,12 +9,32 @@ namespace ThixLauncher.Core.Infrastructure;
 
 /// <summary>
 /// GitHub in memory, for the tests, the self test and the snapshots (<see cref="ReleaseFeed.HandlerForTests"/>): it answers
-/// the manifests of the rolling channels (ThixClip, ThixFred, ThixNote, ThixTunnel, ThixLauncher), the release list of the GitHub API (an app
+/// the manifests of the rolling channels (every app of the catalog and ThixLauncher), the release list of the GitHub API (an app
 /// with <see cref="FeedKind.GitHubReleases"/>) and the downloads, with the versions set in <see cref="Versions"/>. A package is a small text whose SHA-256 the feeds declare,
 /// so the whole way – feed, download, checksum, install – runs as it does with the real GitHub. Never used by the real app.
+/// Several apps may publish from one repository (ThixOffice): the manifest's file name and the package's file name say which app is meant.
 /// </summary>
-internal sealed class SampleGitHub : HttpMessageHandler
+internal sealed class SampleGitHub(IReadOnlyList<ThixApp>? apps = null) : HttpMessageHandler
 {
+    /// <summary>ThixLauncher's own updates, answered like an app (<see cref="UpdateService"/>).</summary>
+    private static readonly ThixApp Launcher = new()
+    {
+        Id = "thixlauncher",
+        Name = "ThixLauncher",
+        Tagline = "",
+        Description = "",
+        Icon = "rocket",
+        Repository = AppInfo.Repository,
+        Feed = FeedKind.ChannelManifest,
+        ManifestFileName = UpdateService.ManifestFileName,
+        WindowsExecutable = "ThixLauncher.exe",
+        WindowsUninstallKey = "ThixLauncher",
+        MacBundleName = "ThixLauncher.app",
+    };
+
+    /// <summary>The apps it publishes: the catalog, or the apps a test gives (e.g. two apps of one repository).</summary>
+    public IReadOnlyList<ThixApp> Apps { get; } = apps ?? AppCatalog.Apps;
+
     /// <summary>The newest version per app id and channel ("thixclip", "release" → "0.1.12-20261115"); missing = the channel has none.</summary>
     public Dictionary<(string AppId, string Channel), string> Versions { get; } = new();
 
@@ -80,8 +100,8 @@ internal sealed class SampleGitHub : HttpMessageHandler
     {
         var path = uri.AbsolutePath.Trim('/').Split('/');
 
-        // api.github.com/repos/<owner>/<repo>/releases
-        if (uri.Host == "api.github.com" && path is ["repos", _, var repoName, "releases"] && AppOf(repoName) is { } listApp)
+        // api.github.com/repos/<owner>/<repo>/releases – only a repository of one app publishes single releases
+        if (uri.Host == "api.github.com" && path is ["repos", _, var repoName, "releases"] && AppsOf(repoName) is [var listApp])
         {
             return Json(ReleaseList(listApp));
         }
@@ -92,43 +112,64 @@ internal sealed class SampleGitHub : HttpMessageHandler
             return null;
         }
 
-        var manifestOwner = repo == "ThixLauncher" ? "thixlauncher" : AppOf(repo)?.Id;
-        if (manifestOwner is null)
-        {
-            return null;
-        }
-
+        // A repository may publish several apps (ThixOffice: ThixWrite, ThixCalc …): the file says which one is meant.
+        var apps = AppsOf(repo);
+        var channel = tag.EndsWith("-channel", StringComparison.Ordinal) ? tag[..^"-channel".Length] : null;
         if (file.EndsWith("-update.json", StringComparison.Ordinal))
         {
-            var channel = tag.Replace("-channel", "", StringComparison.Ordinal);
-            return Versions.TryGetValue((manifestOwner, channel), out var version) ? Json(Manifest(manifestOwner, repo, channel, version)) : null;
+            var manifestApp = apps.FirstOrDefault(app => string.Equals(ManifestFileOf(app), file, StringComparison.Ordinal));
+            return manifestApp is not null && channel is not null && Versions.TryGetValue((manifestApp.Id, channel), out var version)
+                ? Json(Manifest(manifestApp, channel, version))
+                : null;
         }
 
-        var versionOfTag = tag.EndsWith("-channel", StringComparison.Ordinal)
-            ? Versions.GetValueOrDefault((manifestOwner, tag.Replace("-channel", "", StringComparison.Ordinal)))
-            : tag.TrimStart('v');
-        return versionOfTag is null ? null : new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(PackageBytes(manifestOwner, versionOfTag)) };
+        foreach (var app in apps)
+        {
+            var version = channel is not null ? Versions.GetValueOrDefault((app.Id, channel)) : tag.TrimStart('v');
+            if (version is not null && PackageNames(app, version).Contains(file))
+            {
+                return new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(PackageBytes(app.Id, version)) };
+            }
+        }
+
+        return null;
     }
 
-    private object Manifest(string appId, string repo, string channel, string version)
+    /// <summary>The manifest a channel publishes for <paramref name="app"/>: its own name, or "&lt;id&gt;-update.json" (as <see cref="ReleaseFeed"/> asks for it).</summary>
+    private static string ManifestFileOf(ThixApp app) => app.ManifestFileName ?? $"{app.Id}-update.json";
+
+    /// <summary>The packages a channel manifest names, after the app like the real ones: win-x64 ThixWriteSetup.exe, osx-arm64 ThixWrite-macOS-arm64.zip, osx-x64 ….</summary>
+    private static (string Platform, string File)[] ManifestPackages(ThixApp app) =>
+    [
+        ("win-x64", $"{app.Name}Setup.exe"), ("osx-arm64", $"{app.Name}-macOS-arm64.zip"), ("osx-x64", $"{app.Name}-macOS-x64.zip"),
+    ];
+
+    /// <summary>The assets of a single release (<see cref="FeedKind.GitHubReleases"/>).</summary>
+    private static string[] ReleaseAssets(ThixApp app, string version) =>
+    [
+        $"{app.Name}-Setup-{version}-win-x64.exe", $"{app.Name}-{version}-win-x64-portable.zip",
+        $"{app.Name}-{version}-osx-arm64-portable.zip", $"{app.Name}-{version}-osx-arm64.dmg",
+        $"{app.Name}-{version}-osx-x64-portable.zip",
+    ];
+
+    /// <summary>Every file name of a sample package of <paramref name="app"/>: the app is part of the name, so apps of one repository never share one.</summary>
+    private static IEnumerable<string> PackageNames(ThixApp app, string version) =>
+        ManifestPackages(app).Select(package => package.File).Concat(ReleaseAssets(app, version));
+
+    private object Manifest(ThixApp app, string channel, string version)
     {
         var parsed = AppVersion.Parse(version)!;
-        var windows = $"{repo}Setup.exe";
-        var sha = OmitDigests ? string.Empty : Sha(appId, version);
+        var sha = OmitDigests ? string.Empty : Sha(app.Id, version);
+        var packages = ManifestPackages(app);
         return new
         {
             version,
             channel,
             buildNumber = parsed.BuildNumber,
-            setup = windows,
+            setup = packages[0].File,
             sha256 = sha,
             publishedAt = PublishedAt,
-            packages = new Dictionary<string, object>
-            {
-                ["win-x64"] = new { file = windows, sha256 = sha },
-                ["osx-arm64"] = new { file = $"{repo}-macOS-arm64.zip", sha256 = sha },
-                ["osx-x64"] = new { file = $"{repo}-macOS-x64.zip", sha256 = sha },
-            },
+            packages = packages.ToDictionary(package => package.Platform, package => (object)new { file = package.File, sha256 = sha }),
         };
     }
 
@@ -143,12 +184,7 @@ internal sealed class SampleGitHub : HttpMessageHandler
             }
 
             var tag = channel == AppVersion.Release ? $"v{version}" : version;
-            var assets = new[]
-                {
-                    $"{app.Name}-Setup-{version}-win-x64.exe", $"{app.Name}-{version}-win-x64-portable.zip",
-                    $"{app.Name}-{version}-osx-arm64-portable.zip", $"{app.Name}-{version}-osx-arm64.dmg",
-                    $"{app.Name}-{version}-osx-x64-portable.zip",
-                }
+            var assets = ReleaseAssets(app, version)
                 .Select(name => (object)new Dictionary<string, object?>
                 {
                     ["name"] = name,
@@ -174,8 +210,9 @@ internal sealed class SampleGitHub : HttpMessageHandler
     private string Sha(string appId, string version) =>
         BreakChecksums ? new string('0', 64) : Convert.ToHexString(SHA256.HashData(PackageBytes(appId, version))).ToLowerInvariant();
 
-    private static ThixApp? AppOf(string repositoryName) =>
-        AppCatalog.Apps.FirstOrDefault(app => app.Repository.EndsWith("/" + repositoryName, StringComparison.OrdinalIgnoreCase));
+    /// <summary>Every app that publishes from the repository <paramref name="repositoryName"/>, ThixLauncher's own updates included.</summary>
+    private List<ThixApp> AppsOf(string repositoryName) =>
+        Apps.Append(Launcher).Where(app => app.Repository.EndsWith("/" + repositoryName, StringComparison.OrdinalIgnoreCase)).ToList();
 
     private static HttpResponseMessage Json(object value) =>
         new(HttpStatusCode.OK) { Content = new StringContent(JsonSerializer.Serialize(value), Encoding.UTF8, "application/json") };

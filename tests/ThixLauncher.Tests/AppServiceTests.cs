@@ -242,11 +242,90 @@ public sealed class AppServiceTests
     }
 
     [Fact]
+    public async Task Two_apps_of_one_repository_each_get_their_own_manifest_and_package()
+    {
+        using var data = new TestData();
+        var write = OfficeApp("thixwrite", "ThixWrite");
+        var calc = OfficeApp("thixcalc", "ThixCalc");
+        var github = new SampleGitHub([write, calc]);
+        github.Versions[("thixwrite", AppVersion.Release)] = "0.1.4-20261119";
+        github.Versions[("thixcalc", AppVersion.Release)] = "0.2.7-20261118";
+        github.Versions[("thixcalc", AppVersion.Nightly)] = "nightly-9-20261119";
+        ReleaseFeed.HandlerForTests = github;
+
+        var writeRelease = (await ReleaseFeed.LatestAsync(write, AppVersion.Release, "win-x64", CancellationToken.None))!;
+        var calcRelease = (await ReleaseFeed.LatestAsync(calc, AppVersion.Release, "osx-arm64", CancellationToken.None))!;
+        Assert.Equal("0.1.4-20261119", writeRelease.Version.Text);
+        Assert.Equal("ThixWriteSetup.exe", writeRelease.PackageFile);
+        Assert.Equal("https://github.com/Real-TTX/ThixOffice/releases/download/release-channel/ThixWriteSetup.exe", writeRelease.DownloadUrl);
+        Assert.Equal("0.2.7-20261118", calcRelease.Version.Text);
+        Assert.Equal("ThixCalc-macOS-arm64.zip", calcRelease.PackageFile);
+        Assert.Contains(github.Requests, url => url.EndsWith("/release-channel/thixwrite-update.json", StringComparison.Ordinal));
+        Assert.Contains(github.Requests, url => url.EndsWith("/release-channel/thixcalc-update.json", StringComparison.Ordinal));
+
+        // the nightly of one app is not the nightly of the other
+        Assert.Null(await ReleaseFeed.LatestAsync(write, AppVersion.Nightly, "win-x64", CancellationToken.None));
+        Assert.Equal("nightly-9-20261119", (await ReleaseFeed.LatestAsync(calc, AppVersion.Nightly, "win-x64", CancellationToken.None))!.Version.Text);
+
+        // each package is the one of its app, and its checksum fits
+        foreach (var (app, release) in new[] { (write, writeRelease), (calc, calcRelease) })
+        {
+            var file = Path.Combine(data.Folder, release.PackageFile);
+            await ReleaseFeed.DownloadAsync(release.DownloadUrl, file, release.Sha256!, null, CancellationToken.None);
+            Assert.Equal((app.Id, release.Version.Text), SampleGitHub.ReadPackage(file));
+        }
+    }
+
+    [Fact]
+    public async Task An_app_with_single_releases_is_read_from_the_release_list_of_its_repository()
+    {
+        using var data = new TestData();
+        var app = OfficeApp("thixwrite", "ThixWrite") with
+        {
+            Repository = "Real-TTX/ThixWrite",
+            Feed = FeedKind.GitHubReleases,
+            PackagePatterns = new Dictionary<string, string>
+            {
+                ["win-x64"] = @"^ThixWrite-Setup-.+-win-x64\.exe$",
+                ["osx-arm64"] = @"^ThixWrite-.+-osx-arm64-portable\.zip$",
+                ["osx-x64"] = @"^ThixWrite-.+-osx-x64-portable\.zip$",
+            },
+        };
+        var github = new SampleGitHub([app]);
+        github.Versions[("thixwrite", AppVersion.Release)] = "0.1.4-20261119";
+        ReleaseFeed.HandlerForTests = github;
+
+        var release = (await ReleaseFeed.LatestAsync(app, AppVersion.Release, "win-x64", CancellationToken.None))!;
+        Assert.Equal("ThixWrite-Setup-0.1.4-20261119-win-x64.exe", release.PackageFile);
+        Assert.Equal("https://github.com/Real-TTX/ThixWrite/releases/tag/v0.1.4-20261119", release.ReleasePage);
+
+        var file = Path.Combine(data.Folder, release.PackageFile);
+        await ReleaseFeed.DownloadAsync(release.DownloadUrl, file, release.Sha256!, null, CancellationToken.None);
+        Assert.Equal(("thixwrite", "0.1.4-20261119"), SampleGitHub.ReadPackage(file));
+    }
+
+    [Fact]
     public void An_unknown_app_is_refused()
     {
         using var data = new TestData();
         Assert.Throws<BusinessException>(() => AppService.Get("thixunknown"));
     }
+
+    /// <summary>An app of a suite that publishes several apps from one repository (ThixOffice), not in the catalog.</summary>
+    private static ThixApp OfficeApp(string id, string name) => new()
+    {
+        Id = id,
+        Name = name,
+        Tagline = name,
+        Description = name,
+        Icon = "file-text",
+        Repository = "Real-TTX/ThixOffice",
+        Feed = FeedKind.ChannelManifest,
+        WindowsExecutable = name + ".exe",
+        WindowsUninstallKey = name,
+        WindowsQuietInstallArguments = "--update",
+        MacBundleName = name + ".app",
+    };
 
     private static async Task WaitUntil(Func<bool> condition)
     {

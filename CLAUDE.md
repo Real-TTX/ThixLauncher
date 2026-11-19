@@ -64,7 +64,8 @@ src/ThixLauncher.Core   (no UI) models, business layer (static classes), infrast
                         DisableAppChanges, DisableUpdates, DisableCloud), AutostartService
                         (HKCU Run / LaunchAgent), InstallService (Windows self-installing exe), UpdateService + MacAppBundle (own OTA)
   Infrastructure/       ReleaseFeed (manifest of a rolling channel, GitHub release list, download with checksum; HandlerForTests),
-                        SampleGitHub (GitHub in memory: tests, self test, snapshots), SampleCloud (MatCloud in memory), TokenStore (DPAPI / Keychain),
+                        SampleGitHub (GitHub in memory: tests, self test, snapshots; apps of one repository – ThixOffice – told apart
+                        by the manifest's and the package's file name; a test may give its own apps), SampleCloud (MatCloud in memory), TokenStore (DPAPI / Keychain),
                         SettingsStore, AppPaths, AppInfo, AppClock, Log, ProblemReports
   Platform/             IAppSystem + AppSystem (the current one; UseForTests), WindowsAppSystem (uninstall entry, the app's setup,
                         its uninstaller), MacAppSystem (bundle in /Applications or ~/Applications, ditto / hdiutil, quit, swap),

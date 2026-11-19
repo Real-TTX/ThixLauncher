@@ -103,5 +103,17 @@ public sealed class VersionAndPlatformTests
             Assert.EndsWith(".app", app.MacBundleName);
             Assert.True(app.Feed == FeedKind.ChannelManifest ? app.ManifestFileName is not null : app.PackagePatterns.Count == 3, app.Id);
         }
+
+        // Apps of one repository (ThixOffice) are told apart by their manifest: single releases ("v…") would mix their versions.
+        foreach (var shared in AppCatalog.Apps.GroupBy(app => app.Repository, StringComparer.OrdinalIgnoreCase).Where(group => group.Count() > 1))
+        {
+            Assert.All(shared, app => Assert.Equal(FeedKind.ChannelManifest, app.Feed));
+            Assert.Equal(shared.Count(), shared.Select(app => app.ManifestFileName).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        }
+
+        foreach (var key in new Func<ThixApp, string?>[] { app => app.Id, app => app.WindowsUninstallKey, app => app.WindowsExecutable, app => app.MacBundleName, app => app.MacBundleId })
+        {
+            Assert.Equal(AppCatalog.Apps.Count, AppCatalog.Apps.Select(key).Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        }
     }
 }
