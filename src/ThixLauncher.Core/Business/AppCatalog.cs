@@ -21,7 +21,7 @@ public static class AppCatalog
                           "Drucken und Export als PDF. Excel-Mappen (.xlsx, .xlsm) und CSV-Dateien öffnet und speichert ThixCalc " +
                           "direkt, mit der MatCloud auch in ThixDrive.",
             Icon = "table",
-            // ThixOffice publishes every app of the suite (ThixWrite, ThixCalc, later ThixShow) into the same rolling releases;
+            // ThixOffice publishes every app of the suite (ThixWrite, ThixCalc, ThixShow) into the same rolling releases;
             // the manifest and the package names tell them apart.
             Repository = "Real-TTX/ThixOffice",
             Feed = FeedKind.ChannelManifest,
@@ -116,6 +116,31 @@ public static class AppCatalog
         },
         new ThixApp
         {
+            Id = "thixshow",
+            CloudApp = CloudApps.Show,
+            Name = "ThixShow",
+            Tagline = "Präsentationen mit Folien, Designs und Bildschirmpräsentation",
+            Description = "Präsentieren wie in PowerPoint: Folien mit Layouts und Designs, Formen, Bilder und Diagramme, " +
+                          "Übergänge und Animationen, Bildschirmpräsentation mit Referentenansicht, Drucken und Export als PDF. " +
+                          "PowerPoint-Präsentationen (.pptx, .pptm) öffnet und speichert ThixShow direkt, mit der MatCloud auch in ThixDrive.",
+            Icon = "tv",
+            // ThixOffice publishes every app of the suite (ThixWrite, ThixCalc, ThixShow) into the same rolling releases; the
+            // manifest and the package names tell them apart.
+            Repository = "Real-TTX/ThixOffice",
+            Feed = FeedKind.ChannelManifest,
+            ManifestFileName = "thixshow-update.json",
+            WindowsExecutable = "ThixShow.exe",
+            WindowsUninstallKey = "ThixShow",
+            // ThixShowSetup.exe (the program itself, the same install code as ThixWrite and ThixCalc) --update installs or updates
+            // without a window: a fresh install takes the default choices (Start menu, "Öffnen mit" for its document types, no
+            // desktop shortcut, no default program taken); a running ThixShow keeps its unsaved changes as recovery files and ends,
+            // it is not started again (that would take "--restart").
+            WindowsQuietInstallArguments = "--update",
+            MacBundleName = "ThixShow.app",
+            MacBundleId = "info.schmoldt.thixshow",
+        },
+        new ThixApp
+        {
             Id = "thixtunnel",
             Name = "ThixTunnel",
             Tagline = "SSH-Tunnel",
@@ -143,7 +168,7 @@ public static class AppCatalog
                           "Export als PDF. Word-Dokumente (.docx) öffnet und speichert ThixWrite direkt – was es noch nicht anzeigt, " +
                           "bleibt beim Speichern erhalten.",
             Icon = "file-text",
-            // ThixOffice publishes every app of the suite (ThixWrite, ThixCalc, later ThixShow) into the same rolling releases;
+            // ThixOffice publishes every app of the suite (ThixWrite, ThixCalc, ThixShow) into the same rolling releases;
             // the manifest and the package names tell them apart.
             Repository = "Real-TTX/ThixOffice",
             Feed = FeedKind.ChannelManifest,
