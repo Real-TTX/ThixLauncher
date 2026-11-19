@@ -108,6 +108,30 @@ public static class AppCatalog
             MacBundleName = "ThixTunnel.app",
             MacBundleId = "info.schmoldt.thixtunnel",
         },
+        new ThixApp
+        {
+            Id = "thixwrite",
+            Name = "ThixWrite",
+            Tagline = "Textverarbeitung für Dokumente, Briefe und Berichte",
+            Description = "Schreiben wie in Word: Menüband, Seiten wie auf Papier, Formatvorlagen, Aufzählungen, Suchen und Ersetzen und " +
+                          "Export als PDF. Word-Dokumente (.docx) öffnet und speichert ThixWrite direkt – was es noch nicht anzeigt, " +
+                          "bleibt beim Speichern erhalten.",
+            Icon = "file-text",
+            // ThixOffice publishes every app of the suite (ThixWrite, later ThixCalc and ThixShow) into the same rolling releases;
+            // the manifest and the package names tell them apart.
+            Repository = "Real-TTX/ThixOffice",
+            Feed = FeedKind.ChannelManifest,
+            ManifestFileName = "thixwrite-update.json",
+            WindowsExecutable = "ThixWrite.exe",
+            WindowsUninstallKey = "ThixWrite",
+            // ThixWriteSetup.exe (the program itself) --update installs or updates without a window: a fresh install takes the
+            // default choices (Start menu, "Öffnen mit" for its document types, no desktop shortcut, no default program taken);
+            // a running ThixWrite keeps its unsaved changes as recovery files and ends, it is not started again (that would
+            // take "--restart").
+            WindowsQuietInstallArguments = "--update",
+            MacBundleName = "ThixWrite.app",
+            MacBundleId = "info.schmoldt.thixwrite",
+        },
     ];
 
     /// <summary>The app with this id, or null.</summary>

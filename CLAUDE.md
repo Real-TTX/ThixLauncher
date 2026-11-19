@@ -5,8 +5,8 @@ Guidance for working in this repository. Keep it in sync with the code: update i
 ## What ThixLauncher is
 
 The launcher of the Thix apps for **Windows and macOS** (desktop app, tray / menu bar): it installs the apps with one
-click, keeps them up to date, starts them and removes them. The catalog has **ThixCalendar**, **ThixClip**, **ThixFred**, **ThixNote** and **ThixTunnel**
-(`AppCatalog`); a new app is one entry there plus its logo in `src/ThixLauncher/Assets/apps/<id>.png`. The apps come
+click, keeps them up to date, starts them and removes them. The catalog has **ThixCalendar**, **ThixClip**, **ThixFred**, **ThixNote**, **ThixTunnel** and **ThixWrite**
+(`AppCatalog`; ThixWrite comes from ThixOffice, which will publish ThixCalc and ThixShow from the same repository); a new app is one entry there plus its logo in `src/ThixLauncher/Assets/apps/<id>.png`. The apps come
 straight from their GitHub releases (public, no token), every package is checked by **SHA-256** before it runs.
 With **MatCloud** (`../MatCloud`, the cloud of the Thix apps) the launcher signs in once and
 hands its sign-in to every app it installs (`CloudService`, contract `POST /api/v1/devices/handoff` + `CloudHandoff`); the cloud never holds up
