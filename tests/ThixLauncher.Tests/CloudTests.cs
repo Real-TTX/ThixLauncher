@@ -41,12 +41,20 @@ public sealed class CloudTests
     public async Task The_launcher_signs_in_in_the_browser()
     {
         using var data = new TestData();
+        // waits for the browser to open – the last step before the launcher polls – and remembers the code shown by then: the two callbacks
+        // run one after the other on another thread, so a test that waits only for the code may look before the browser was opened
         DeviceLinkStart? shown = null;
-        string? opened = null;
-        var connecting = CloudService.ConnectInBrowserAsync(SampleCloud.Address, "", start => shown = start, address => opened = address);
-        await WaitUntil(() => shown is not null);
-        Assert.Equal(SampleCloud.Code, shown!.Code);
-        Assert.Equal($"{SampleCloud.Address}/Connect?code={SampleCloud.Code}", opened);
+        var opened = new TaskCompletionSource<(string Address, DeviceLinkStart? Shown)>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var connecting = CloudService.ConnectInBrowserAsync(SampleCloud.Address, "", start => shown = start, address => opened.TrySetResult((address, shown)));
+        if (await Task.WhenAny(opened.Task, connecting).WaitAsync(TimeSpan.FromSeconds(30)) == connecting)
+        {
+            await connecting; // it ended before it opened the browser: show why
+            Assert.Fail("The sign-in ended without opening the browser.");
+        }
+
+        var (address, codeShown) = await opened.Task;
+        Assert.Equal(SampleCloud.Code, codeShown?.Code);
+        Assert.Equal($"{SampleCloud.Address}/Connect?code={SampleCloud.Code}", address);
         Assert.Equal(CloudState.Connecting, CloudService.Status.State);
 
         data.Cloud.ApproveLink();
@@ -178,15 +186,5 @@ public sealed class CloudTests
         Assert.Empty(data.Cloud.HandedOver);
         Assert.Equal(CloudState.Off, CloudService.Status.State);
         Assert.True(AccessPolicy.IsAnySet);
-    }
-
-    private static async Task WaitUntil(Func<bool> condition)
-    {
-        for (var i = 0; i < 200 && !condition(); i++)
-        {
-            await Task.Delay(10);
-        }
-
-        Assert.True(condition());
     }
 }
