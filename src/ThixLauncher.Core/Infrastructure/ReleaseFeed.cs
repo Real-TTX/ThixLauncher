@@ -165,7 +165,7 @@ internal static class ReleaseFeed
         version = version with { BuildNumber = manifest.BuildNumber > 0 ? manifest.BuildNumber : version.BuildNumber };
         var tag = $"{channel}-channel";
         return new AppRelease(app.Id, version, package.File, $"https://github.com/{app.Repository}/releases/download/{tag}/{package.File}",
-            package.Sha256, null, manifest.PublishedAt, $"https://github.com/{app.Repository}/releases/tag/{tag}");
+            package.Sha256, null, manifest.PublishedAt, $"https://github.com/{app.Repository}/releases/tag/{tag}", manifest.Installer);
     }
 
     private static async Task<AppRelease?> FromReleaseListAsync(ThixApp app, string channel, string platformKey, CancellationToken cancellationToken)

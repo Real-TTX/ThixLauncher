@@ -53,10 +53,30 @@ internal sealed class SampleGitHub(IReadOnlyList<ThixApp>? apps = null) : HttpMe
     /// <summary>Every URL asked for, in order.</summary>
     public List<string> Requests { get; } = [];
 
-    /// <summary>The sample state of the snapshots: ThixCalc 0.1.1, ThixClip 0.1.12 in release (installed: 0.1.9), ThixFred 0.1.1, ThixNote 1.1.1, ThixShow 0.1.1, ThixTunnel 0.2.8, ThixWrite 0.1.1, nightlies of all.</summary>
+    /// <summary>The block "installer" of an app's manifests (SETUP-08); an app without one publishes manifests without it (an older build).</summary>
+    public Dictionary<string, InstallerConfig> Installers { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>The install options of the sample ThixNote: no desktop shortcut, no autostart, automatic updates, Markdown on, text off.</summary>
+    public static InstallerConfig SampleNoteInstaller { get; } = new()
+    {
+        DesktopShortcut = new InstallerSwitch { Default = false },
+        Autostart = new InstallerSwitch { Default = false },
+        AutomaticUpdates = new InstallerSwitch { Default = true },
+        FileTypes =
+        [
+            new InstallerFileType { Extension = ".md", Name = "Markdown-Notiz", Default = true },
+            new InstallerFileType { Extension = ".txt", Name = "Textdatei", Default = false },
+        ],
+    };
+
+    /// <summary>
+    /// The sample state of the snapshots: ThixCalc 0.1.1, ThixClip 0.1.12 in release (installed: 0.1.9), ThixFred 0.1.1, ThixNote 1.1.1, ThixShow 0.1.1, ThixTunnel 0.2.8, ThixWrite 0.1.1, nightlies of all;
+    /// ThixNote with install options (<see cref="SampleNoteInstaller"/>), the others as builds without them.
+    /// </summary>
     public static SampleGitHub WithSampleReleases()
     {
         var github = new SampleGitHub();
+        github.Installers["thixnote"] = SampleNoteInstaller;
         github.Versions[("thixcalc", AppVersion.Release)] = "0.1.1-20261119";
         github.Versions[("thixcalc", AppVersion.Nightly)] = "nightly-3-20261119";
         github.Versions[("thixcalendar", AppVersion.Release)] = "0.1.3-20261117";
@@ -176,6 +196,7 @@ internal sealed class SampleGitHub(IReadOnlyList<ThixApp>? apps = null) : HttpMe
             sha256 = sha,
             publishedAt = PublishedAt,
             packages = packages.ToDictionary(package => package.Platform, package => (object)new { file = package.File, sha256 = sha }),
+            installer = Installers.GetValueOrDefault(app.Id),
         };
     }
 

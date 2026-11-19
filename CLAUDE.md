@@ -30,11 +30,11 @@ apps is read from the system and GitHub; settings are `settings.json`.
   run works on the real computer: Installieren really installs the app.
 - **Snapshots:** `dotnet run --project src/ThixLauncher -- --snapshot docs/images` draws every window headless from sample
   data (ThixClip 0.1.9 installed with 0.1.12 waiting, ThixNote 1.1.1 offered, pinned clock 16.11.2026 14:32, version 1.0.0,
-  ANNA-PC) in light and dark: `setup-*`, `main-{apps,installing,detail,settings,settings-cloud-code,settings-cloud,about,folded}` (the cloud tab against `SampleCloud`), `dialog-uninstall`, `toast`,
+  ANNA-PC) in light and dark: `setup-*`, `main-{apps,installing,detail,settings,settings-cloud-code,settings-cloud,about,folded}` (the cloud tab against `SampleCloud`), `dialog-install-options` (ThixNote's), `dialog-uninstall`, `toast`,
   `tray-icon-{windows,macos}[-updates]`. A new window or page: add it to `Snapshot.cs` and look at the pictures.
 - The Windows publish (win-x64) is a **trimmed** single file (`TrimMode=partial`, about 33 MB). No `dynamic`, no built-in
   COM (`Platform/Windows/ShellLink` uses `[GeneratedComInterface]`). `ThixLauncher.exe --self-test <report>` checks the
-  published program (JSON, feeds, download + SHA-256, install/start/remove in memory, the sign-in at MatCloud and the hand-over with the
+  published program (JSON, installer.json and the install options, feeds, download + SHA-256, install/start/remove in memory, the sign-in at MatCloud and the hand-over with the
   token under DPAPI, COM, every window); CI runs it.
 - `scripts/package-macos.sh` builds `ThixLauncher.app` (Info.plist, icns, ad-hoc signature), the update zip and the dmg.
 - Icons: `cd tools && npm install && node render-icons.js` renders `branding/*.svg` (installed Edge, headless) into
@@ -56,27 +56,39 @@ src/ThixLauncher.Core   (no UI) models, business layer (static classes), infrast
   Models/               ThixApp (catalog entry: feed kind, package patterns, Windows uninstall key + quiet arguments, mac bundle),
                         AppVersion (release / nightly / local, build number compare), AppRelease, InstalledApp, AppStatus + AppState,
                         AppQuery (search, AppFilter, AppSort), AppSettings (theme, AppChannel, updates, Cloud = CloudSettings – only CloudService
-                        writes it –, ConnectInstalledApps), UpdateManifest, BusinessException; ThixApp.CloudApp = its id at MatCloud
+                        writes it –, ConnectInstalledApps), UpdateManifest (+ "installer"), BusinessException; ThixApp.CloudApp = its id at MatCloud;
+                        InstallerConfig (SETUP-08: InstallerSwitch, InstallerFileType, InstallChoices, SetupAction, SetupRequest,
+                        AppSetupCommand = how a platform runs an app's package)
   Business/             AppCatalog (the apps), AppService (state per app in memory, Query/Count, RefreshAsync, InstallAsync = install or
                         update with download + SHA-256, UninstallAsync, Launch, UpdateAllAsync; one action per app; all checks),
                         CloudService (sign-in in the browser / with a password, CheckAsync in the background, HandOffAsync before the setup of a fresh
                         install: at most 8 s, never throws; ForgetHandoff after removing), SettingsService, AccessPolicy (LockConfiguration,
                         DisableAppChanges, DisableUpdates, DisableCloud), AutostartService
-                        (HKCU Run / LaunchAgent), InstallService (Windows self-installing exe), UpdateService + MacAppBundle (own OTA)
+                        (HKCU Run / LaunchAgent), InstallService (Windows self-installing exe), UpdateService + MacAppBundle (own OTA),
+                        InstallerOptions (SETUP-08 of MatDesign for the launcher itself: installer.json – embedded, and as "installer"
+                        in its update manifest – offers desktop shortcut, autostart, automatic updates, no file types; the command line
+                        --quiet / --update / --configure [--desktop-shortcut=yes|no --autostart=yes|no --automatic-updates=yes|no
+                        --file-types=…] [--start], a wrong value = exit code 2; Current/Apply), AppInstallOptions (SETUP-08 for the
+                        apps: the block "installer" of their manifests → what to ask (ForThisSystem) and the setup's arguments
+                        (SetupFor: first install "--quiet" + every offered option [+ "--start" with autostart], macOS "--configure …";
+                        updates and builds without the block keep WindowsQuietInstallArguments); AppService.InstallOptionsOf)
   Infrastructure/       ReleaseFeed (manifest of a rolling channel, GitHub release list, download with checksum; HandlerForTests),
                         SampleGitHub (GitHub in memory: tests, self test, snapshots; apps of one repository – ThixOffice – told apart
-                        by the manifest's and the package's file name; a test may give its own apps), SampleCloud (MatCloud in memory), TokenStore (DPAPI / Keychain),
+                        by the manifest's and the package's file name; a test may give its own apps; Installers = the "installer" block per
+                        app, the sample ThixNote has one), SampleCloud (MatCloud in memory), TokenStore (DPAPI / Keychain),
                         SettingsStore, AppPaths, AppInfo, AppClock, Log, ProblemReports
-  Platform/             IAppSystem + AppSystem (the current one; UseForTests), WindowsAppSystem (uninstall entry, the app's setup,
-                        its uninstaller), MacAppSystem (bundle in /Applications or ~/Applications, ditto / hdiutil, quit, swap),
-                        SampleAppSystem (a computer in memory), InstallInfo (DisplayIcon path, bundle version), CommandLine, Windows/ShellLink
+  Platform/             IAppSystem + AppSystem (the current one; UseForTests), WindowsAppSystem (uninstall entry, the app's setup with
+                        the AppSetupCommand – quiet: stderr is read, exit code 2 = the setup refused the options –, its uninstaller),
+                        MacAppSystem (bundle in /Applications or ~/Applications, ditto / hdiutil, quit, swap, then "--configure …"),
+                        SampleAppSystem (a computer in memory; Setups records every AppSetupCommand, RefuseOptions), InstallInfo (DisplayIcon path, bundle version), CommandLine, Windows/ShellLink
 src/ThixLauncher        (Avalonia app)
-  Program / App         start-up: ProblemReports, self test, snapshot, Windows setup mode (--update, --quiet, --uninstall), single
+  Program / App         start-up: ProblemReports, self test, snapshot, setup mode (InstallerOptions.Parse: Windows --update, --quiet, --uninstall;
+                        both --configure; wrong options = exit code 2), single
                         instance (MatSingleInstance), tray, AppCoordinator, UpdateCoordinator; ShowMainWindow, Notify, ExitApplication
   AppCoordinator        reads the apps at start / every 6 h / after a channel change; automatic app updates; announces new updates once
   UpdateCoordinator     the launcher's own updates (check, full auto update)
   AppActions            the actions of an app for every page and the tray: main button (Aktualisieren / Öffnen / Installieren),
-                        second button, may it be removed, RunAsync (asks before removing)
+                        second button, may it be removed, RunAsync (asks the install options before a first install, asks before removing)
   MainWindow            MatTitleBar (logo, word mark, the installed apps to start), MatNav (Apps, Installiert, Updates (n),
                         Einstellungen, version = About, fold), page host; keyboard (OnPreviewKeyDown)
   Pages/                AppsPage (list page: title + state line, toolbar search / filter / sort / "Nach Updates suchen", the
@@ -86,8 +98,9 @@ src/ThixLauncher        (Avalonia app)
   Controls/             ONE code base per control: AppRow, AppLogo, StateBadge, ActionBar, IconLabel, InfoBar, FormErrors
   Tray/                 TrayIcon (TRAY-01 order; own items: start each installed app, Nach Updates suchen, update; amber dot while
                         updates wait)
-  Setup/                ThixLauncherSetup (MatSetupWindow: install, update, uninstall)
-  Dialogs/              ConfirmDialog, ProblemReportDialog
+  Setup/                ThixLauncherSetup (MatSetupWindow: install, update, uninstall; the Options switches from installer.json)
+  Dialogs/              ConfirmDialog, InstallOptionsDialog (SETUP-08: a switch per offered option, the app's defaults; Installieren /
+                        Abbrechen), ProblemReportDialog
   SelfTest, Snapshot, UiWatchdog, Ui
 tests/ThixLauncher.Tests
 ```

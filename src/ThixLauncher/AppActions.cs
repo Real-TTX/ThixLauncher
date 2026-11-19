@@ -18,8 +18,8 @@ public enum AppAction
 public sealed record AppButton(AppAction? Action, string Text, string Icon, string? Tip = null);
 
 /// <summary>
-/// The actions on an app as the list, the detail page and the tray offer them – one place for their words, icons and the
-/// question before removing. What may happen is decided by the business layer (<see cref="AppService"/>); its refusal comes
+/// The actions on an app as the list, the detail page and the tray offer them – one place for their words, icons, the
+/// install options before a first install (<see cref="InstallOptionsDialog"/>) and the question before removing. What may happen is decided by the business layer (<see cref="AppService"/>); its refusal comes
 /// back as a <see cref="BusinessException"/> for the page to show.
 /// </summary>
 internal static class AppActions
@@ -69,7 +69,18 @@ internal static class AppActions
 
             case AppAction.Install:
             case AppAction.Update:
-                var cloudAccount = await AppService.InstallAsync(app.Id);
+                // a first install of an app that offers install options (SETUP-08) asks them first
+                InstallChoices? choices = null;
+                if (action == AppAction.Install && AppService.InstallOptionsOf(app.Id) is { } offered)
+                {
+                    choices = await InstallOptionsDialog.AskAsync(owner, app, offered);
+                    if (choices is null)
+                    {
+                        return null;
+                    }
+                }
+
+                var cloudAccount = await AppService.InstallAsync(app.Id, choices);
                 var now = AppService.Get(app.Id);
                 if (action == AppAction.Update)
                 {

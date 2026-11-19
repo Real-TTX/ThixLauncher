@@ -2,26 +2,25 @@ using System.Diagnostics;
 using System.Runtime.Versioning;
 using Microsoft.Win32;
 using ThixLauncher.Core.Infrastructure;
+using ThixLauncher.Core.Models;
 
 namespace ThixLauncher.Core.Business;
-
-/// <summary>The choices of the setup assistant; an update (null) keeps what the user has.</summary>
-public sealed record InstallOptions(bool StartWithWindows, bool DesktopShortcut, bool InstallUpdatesAutomatically = true);
 
 /// <summary>
 /// Windows only (macOS: the app bundle, <see cref="MacAppBundle"/>). ThixLauncher installs itself - like ThixTunnel, the
 /// Matgate agent and the MatMon setup - without a separate installer tool.
 /// The published ThixLauncher.exe is the setup: started from anywhere else it copies itself to
 /// %LocalAppData%\Programs\ThixLauncher (per user, no administrator rights), creates the Start menu entry, the entry in
-/// "Installierte Apps" and optionally the autostart and a desktop shortcut. "--uninstall" removes every one of them.
+/// "Installierte Apps" and – as the install options say (InstallerOptions, SETUP-08) – the autostart, a desktop shortcut and
+/// automatic updates. "--uninstall" removes every one of them.
 /// User data (%LocalAppData%\ThixLauncher: settings, logs) stays unless the user explicitly deletes it while uninstalling.
 /// </summary>
 [SupportedOSPlatform("windows")]
 public static class InstallService
 {
-    public const string UpdateArgument = UpdateService.WindowsUpdateArgument;
-    public const string UninstallArgument = "--uninstall";
-    public const string QuietArgument = "--quiet";
+    public const string UpdateArgument = InstallerOptions.UpdateArgument;
+    public const string UninstallArgument = InstallerOptions.UninstallArgument;
+    public const string QuietArgument = InstallerOptions.QuietArgument;
     public const string ExecutableName = "ThixLauncher.exe";
 
     /// <summary>A running ThixLauncher listens for this signal and ends itself cleanly.</summary>
@@ -69,11 +68,13 @@ public static class InstallService
         string.Equals(Path.GetFullPath(path), Path.GetFullPath(InstalledExecutable), StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Installs or updates. <paramref name="options"/> null = update: shortcuts and autostart stay as they are.
+    /// Installs or updates with the install options (SETUP-08): what <paramref name="choices"/> leaves open (null, or a value of
+    /// null) an installed ThixLauncher keeps as it is and a first install takes from installer.json.
     /// </summary>
-    public static void Install(string sourceExecutable, InstallOptions? options, Action<string> log)
+    public static void Install(string sourceExecutable, InstallChoices? choices, Action<string> log)
     {
-        var isUpdate = options is null;
+        var isUpdate = IsInstalled;
+        var wanted = (choices ?? new InstallChoices()).Over(isUpdate ? InstallerOptions.Current() : InstallerOptions.Defaults);
         log(isUpdate ? $"Aktualisiere ThixLauncher in {ProgramFolder}" : $"Installiere ThixLauncher nach {ProgramFolder}");
         StopRunningInstances(log);
 
@@ -87,28 +88,8 @@ public static class InstallService
         CreateShortcut(StartMenuShortcut, "Thix-Apps installieren und starten");
         log("Startmenü-Eintrag angelegt");
 
-        var wantsDesktopShortcut = options?.DesktopShortcut ?? HasDesktopShortcut;
-        if (wantsDesktopShortcut)
-        {
-            CreateShortcut(DesktopShortcut, "Thix-Apps installieren und starten");
-            log("Desktop-Verknüpfung angelegt");
-        }
-
-        if (_testLocations is null)
-        {
-            // An update keeps the autostart as the user left it, but points it at the installed file.
-            var wantsAutostart = options?.StartWithWindows ?? AutostartService.IsEnabled();
-            if (wantsAutostart)
-            {
-                AutostartService.WriteEntry(InstalledExecutable);
-                log("Autostart bei der Windows-Anmeldung eingerichtet");
-            }
-        }
-
-        if (options is not null)
-        {
-            ApplyUpdateChoice(options.InstallUpdatesAutomatically, log);
-        }
+        // also an update writes them again: the autostart points at the installed file
+        InstallerOptions.Apply(wanted, InstalledExecutable, log);
 
         WriteUninstallEntry();
         log("Eintrag unter „Installierte Apps“ geschrieben");
@@ -239,17 +220,16 @@ public static class InstallService
         }
     }
 
-    /// <summary>"Updates automatisch installieren" of the setup; a locked configuration (policy) keeps its value.</summary>
-    private static void ApplyUpdateChoice(bool installAutomatically, Action<string> log)
+    /// <summary>The desktop shortcut on or off (install options).</summary>
+    internal static void SetDesktopShortcut(bool wanted)
     {
-        try
+        if (wanted)
         {
-            SettingsService.Update(settings => settings with { InstallUpdatesAutomatically = installAutomatically });
-            log(installAutomatically ? "Updates werden automatisch installiert" : "Updates werden nur angeboten");
+            CreateShortcut(DesktopShortcut, "Thix-Apps installieren und starten");
         }
-        catch (Models.BusinessException exception)
+        else
         {
-            log(exception.Message);
+            DeleteFile(DesktopShortcut);
         }
     }
 

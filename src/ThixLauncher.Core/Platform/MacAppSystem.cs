@@ -9,7 +9,8 @@ namespace ThixLauncher.Core.Platform;
 /// <summary>
 /// macOS: a Thix app is an app bundle (ThixClip.app) in /Applications or ~/Applications; the launcher finds it there and
 /// reads its version from Info.plist. Installing unpacks the package (a zip of the bundle with ditto, or a disk image with
-/// hdiutil), ends a running copy, swaps the bundles (the old one comes back if that fails) and removes the quarantine flag.
+/// hdiutil), ends a running copy, swaps the bundles (the old one comes back if that fails) and removes the quarantine flag;
+/// a first install of an app that knows the install options (SETUP-08) then calls the app with "--configure" and the choices.
 /// Removing ends the app and deletes the bundle and its LaunchAgent (autostart); the user data stays.
 /// </summary>
 [SupportedOSPlatform("macos")]
@@ -39,7 +40,7 @@ internal sealed class MacAppSystem : IAppSystem
         return null;
     }
 
-    public async Task InstallAsync(ThixApp app, string packageFile, InstalledApp? installed, IProgress<string> progress, CancellationToken cancellationToken)
+    public async Task InstallAsync(ThixApp app, string packageFile, InstalledApp? installed, AppSetupCommand setup, IProgress<string> progress, CancellationToken cancellationToken)
     {
         var work = Path.Combine(Path.GetDirectoryName(packageFile)!, "unpacked");
         DeleteFolder(work);
@@ -56,6 +57,12 @@ internal sealed class MacAppSystem : IAppSystem
         progress.Report(installed is null ? $"{app.Name} nach {Path.GetDirectoryName(target)} kopieren" : $"{app.Name} ersetzen");
         await Task.Run(() => Replace(target, newBundle), cancellationToken);
         DeleteFolder(work);
+
+        if (setup.MacConfigureArguments is { } configure)
+        {
+            progress.Report($"{app.Name} einrichten");
+            await ConfigureAsync(app, target, configure, cancellationToken);
+        }
 
         if (wasRunning)
         {
@@ -81,6 +88,72 @@ internal sealed class MacAppSystem : IAppSystem
     }
 
     public void Launch(ThixApp app, InstalledApp installed) => Run("/usr/bin/open", installed.Location);
+
+    /// <summary>
+    /// The install options of SETUP-08: the copied app applies them itself – <c>&lt;bundle&gt;/Contents/MacOS/&lt;executable&gt;
+    /// --configure …</c> – and ends; this waits for it (at most 2 minutes). Exit code 2: it refused the options, with the reason on stderr.
+    /// </summary>
+    private static async Task ConfigureAsync(ThixApp app, string bundle, IReadOnlyList<string> arguments, CancellationToken cancellationToken)
+    {
+        var info = ReadInfo(Path.Combine(bundle, "Contents", "Info.plist"));
+        var name = info.TryGetValue("CFBundleExecutable", out var executableName) && executableName.Length > 0
+            ? executableName
+            : Path.GetFileNameWithoutExtension(app.MacBundleName);
+        var executable = Path.Combine(bundle, "Contents", "MacOS", name);
+        var startInfo = new ProcessStartInfo(executable) { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
+        foreach (var argument in arguments)
+        {
+            startInfo.ArgumentList.Add(argument);
+        }
+
+        Log.Info($"{executable} {string.Join(' ', arguments)}");
+        Process? started;
+        try
+        {
+            started = Process.Start(startInfo);
+        }
+        catch (System.ComponentModel.Win32Exception exception)
+        {
+            throw new AppSystemException($"{app.Name} ist installiert, konnte aber nicht eingerichtet werden: {exception.Message}", exception);
+        }
+
+        using var process = started ?? throw new AppSystemException($"{app.Name} ist installiert, konnte aber nicht eingerichtet werden.");
+        var output = process.StandardOutput.ReadToEndAsync(cancellationToken);
+        var errors = process.StandardError.ReadToEndAsync(cancellationToken);
+        using var limit = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        limit.CancelAfter(TimeSpan.FromMinutes(2));
+        try
+        {
+            await process.WaitForExitAsync(limit.Token);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            TryKill(process);
+            throw new AppSystemException($"{app.Name} ist installiert, reagierte beim Einrichten aber nicht mehr.");
+        }
+
+        await Task.WhenAny(Task.WhenAll(output, errors), Task.Delay(TimeSpan.FromSeconds(1), CancellationToken.None));
+        var reason = errors.IsCompletedSuccessfully ? errors.Result.Trim() : "";
+        Log.Info($"{name} --configure ended with {process.ExitCode}{(reason.Length > 0 ? ": " + reason : "")}");
+        if (process.ExitCode != 0)
+        {
+            throw new AppSystemException(reason.Length > 0
+                ? $"{app.Name} ist installiert, hat die Optionen aber abgelehnt: {reason}"
+                : $"{app.Name} ist installiert, das Einrichten endete aber mit dem Fehler {process.ExitCode}.");
+        }
+    }
+
+    private static void TryKill(Process process)
+    {
+        try
+        {
+            process.Kill(entireProcessTree: true);
+        }
+        catch (Exception exception) when (exception is InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            // already gone
+        }
+    }
 
     /// <summary>/Applications when this user may write there (an administrator), otherwise ~/Applications.</summary>
     private static string TargetFolder()

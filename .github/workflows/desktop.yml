@@ -178,6 +178,13 @@ jobs:
     needs: [version, windows, macos]
     runs-on: ubuntu-latest
     steps:
+      # installer.json: the install options (SETUP-08) go into the manifest as "installer" (ThixInstall)
+      - uses: actions/checkout@v4
+        with:
+          path: source
+          sparse-checkout: src/ThixLauncher.Core/installer.json
+          sparse-checkout-cone-mode: false
+
       - uses: actions/download-artifact@v4
         with:
           name: windows
@@ -189,7 +196,7 @@ jobs:
           path: artifacts
 
       # The manifest the installed launcher reads for its update check (UpdateService): "setup"/"sha256" for Windows,
-      # "packages" for each platform.
+      # "packages" for each platform, "installer" what its setup offers (SETUP-08).
       - name: Write update manifest
         shell: bash
         run: |
@@ -204,6 +211,7 @@ jobs:
             "setup": "ThixLauncherSetup.exe",
             "sha256": "$(sha ThixLauncherSetup.exe)",
             "publishedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "installer": $(cat ../source/src/ThixLauncher.Core/installer.json),
             "packages": {
               "win-x64": { "file": "ThixLauncherSetup.exe", "sha256": "$(sha ThixLauncherSetup.exe)" },
               "osx-arm64": { "file": "ThixLauncher-macOS-arm64.zip", "sha256": "$(sha ThixLauncher-macOS-arm64.zip)" },

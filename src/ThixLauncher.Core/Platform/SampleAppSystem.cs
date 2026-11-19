@@ -24,6 +24,12 @@ internal sealed class SampleAppSystem : IAppSystem
     /// <summary>Holds every installation until it is released (tests of the busy state).</summary>
     public TaskCompletionSource? Hold { get; set; }
 
+    /// <summary>How every package was run, in order: the app and the command the business layer chose (install options).</summary>
+    public List<(string AppId, AppSetupCommand Setup)> Setups { get; } = [];
+
+    /// <summary>Simulates a setup that refuses its options (exit code 2) with this reason.</summary>
+    public string? RefuseOptions { get; set; }
+
     public bool IsSupported => true;
 
     /// <summary>Notes an app as installed (the sample state).</summary>
@@ -42,9 +48,19 @@ internal sealed class SampleAppSystem : IAppSystem
         }
     }
 
-    public async Task InstallAsync(ThixApp app, string packageFile, InstalledApp? installed, IProgress<string> progress, CancellationToken cancellationToken)
+    public async Task InstallAsync(ThixApp app, string packageFile, InstalledApp? installed, AppSetupCommand setup, IProgress<string> progress, CancellationToken cancellationToken)
     {
         progress.Report(installed is null ? $"{app.Name} wird installiert" : $"{app.Name} wird aktualisiert");
+        lock (Setups)
+        {
+            Setups.Add((app.Id, setup));
+        }
+
+        if (RefuseOptions is { } reason && setup.WindowsArguments.Any(argument => argument.Contains('=', StringComparison.Ordinal)))
+        {
+            throw new AppSystemException($"Das Setup von {app.Name} lehnt die Optionen ab: {reason}");
+        }
+
         if (Hold is { } hold)
         {
             await hold.Task.WaitAsync(cancellationToken);

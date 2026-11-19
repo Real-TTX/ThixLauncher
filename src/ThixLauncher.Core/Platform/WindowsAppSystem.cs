@@ -10,8 +10,10 @@ namespace ThixLauncher.Core.Platform;
 /// <summary>
 /// Windows: every Thix app installs itself per user (no administrator rights) and writes its entry under
 /// HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\&lt;app&gt; – that entry is how the launcher finds it (version,
-/// folder, uninstaller). Installing runs the app's own setup: without a window when the app knows how
-/// (<see cref="ThixApp.WindowsQuietInstallArguments"/>), otherwise the setup opens and the launcher waits for it. Removing
+/// folder, uninstaller). Installing runs the app's own setup with the arguments the business layer chose
+/// (<see cref="AppSetupCommand"/>: "--quiet" with the install options of SETUP-08, or <see cref="ThixApp.WindowsQuietInstallArguments"/>):
+/// without a window when it is quiet – a refusal (exit code 2) comes back with what the setup wrote on stderr –, otherwise
+/// the setup opens and the launcher waits for it. Removing
 /// runs the uninstaller of the entry, the quiet one when there is one.
 /// </summary>
 [SupportedOSPlatform("windows")]
@@ -21,6 +23,9 @@ internal sealed class WindowsAppSystem : IAppSystem
 
     /// <summary>A setup without a window that takes longer than this is stuck.</summary>
     private static readonly TimeSpan QuietTimeout = TimeSpan.FromMinutes(10);
+
+    /// <summary>A setup of the contract (SETUP-08) refuses its arguments with this exit code and says why on stderr.</summary>
+    private const int SetupRefusedExitCode = 2;
 
     public bool IsSupported => true;
 
@@ -57,32 +62,42 @@ internal sealed class WindowsAppSystem : IAppSystem
         return null;
     }
 
-    public async Task InstallAsync(ThixApp app, string packageFile, InstalledApp? installed, IProgress<string> progress, CancellationToken cancellationToken)
+    public async Task InstallAsync(ThixApp app, string packageFile, InstalledApp? installed, AppSetupCommand setup, IProgress<string> progress, CancellationToken cancellationToken)
     {
         if (!packageFile.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
         {
             throw new AppSystemException($"Das Paket von {app.Name} ist kein Windows-Setup.");
         }
 
-        var quiet = app.WindowsQuietInstallArguments;
+        var quiet = setup.WindowsQuiet;
         var startInfo = new ProcessStartInfo(packageFile)
         {
             UseShellExecute = false,
             WorkingDirectory = Path.GetDirectoryName(packageFile)!,
-            CreateNoWindow = quiet is not null,
+            CreateNoWindow = quiet,
+            // a quiet setup says on stderr why it refuses its arguments (exit code 2, SETUP-08)
+            RedirectStandardError = quiet,
         };
-        foreach (var argument in CommandLine.Arguments(quiet))
+        foreach (var argument in setup.WindowsArguments)
         {
             startInfo.ArgumentList.Add(argument);
         }
 
-        progress.Report(quiet is null
+        progress.Report(!quiet
             ? $"Das Setup von {app.Name} ist geöffnet – bitte dort abschließen"
             : installed is null ? $"{app.Name} wird installiert" : $"{app.Name} wird aktualisiert");
-        var exitCode = await RunAsync(startInfo, quiet is null ? null : QuietTimeout, app, cancellationToken);
+        Log.Info($"{Path.GetFileName(packageFile)} {string.Join(' ', setup.WindowsArguments)}");
+        var (exitCode, errors) = await RunAsync(startInfo, quiet ? QuietTimeout : null, app, cancellationToken);
+        if (exitCode == SetupRefusedExitCode && errors.Length > 0)
+        {
+            throw new AppSystemException($"Das Setup von {app.Name} lehnt die Optionen ab: {errors}");
+        }
+
         if (exitCode != 0)
         {
-            throw new AppSystemException($"Das Setup von {app.Name} endete mit dem Fehler {exitCode}.");
+            throw new AppSystemException(errors.Length > 0
+                ? $"Das Setup von {app.Name} endete mit dem Fehler {exitCode}: {errors}"
+                : $"Das Setup von {app.Name} endete mit dem Fehler {exitCode}.");
         }
     }
 
@@ -98,7 +113,7 @@ internal sealed class WindowsAppSystem : IAppSystem
         }
 
         progress.Report(isQuiet ? $"{app.Name} wird entfernt" : $"Die Deinstallation von {app.Name} ist geöffnet – bitte dort bestätigen");
-        var exitCode = await RunAsync(startInfo, isQuiet ? QuietTimeout : null, app, cancellationToken);
+        var (exitCode, _) = await RunAsync(startInfo, isQuiet ? QuietTimeout : null, app, cancellationToken);
         if (exitCode != 0)
         {
             throw new AppSystemException($"Die Deinstallation von {app.Name} endete mit dem Fehler {exitCode}.");
@@ -124,9 +139,10 @@ internal sealed class WindowsAppSystem : IAppSystem
 
     /// <summary>
     /// Starts the program off the calling thread (Windows checks a fresh download inside CreateProcess, which can take a
-    /// while) and waits for its end; null timeout = as long as the user needs.
+    /// while) and waits for its end; null timeout = as long as the user needs. Returns the exit code and – when stderr is
+    /// redirected – what the program wrote there.
     /// </summary>
-    private static async Task<int> RunAsync(ProcessStartInfo startInfo, TimeSpan? timeout, ThixApp app, CancellationToken cancellationToken)
+    private static async Task<(int ExitCode, string Errors)> RunAsync(ProcessStartInfo startInfo, TimeSpan? timeout, ThixApp app, CancellationToken cancellationToken)
     {
         Process process;
         try
@@ -141,6 +157,7 @@ internal sealed class WindowsAppSystem : IAppSystem
 
         using (process)
         {
+            var errors = startInfo.RedirectStandardError ? new ErrorText(process.StandardError) : null;
             using var limit = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             if (timeout is { } span)
             {
@@ -157,8 +174,68 @@ internal sealed class WindowsAppSystem : IAppSystem
                 throw new AppSystemException($"Das Programm von {app.Name} reagiert nicht mehr.");
             }
 
-            Log.Info($"{Path.GetFileName(startInfo.FileName)} of {app.Id} ended with {process.ExitCode}");
-            return process.ExitCode;
+            var text = errors is null ? "" : await errors.CollectAsync();
+            Log.Info($"{Path.GetFileName(startInfo.FileName)} of {app.Id} ended with {process.ExitCode}{(text.Length > 0 ? ": " + text : "")}");
+            return (process.ExitCode, text);
+        }
+    }
+
+    /// <summary>
+    /// Reads stderr while the program runs. A setup may start its app (--start), which can inherit the pipe and keep it open:
+    /// so after the end of the setup this waits only a moment for the rest and takes what came.
+    /// </summary>
+    internal sealed class ErrorText
+    {
+        private readonly MemoryStream _bytes = new();
+        private readonly Task _reading;
+
+        public ErrorText(StreamReader reader) => _reading = Task.Run(async () =>
+        {
+            var buffer = new byte[1024];
+            try
+            {
+                int read;
+                while ((read = await reader.BaseStream.ReadAsync(buffer)) > 0)
+                {
+                    lock (_bytes)
+                    {
+                        if (_bytes.Length < 8000)
+                        {
+                            _bytes.Write(buffer, 0, read);
+                        }
+                    }
+                }
+            }
+            catch (Exception exception) when (exception is IOException or ObjectDisposedException or InvalidOperationException)
+            {
+                // the process and its pipe are gone
+            }
+        });
+
+        public async Task<string> CollectAsync()
+        {
+            await Task.WhenAny(_reading, Task.Delay(TimeSpan.FromSeconds(1)));
+            lock (_bytes)
+            {
+                return Decode(_bytes.ToArray()).Trim();
+            }
+        }
+
+        /// <summary>
+        /// A Windows program without a console writes stderr in the ANSI code page ("ü" = 0xFC in 1252), one that sets it up in
+        /// UTF-8: UTF-8 when the bytes are valid UTF-8, the ANSI code page otherwise.
+        /// </summary>
+        internal static string Decode(byte[] bytes)
+        {
+            try
+            {
+                return new System.Text.UTF8Encoding(false, throwOnInvalidBytes: true).GetString(bytes);
+            }
+            catch (System.Text.DecoderFallbackException)
+            {
+                var ansi = System.Text.CodePagesEncodingProvider.Instance.GetEncoding(System.Globalization.CultureInfo.CurrentCulture.TextInfo.ANSICodePage);
+                return (ansi ?? System.Text.Encoding.Latin1).GetString(bytes);
+            }
         }
     }
 }

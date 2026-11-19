@@ -41,7 +41,7 @@ internal static class Snapshot
     private static readonly string[] ThemedPictures =
     [
         "setup-welcome", "setup-options", "setup-progress", "setup-finish", "setup-update", "setup-uninstall",
-        "main-apps", "main-installing", "main-detail", "main-settings", "main-settings-cloud-code", "main-settings-cloud", "main-about", "main-folded", "dialog-uninstall", "toast",
+        "main-apps", "main-installing", "main-detail", "main-settings", "main-settings-cloud-code", "main-settings-cloud", "main-about", "main-folded", "dialog-install-options", "dialog-uninstall", "toast",
     ];
 
     /// <summary>Every file a snapshot writes (the tray icons are the same in both themes).</summary>
@@ -200,6 +200,16 @@ internal static class Snapshot
         window.Apps.Select("thixclip");
         Settle(window, waitLonger: true);
         Save(window, folder, $"main-apps-{theme}.png", report);
+
+        // The install options of ThixNote (SETUP-08) before its first install; closed again without installing.
+        var asking = AppActions.RunAsync(AppAction.Install, AppService.Get("thixnote"), window);
+        Settle(window);
+        var options = window.OwnedWindows.OfType<Dialogs.InstallOptionsDialog>().Single();
+        Settle(options, waitLonger: true);
+        Save(options, folder, $"dialog-install-options-{theme}.png", report);
+        options.Close();
+        Wait(asking);
+        Settle(window);
 
         // ThixNote while it installs: the progress of the download in its row.
         system.Hold = new TaskCompletionSource();

@@ -1,6 +1,9 @@
 namespace ThixLauncher.Core.Models;
 
-/// <summary>The newest build of an app in a channel for this system, as its feed names it.</summary>
+/// <summary>
+/// The newest build of an app in a channel for this system, as its feed names it; <see cref="Installer"/> is what its setup offers
+/// (the block "installer" of its manifest, SETUP-08), null for a build without it and for single GitHub releases.
+/// </summary>
 public sealed record AppRelease(
     string AppId,
     AppVersion Version,
@@ -9,7 +12,8 @@ public sealed record AppRelease(
     string? Sha256,
     long? Size,
     DateTimeOffset? PublishedAt,
-    string ReleasePage);
+    string ReleasePage,
+    InstallerConfig? Installer = null);
 
 /// <summary>An installation the launcher found on this computer (installed by the launcher or by hand).</summary>
 public sealed record InstalledApp(

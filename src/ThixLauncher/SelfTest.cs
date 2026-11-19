@@ -71,6 +71,24 @@ internal static class SelfTest
             return "";
         });
 
+        await Check("install options (installer.json, arguments)", () =>
+        {
+            Ensure(InstallerOptions.Config is { Autostart: not null, DesktopShortcut: not null, AutomaticUpdates: not null }, "installer.json not read");
+            var request = InstallerOptions.Parse([InstallerOptions.QuietArgument, "--autostart=no", "--desktop-shortcut=yes"]);
+            Ensure(request is { Action: SetupAction.Install, Choices: { Autostart: false, DesktopShortcut: true } }, "arguments not read");
+            return Task.FromResult("");
+        });
+
+        await Check("install options of an app (manifest block, setup arguments)", async () =>
+        {
+            const string json = """{"version":"1.1.1-20261116","channel":"release","buildNumber":1,"setup":"ThixNoteSetup.exe","sha256":"AB","installer":{"autostart":{"default":false},"fileTypes":[{"extension":".md","name":"Markdown-Notiz","default":true}]}}""";
+            var manifest = await new StringContent(json, Encoding.UTF8, "application/json").ReadFromJsonAsync<UpdateManifest>();
+            Ensure(manifest?.Installer is { Autostart.Default: false, FileTypes: [{ Extension: ".md", Default: true }] }, "the block \"installer\" was not read");
+            var setup = AppInstallOptions.SetupFor(AppCatalog.Find("thixnote")!, manifest!.Installer, new InstallChoices(Autostart: true), isUpdate: false);
+            Ensure(setup.WindowsArguments.SequenceEqual(["--quiet", "--autostart=yes", "--file-types=.md", "--start"]), string.Join(' ', setup.WindowsArguments));
+            return "";
+        });
+
         await Check("versions", () =>
         {
             Ensure(AppVersion.Parse("0.1.12-20261115") is { Channel: "release", BuildNumber: 12 }, "release version");
@@ -93,6 +111,7 @@ internal static class SelfTest
         {
             await AppService.InstallAsync("thixnote");
             Ensure(AppService.Get("thixnote").Installed?.VersionText == "1.1.1-20261116", "not installed");
+            Ensure(system.Setups[^1].Setup.WindowsArguments is ["--quiet", ..], "the install options of the manifest were not passed");
             AppService.Launch("thixnote");
             Ensure(system.Launched.SequenceEqual(["thixnote"]), "not started");
             await AppService.UninstallAsync("thixnote");

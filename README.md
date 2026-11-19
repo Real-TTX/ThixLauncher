@@ -27,10 +27,22 @@ Läuft im Infobereich bzw. in der Menüleiste, ohne Administratorrechte.
 Fertige Builds gibt es unter [Releases](https://github.com/Real-TTX/ThixLauncher/releases):
 
 - **Windows:** `ThixLauncherSetup.exe` – das Programm ist sein eigenes Setup und installiert sich pro Benutzer nach
-  `%LocalAppData%\Programs\ThixLauncher` (ohne Administratorrechte). Ohne Fenster: `ThixLauncherSetup.exe --quiet`.
-  Entfernen über „Installierte Apps“ oder `ThixLauncher.exe --uninstall [--quiet]`.
+  `%LocalAppData%\Programs\ThixLauncher` (ohne Administratorrechte), mit Startmenü, „Installierte Apps“, optional Autostart,
+  Desktop-Verknüpfung und automatischen Updates. Entfernen über „Installierte Apps“ oder `ThixLauncher.exe --uninstall [--quiet]`.
 - **macOS:** `ThixLauncher-macOS-arm64.dmg` (Apple Silicon) bzw. `-x64.dmg` (Intel) öffnen und ThixLauncher in
   „Programme“ ziehen.
+
+**Ohne Fenster** (ThixInstall, Administratoren) – die Optionen des Setups als Argumente (MatDesign SETUP-05/08; was angeboten
+wird, steht in `src/ThixLauncher.Core/installer.json` und im Update-Manifest unter `installer`):
+
+```
+ThixLauncherSetup.exe --quiet --desktop-shortcut=yes --autostart=no --automatic-updates=yes [--start]
+ThixLauncher --configure --autostart=yes        # nur anwenden (auch macOS)
+ThixLauncher.exe --uninstall --quiet
+```
+
+Nicht angegebene Optionen: bei der Erstinstallation der Standard, bei einem Update bleibt es, wie es ist. Ein falscher Wert
+bricht mit Exit-Code 2 ab (Grund auf stderr und im Protokoll), ohne etwas zu installieren. Dateitypen verknüpft ThixLauncher keine.
 
 Nightlies aus dem Branch `dev` stehen im Pre-Release `nightly-channel`.
 
@@ -50,6 +62,15 @@ Nightlies aus dem Branch `dev` stehen im Pre-Release `nightly-channel`.
 - **Installieren / Aktualisieren:** unter Windows läuft das Setup der App selbst, ohne Rückfrage
   (`--update`). Ein Setup, das nachfragt, öffnet sich, und ThixLauncher wartet, bis es geschlossen ist. Unter macOS
   ersetzt ThixLauncher das App-Bundle in `/Applications` (bzw. `~/Applications`) und beendet eine laufende App vorher.
+- **Installationsoptionen (SETUP-08):** Hat das Manifest einer App den Block `installer` (was ihr Setup anbietet), fragt
+  ThixLauncher vor der **ersten** Installation dasselbe wie ihr Setup-Assistent – Desktop-Verknüpfung, Beim Anmelden starten,
+  Updates automatisch installieren und je Dateityp „.md-Dateien mit … öffnen“, vorbelegt mit den Standards der App – und gibt die
+  Antworten weiter: Windows `<App>Setup.exe --quiet --desktop-shortcut=… --autostart=… --automatic-updates=… --file-types=…|none`
+  (dazu `--start`, wenn sie beim Anmelden startet), macOS nach dem Kopieren `<App>.app/Contents/MacOS/<App> --configure …`.
+  Lehnt das Setup die Optionen ab (Exit-Code 2), zeigt ThixLauncher seinen Grund. Updates und Apps ohne den Block (ältere Builds)
+  laufen wie bisher (`--update`); eine installierte App behält ihre Einstellungen.
+
+  ![Installationsoptionen](docs/images/dialog-install-options-light.png)
 - **Entfernen:** mit dem Deinstallationsprogramm der App (das stille, wenn es eines gibt). Die Daten der App bleiben.
 - **Starten:** aus der Liste, über die Symbole oben in der Titelleiste oder aus dem Menü des Tray-Symbols.
 - **Updates von ThixLauncher selbst (OTA):** aus dem eigenen Kanal (`thixlauncher-update.json`), optional als

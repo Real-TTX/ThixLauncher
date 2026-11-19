@@ -15,8 +15,11 @@ internal interface IAppSystem
     /// <summary>The installation of <paramref name="app"/>, or null when it is not installed.</summary>
     InstalledApp? Detect(ThixApp app);
 
-    /// <summary>Installs or updates <paramref name="app"/> from the downloaded (and checked) package.</summary>
-    Task InstallAsync(ThixApp app, string packageFile, InstalledApp? installed, IProgress<string> progress, CancellationToken cancellationToken);
+    /// <summary>
+    /// Installs or updates <paramref name="app"/> from the downloaded (and checked) package, run as <paramref name="setup"/> says
+    /// (the business layer builds it: the arguments of the setup on Windows, the call of --configure on macOS).
+    /// </summary>
+    Task InstallAsync(ThixApp app, string packageFile, InstalledApp? installed, AppSetupCommand setup, IProgress<string> progress, CancellationToken cancellationToken);
 
     /// <summary>Removes <paramref name="app"/>; its user data stays.</summary>
     Task UninstallAsync(ThixApp app, InstalledApp installed, IProgress<string> progress, CancellationToken cancellationToken);
@@ -47,7 +50,7 @@ internal static class AppSystem
 
         public InstalledApp? Detect(ThixApp app) => null;
 
-        public Task InstallAsync(ThixApp app, string packageFile, InstalledApp? installed, IProgress<string> progress, CancellationToken cancellationToken) =>
+        public Task InstallAsync(ThixApp app, string packageFile, InstalledApp? installed, AppSetupCommand setup, IProgress<string> progress, CancellationToken cancellationToken) =>
             throw new PlatformNotSupportedException();
 
         public Task UninstallAsync(ThixApp app, InstalledApp installed, IProgress<string> progress, CancellationToken cancellationToken) =>

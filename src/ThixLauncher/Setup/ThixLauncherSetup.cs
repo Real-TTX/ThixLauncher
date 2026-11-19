@@ -5,6 +5,7 @@ using MatDesktop;
 using ThixLauncher.Controls;
 using ThixLauncher.Core.Business;
 using ThixLauncher.Core.Infrastructure;
+using ThixLauncher.Core.Models;
 
 namespace ThixLauncher.Setup;
 
@@ -38,10 +39,8 @@ internal static class ThixLauncherSetup
                 }
                 else
                 {
-                    var options = isUpdate
-                        ? null
-                        : new InstallOptions(run.Options.GetValueOrDefault("autostart"), run.Options.GetValueOrDefault("shortcut"), run.Options.GetValueOrDefault("updates"));
-                    await Task.Run(() => InstallService.Install(source, options, Report));
+                    var choices = isUpdate ? null : Choices(run.Options);
+                    await Task.Run(() => InstallService.Install(source, choices, Report));
                 }
             }
             catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException
@@ -89,10 +88,7 @@ internal static class ThixLauncherSetup
                 MatSetupStep.Welcome(
                     "ThixLauncher installiert die Thix-Apps mit einem Klick, hält sie aktuell und startet sie. Er läuft im Infobereich der Taskleiste.",
                     Note($"Wird für dein Benutzerkonto installiert – ohne Administratorrechte – nach\n{programFolder}")),
-                MatSetupStep.WithOptions(null,
-                    MatSetupOption.Autostart("Im Infobereich, ohne Fenster – hält die Apps aktuell"),
-                    MatSetupOption.DesktopShortcut("Ein Startmenü-Eintrag wird immer angelegt"),
-                    MatSetupOption.AutomaticUpdates("Neue Versionen von ThixLauncher ohne Rückfrage, er startet danach neu")),
+                MatSetupStep.WithOptions(null, [.. Options()]),
             ],
         };
 
@@ -110,6 +106,35 @@ internal static class ThixLauncherSetup
             DeleteDataDescription = "Einstellungen und Protokolle von ThixLauncher auf diesem Computer. Die Apps und ihre Daten bleiben in jedem Fall.",
         });
     }
+
+    /// <summary>
+    /// The switches of the Options step from the install options (installer.json, SETUP-08), each on as its default: the same
+    /// questions a quiet install takes on its command line.
+    /// </summary>
+    internal static IEnumerable<MatSetupOption> Options()
+    {
+        var config = InstallerOptions.Config;
+        if (config.Autostart is { } autostart)
+        {
+            yield return MatSetupOption.Autostart("Im Infobereich, ohne Fenster – hält die Apps aktuell") with { IsOn = autostart.Default };
+        }
+
+        if (config.DesktopShortcut is { } shortcut)
+        {
+            yield return MatSetupOption.DesktopShortcut("Ein Startmenü-Eintrag wird immer angelegt") with { IsOn = shortcut.Default };
+        }
+
+        if (config.AutomaticUpdates is { } updates)
+        {
+            yield return MatSetupOption.AutomaticUpdates("Neue Versionen von ThixLauncher ohne Rückfrage, er startet danach neu") with { IsOn = updates.Default };
+        }
+    }
+
+    /// <summary>The answers of the Options step as install choices (a switch that was not shown: null, the default).</summary>
+    internal static InstallChoices Choices(IReadOnlyDictionary<string, bool> options) => new(
+        options.TryGetValue("shortcut", out var shortcut) ? shortcut : null,
+        options.TryGetValue("autostart", out var autostart) ? autostart : null,
+        options.TryGetValue("updates", out var updates) ? updates : null);
 
     /// <summary>The word mark of the title bar ("Thix" and "Launcher" in the accent text) for the header of the setup.</summary>
     private static TextBlock WordMark()

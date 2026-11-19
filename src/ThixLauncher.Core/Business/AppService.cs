@@ -100,12 +100,27 @@ public static class AppService
     }
 
     /// <summary>
+    /// What to ask before <see cref="InstallAsync"/> (SETUP-08): the install options of the newest build – the block
+    /// "installer" of its manifest – that apply on this system, with their defaults. Null when there is nothing to ask: the app
+    /// is installed (an update keeps its choices), its build has no such block (older builds, single GitHub releases), or
+    /// nothing it offers applies here.
+    /// </summary>
+    public static InstallerConfig? InstallOptionsOf(string appId)
+    {
+        var status = Get(appId);
+        return status is { IsInstalled: false, Latest.Installer: { } installer } ? AppInstallOptions.ForThisSystem(installer) : null;
+    }
+
+    /// <summary>
     /// Installs the newest build of the channel, or updates to it. Downloads the package, checks its SHA-256 and runs it.
     /// Apps whose setup asks open it, and this waits until the user closed it. A fresh install of an app that knows MatCloud takes the sign-in of
     /// the launcher along (<see cref="CloudService.HandOffAsync"/>; never in the way: without the cloud the app signs in by itself). Returns the
     /// account of MatCloud the app signs in with at its first start, or null.
+    /// <paramref name="choices"/> are the answers to the install options of the app (<see cref="InstallOptionsOf"/>, SETUP-08): a
+    /// first install passes them to the setup of the app, what is left open takes the default of the app; an update ignores
+    /// them (the app keeps what it has), and so does an app without install options.
     /// </summary>
-    public static async Task<string?> InstallAsync(string appId, CancellationToken cancellationToken = default)
+    public static async Task<string?> InstallAsync(string appId, InstallChoices? choices = null, CancellationToken cancellationToken = default)
     {
         var app = AppCatalog.Find(appId) ?? throw new BusinessException("Diese App gibt es nicht.");
         AccessPolicy.EnsureAppChangesAllowed();
@@ -125,6 +140,7 @@ public static class AppService
         }
 
         var isUpdate = installed is not null;
+        var setup = AppInstallOptions.SetupFor(app, latest.Installer, choices, isUpdate);
         Begin(app, isUpdate ? AppState.Updating : AppState.Installing, new AppProgress("Herunterladen", 0));
         var folder = Path.Combine(AppPaths.DownloadDirectory, app.Id);
         string? cloudAccount = null;
@@ -141,7 +157,7 @@ public static class AppService
                 cloudAccount = await CloudService.HandOffAsync(app, latest.Version.Text, cancellationToken);
             }
 
-            await AppSystem.Current.InstallAsync(app, packageFile, installed, new Reporter<string>(step => Report(app, new AppProgress(step))), cancellationToken);
+            await AppSystem.Current.InstallAsync(app, packageFile, installed, setup, new Reporter<string>(step => Report(app, new AppProgress(step))), cancellationToken);
 
             var now = Detect(app);
             lock (Gate)
@@ -152,7 +168,7 @@ public static class AppService
             if (now is null)
             {
                 CloudService.ForgetHandoff(app);
-                throw new BusinessException(app.InstallsQuietly
+                throw new BusinessException(!OperatingSystem.IsWindows() || setup.WindowsQuiet
                     ? $"{app.Name} wurde nicht installiert. Details stehen im Protokoll."
                     : $"{app.Name} wurde nicht installiert – das Setup wurde abgebrochen.");
             }
@@ -163,7 +179,14 @@ public static class AppService
         catch (Exception exception) when (exception is FeedException or AppSystemException or IOException or UnauthorizedAccessException)
         {
             Log.Error($"{(isUpdate ? "Update" : "Installation")} of {app.Id} failed", exception);
-            if (!isUpdate)
+            // the app may be there all the same (macOS: copied, but its options refused): then it keeps the sign-in
+            var now = Detect(app);
+            lock (Gate)
+            {
+                EntryOf(app).Installed = now;
+            }
+
+            if (!isUpdate && now is null)
             {
                 CloudService.ForgetHandoff(app);
             }
@@ -259,7 +282,7 @@ public static class AppService
         {
             try
             {
-                await InstallAsync(status.App.Id, cancellationToken);
+                await InstallAsync(status.App.Id, cancellationToken: cancellationToken);
                 report.Updated.Add(status.App.Name);
             }
             catch (BusinessException exception)

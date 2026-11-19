@@ -69,14 +69,50 @@ public sealed class UiTests
         var window = Open();
         var note = window.Apps.Rows.Single(row => row.App.Id == "thixnote");
 
+        // ThixNote offers install options (SETUP-08): they are asked first, set to its defaults
         var install = AppActions.RunAsync(AppAction.Install, note.Status!, window);
+        Settle(window);
+        var options = window.OwnedWindows.OfType<Dialogs.InstallOptionsDialog>().Single();
+        Assert.True(options.Switches["type:.md"].IsChecked);
+        Assert.False(options.Switches["type:.txt"].IsChecked);
+        Assert.False(options.Switches["autostart"].IsChecked);
+        options.Switches["autostart"].IsChecked = true;
+        options.Switches["type:.txt"].IsChecked = true;
+        options.InstallButton.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+
         await WaitUntil(window, () => install.IsCompleted);
         Assert.Equal("ThixNote 1.1.1-20261116 ist installiert.", await install);
         Settle(window);
+        Assert.Contains("--autostart=yes", data.System.Setups.Single().Setup.WindowsArguments);
+        Assert.Contains("--file-types=.md,.txt", data.System.Setups.Single().Setup.WindowsArguments);
 
         Assert.Equal("Öffnen", note.ActionText);
         Assert.Equal("Installiert", note.Badge.Text);
         Assert.Single(window.QuickLaunchButtons);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task Cancelling_the_install_options_installs_nothing_and_an_app_without_them_asks_nothing()
+    {
+        using var data = new TestData();
+        await AppService.RefreshAsync();
+        var window = Open();
+
+        var cancelled = AppActions.RunAsync(AppAction.Install, AppService.Get("thixnote"), window);
+        Settle(window);
+        var options = window.OwnedWindows.OfType<Dialogs.InstallOptionsDialog>().Single();
+        Assert.Equal(OperatingSystem.IsWindows(), options.Switches.ContainsKey("shortcut"));
+        options.Close();
+        Assert.Null(await cancelled);
+        Assert.False(AppService.Get("thixnote").IsInstalled);
+        Assert.Empty(data.System.Setups);
+
+        // ThixClip's build has no install options: it installs straight away, the old way
+        var install = AppActions.RunAsync(AppAction.Install, AppService.Get("thixclip"), window);
+        await WaitUntil(window, () => install.IsCompleted);
+        Assert.Empty(window.OwnedWindows.OfType<Dialogs.InstallOptionsDialog>());
+        Assert.True(AppService.Get("thixclip").IsInstalled);
         window.Close();
     }
 
