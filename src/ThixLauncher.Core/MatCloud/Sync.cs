@@ -1,4 +1,4 @@
-// MatCloud.Contract 1.2.0 – a copy from MatCloud, do not edit here
+// MatCloud.Contract 1.4.0 – a copy from MatCloud, do not edit here
 using System.Text.RegularExpressions;
 
 namespace MatCloud.Contract;
@@ -18,6 +18,8 @@ namespace MatCloud.Contract;
 ///
 /// Rules: the last writer wins by <see cref="SyncItemDto.UpdatedAt"/> (a delete too, and a later write brings a deleted item back); a push that
 /// loses gets the item that won in <see cref="SyncPushResult.Current"/>. Every change takes the next number of one sequence, so nothing is missed.
+/// The collections that begin with <see cref="ServerCollectionPrefix"/> are written by MatCloud only (a module that syncs on the server, e.g.
+/// ThixCalendar's accounts MatCloud keeps in step): a device reads them, its pushes into them are not applied (they answer the item as it is).
 /// </summary>
 public static partial class SyncContract
 {
@@ -36,6 +38,12 @@ public static partial class SyncContract
 
     /// <summary>The longest key of an item.</summary>
     public const int MaxKeyLength = 200;
+
+    /// <summary>The beginning of the collections only MatCloud writes ("cloud-events").</summary>
+    public const string ServerCollectionPrefix = "cloud-";
+
+    /// <summary>A collection only MatCloud writes.</summary>
+    public static bool IsServerCollection(string? collection) => collection?.StartsWith(ServerCollectionPrefix, StringComparison.Ordinal) == true;
 
     /// <summary>A collection: small letters, digits, '.', '_' and '-', 1 to 64 characters, starting with a letter or a digit.</summary>
     public static bool IsValidCollection(string? collection) => collection is not null && CollectionRegex().IsMatch(collection);

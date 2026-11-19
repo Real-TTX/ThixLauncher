@@ -1,4 +1,4 @@
-// MatCloud.Contract 1.2.0 – a copy from MatCloud, do not edit here
+// MatCloud.Contract 1.4.0 – a copy from MatCloud, do not edit here
 using System.Globalization;
 using System.Net;
 using System.Net.Http.Headers;
@@ -22,9 +22,10 @@ public sealed class CloudException(HttpStatusCode statusCode, string message, st
 /// <summary>
 /// The HTTP calls of the protocol (<see cref="CloudContract"/>, <see cref="SyncContract"/>): the sign-in (password or browser), the account and
 /// the general sync. One instance per server and token. An app with a module of its own (ThixClip) sends its own routes through
-/// <see cref="SendAsync{T}"/>, <see cref="PutBytesAsync"/> and <see cref="GetBytesAsync"/>.
+/// <see cref="SendAsync{T}"/>, <see cref="PutBytesAsync"/> and <see cref="GetBytesAsync"/>. The calls of the Drive (also for ThixWrite, ThixCalc and
+/// ThixShow) are in Drive/MatCloudClient.Drive.cs.
 /// </summary>
-public sealed class MatCloudClient : IDisposable
+public sealed partial class MatCloudClient : IDisposable
 {
     public static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(30);
     public static readonly TimeSpan TransferTimeout = TimeSpan.FromMinutes(5);
@@ -142,6 +143,21 @@ public sealed class MatCloudClient : IDisposable
 
     public Task<SyncPushResponse> PushAsync(SyncPushRequest request, CancellationToken ct) =>
         SendAsync<SyncPushResponse>(HttpMethod.Post, SyncContract.Push, JsonContent.Create(request, options: CloudContract.Json), TransferTimeout, ct);
+
+    // ---- ThixCalendar: the accounts MatCloud keeps in step ----
+
+    public Task<Calendar.CalendarCloudAccount> HandOverCalendarAsync(Calendar.CalendarHandover handover, CancellationToken ct) =>
+        SendAsync<Calendar.CalendarCloudAccount>(HttpMethod.Put, Calendar.CalendarContract.Connections, JsonContent.Create(handover, options: CloudContract.Json), RequestTimeout, ct);
+
+    public Task DisconnectCalendarAsync(string account, CancellationToken ct) =>
+        SendAsync<object>(HttpMethod.Post, Calendar.CalendarContract.Disconnect, JsonContent.Create(new Calendar.CalendarAccountRequest(account), options: CloudContract.Json), RequestTimeout, ct, expectBody: false);
+
+    public Task SyncCalendarNowAsync(string account, CancellationToken ct) =>
+        SendAsync<object>(HttpMethod.Post, Calendar.CalendarContract.SyncNow, JsonContent.Create(new Calendar.CalendarAccountRequest(account), options: CloudContract.Json), RequestTimeout, ct, expectBody: false);
+
+    /// <summary>Changes an event at the provider through MatCloud (it may take a while: the provider is asked first).</summary>
+    public Task<Calendar.CalendarEventChangeResult> ChangeCalendarEventAsync(Calendar.CalendarEventChange change, CancellationToken ct) =>
+        SendAsync<Calendar.CalendarEventChangeResult>(HttpMethod.Post, Calendar.CalendarContract.EventChange, JsonContent.Create(change, options: CloudContract.Json), TransferTimeout, ct);
 
     // ---- the building blocks (also for the routes of a module) ----
 
