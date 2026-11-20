@@ -303,6 +303,8 @@ public static class AppService
             _refresh = null;
             LastRefresh = null;
         }
+
+        StoreService.ResetForTests();
     }
 
     private static async Task RefreshAllAsync(CancellationToken cancellationToken)

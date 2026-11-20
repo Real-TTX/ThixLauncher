@@ -37,7 +37,8 @@ internal static class ReleaseFeed
         }
     }
 
-    private static HttpClient Http => _testClient ?? SharedClient.Value;
+    /// <summary>The one client of every request to GitHub (feeds, packages, the store's pictures and changes).</summary>
+    internal static HttpClient Http => _testClient ?? SharedClient.Value;
 
     /// <summary>The newest build of <paramref name="app"/> in <paramref name="channel"/> for <paramref name="platformKey"/>; null when the channel has none for it.</summary>
     public static async Task<AppRelease?> LatestAsync(ThixApp app, string channel, string platformKey, CancellationToken cancellationToken)

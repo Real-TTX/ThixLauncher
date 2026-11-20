@@ -7,7 +7,7 @@
   <!--
     The one window of ThixLauncher, in MatDesktop's chrome: the title bar (DESK-03: logo and word mark, the installed apps to
     start with one click in the middle, the caption buttons on Windows, the traffic lights on macOS), the menu (DESK-04:
-    Apps, Installiert, Updates, Settings below a line, the version = About and the fold to a rail at its foot) and the page.
+    Bibliothek, Store, Updates, Settings below a line, the version = About and the fold to a rail at its foot) and the page.
   -->
   <Grid RowDefinitions="Auto,*">
     <mat:MatTitleBar x:Name="TitleBar" AppName="ThixLauncher" CloseKey="Esc">

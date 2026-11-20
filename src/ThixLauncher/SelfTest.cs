@@ -146,6 +146,15 @@ internal static class SelfTest
             });
         }
 
+        await Check("store (pictures and changes from GitHub, PNG decoding)", async () =>
+        {
+            var clip = AppCatalog.Find("thixclip")!;
+            var path = await StoreService.PictureAsync(clip, clip.Screenshots[0], dark: false) ?? throw new InvalidOperationException("no picture");
+            Ensure(await Ui.PictureAsync(path, 320) is { PixelSize.Width: 320 }, "the picture was not decoded");
+            Ensure((await StoreService.ChangesAsync(clip)).Count == github.Commits.Count, "the commit feed was not read");
+            return "";
+        });
+
         await Check("windows and bindings", async () =>
         {
             system.Add(AppCatalog.Find("thixclip")!, "0.1.9-20261110");
@@ -153,11 +162,16 @@ internal static class SelfTest
             var window = new MainWindow();
             window.ShowWindow();
             await Settle();
-            Ensure(window.Apps.Rows.Count == AppCatalog.Apps.Count, "the list does not show every app of the catalog");
-            Ensure(window.Apps.Rows.Single(row => row.App.Id == "thixclip").ActionText == "Aktualisieren", "the update is not offered");
+            Ensure(window.Apps.Cards.Count == 1 && window.Apps.ShowsAddCard, "the library does not show the installed app and the add tile");
+            Ensure(window.Apps.Cards.Single(row => row.App.Id == "thixclip").ActionText == "Aktualisieren", "the update is not offered");
             Ensure(window.QuickLaunchButtons.Count == 1, "the installed app is not in the title bar");
+            window.ShowStore();
+            await Settle();
+            Ensure(window.Store.Cards.Count == AppCatalog.Apps.Count, "the store does not show every app of the catalog");
+            Ensure(window.Store.HeroAppId is not null, "the store shows no app big");
             window.ShowDetails("thixclip");
             await Settle();
+            Ensure(window.Detail.ThumbnailButtons.Count == AppCatalog.Find("thixclip")!.Screenshots.Count, "the gallery has not every picture");
             window.ShowSettings();
             await Settle();
             window.ShowAbout();

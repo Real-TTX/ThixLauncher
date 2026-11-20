@@ -4,15 +4,24 @@
 
 Der Launcher für die Thix-Apps unter **Windows und macOS**: installieren mit einem Klick, aktuell halten, starten – und
 wieder entfernen. Dabei sind **ThixCalc** (Tabellenkalkulation für Zahlen, Listen und Auswertungen), **ThixCalendar** (alle Kalender, keine verpasste Erinnerung), **ThixClip** (Zwischenablage-Verlauf), **ThixFred** (Launcher für Programme und Befehle), **ThixNote** (Notizen als Dateien), **ThixShow** (Präsentationen mit Folien, Designs und Bildschirmpräsentation), **ThixTunnel** (SSH-Tunnel) und **ThixWrite** (Textverarbeitung für Dokumente, Briefe und Berichte).
-Läuft im Infobereich bzw. in der Menüleiste, ohne Administratorrechte.
+Läuft im Infobereich bzw. in der Menüleiste, ohne Administratorrechte. Aufgebaut wie ein Store: die **Bibliothek** mit den
+installierten Apps, der **Store** mit allen Apps – mit ihren Screenshots und Änderungen direkt aus ihren GitHub-Repositorys.
 
-![ThixLauncher mit ThixClip (Update verfügbar) und ThixNote](docs/images/main-apps-light.png)
+![Der Store: eine App groß, darunter alle Apps](docs/images/main-store-light.png)
 
 ## Screenshots
 
-| Eine App installiert sich | Seite einer App |
+| Bibliothek (Startseite) | Seite einer App: Bilder von GitHub |
 |---|---|
-| ![ThixNote wird installiert](docs/images/main-installing-light.png) | ![ThixClip mit Update](docs/images/main-detail-dark.png) |
+| ![Die installierten Apps als Kacheln, zuletzt „Apps hinzufügen“](docs/images/main-apps-light.png) | ![ThixClip mit Galerie](docs/images/main-detail-dark.png) |
+
+| Änderungen auf GitHub | Eine App installiert sich |
+|---|---|
+| ![Die neuesten Commits von ThixClip](docs/images/main-detail-changes-dark.png) | ![ThixNote wird installiert](docs/images/main-installing-light.png) |
+
+| Bibliothek als Liste (umschaltbar oben rechts) | Store im Dunkeln |
+|---|---|
+| ![Die installierten Apps als Liste](docs/images/main-list-dark.png) | ![Der Store dunkel](docs/images/main-store-dark.png) |
 
 | Einstellungen › Apps | Setup (Windows) |
 |---|---|
@@ -72,7 +81,19 @@ Nightlies aus dem Branch `dev` stehen im Pre-Release `nightly-channel`.
 
   ![Installationsoptionen](docs/images/dialog-install-options-light.png)
 - **Entfernen:** mit dem Deinstallationsprogramm der App (das stille, wenn es eines gibt). Die Daten der App bleiben.
-- **Starten:** aus der Liste, über die Symbole oben in der Titelleiste oder aus dem Menü des Tray-Symbols.
+- **Bibliothek** (Startseite): die installierten Apps als große Kacheln mit ihrem Screenshot als Cover (oder als Liste – der
+  Schalter neben der Suche, die Wahl bleibt), die letzte Kachel **„Apps hinzufügen“** öffnet den Store. „Updates“ im Menü ist die
+  Bibliothek mit den Apps, für die es ein Update gibt.
+- **Store:** eine App groß (zuerst die erste, die noch nicht installiert ist; ‹ › blättert durch alle) und darunter alle Apps als
+  Kacheln. Ein Klick öffnet die **Seite der App**: ihre Screenshots (eins groß, die anderen zum Anklicken), Übersicht,
+  **Änderungen** und Details, mit Installieren / Aktualisieren / Öffnen / Deinstallieren.
+- **GitHub, ohne Limit:** Die Screenshots kommen aus `docs/images` des Repositorys der App
+  (`raw.githubusercontent.com/<repo>/main/docs/images/…`, im dunklen Design die `-dark`-Variante, sonst die helle), die
+  Änderungen aus dem Commit-Feed des Branches des Kanals (`github.com/<repo>/commits/main.atom` bzw. `dev.atom`). Beides ist
+  nicht die GitHub-API – deren 60 Anfragen pro Stunde bleiben den Releases. Bilder bleiben im Datenordner (`store/`) und werden
+  höchstens einmal am Tag neu gefragt (mit ETag: unverändert = nichts geladen); ohne Verbindung zeigt der Store die gespeicherten.
+  Welche Bilder eine App zeigt, steht im Katalog (`ThixApp.Screenshots`).
+- **Starten:** aus der Bibliothek, über die Symbole oben in der Titelleiste oder aus dem Menü des Tray-Symbols.
 - **Updates von ThixLauncher selbst (OTA):** aus dem eigenen Kanal (`thixlauncher-update.json`), optional als
   **Full-Auto-Update** ohne Rückfrage. Lokale Builds aktualisieren sich nicht.
 - **MatCloud:** Unter Einstellungen › Cloud meldet sich ThixLauncher einmal bei der MatCloud an (im Browser mit Code oder mit
@@ -86,11 +107,11 @@ Nightlies aus dem Branch `dev` stehen im Pre-Release `nightly-channel`.
 
 | Kürzel | Aktion |
 |---|---|
-| Strg+1 / 2 / 3 | Alle Apps / Installiert / Updates |
-| Strg+F | Apps durchsuchen |
+| Strg+1 / 2 / 3 | Bibliothek / Store / Updates |
+| Strg+F | Suchen (im Store alle Apps, in der Bibliothek die installierten) |
 | Strg+R oder F5 | Nach Updates suchen |
-| Enter | Details der gewählten App |
-| Esc | Zurück zur Liste / Fenster ausblenden |
+| Enter | Seite der gewählten App (auf „Apps hinzufügen“: der Store) |
+| Esc | Zurück (von der Seite einer App dorthin, wo sie geöffnet wurde) / Fenster ausblenden |
 | Strg+, | Einstellungen |
 | Strg+B | Menü ein- und ausklappen |
 

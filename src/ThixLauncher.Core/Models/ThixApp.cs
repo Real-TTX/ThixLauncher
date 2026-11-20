@@ -74,6 +74,12 @@ public sealed record ThixApp
     /// </summary>
     public string? CloudApp { get; init; }
 
+    /// <summary>
+    /// The pictures of the app for the store, files in <c>docs/images</c> of its repository (the light ones, "…-light.png"; in the
+    /// dark theme the store asks for "…-dark.png" first). The first is the cover of its tile. Read by <see cref="Business.StoreService"/>.
+    /// </summary>
+    public IReadOnlyList<AppScreenshot> Screenshots { get; init; } = [];
+
     /// <summary>The page of the project.</summary>
     public string ProjectUrl => $"https://github.com/{Repository}";
 

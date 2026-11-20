@@ -25,13 +25,16 @@ apps is read from the system and GitHub; settings are `settings.json`.
   the self update, and the **UI rendered headless** (`UiTests`; `THIXLAUNCHER_SCREENSHOTS=<folder>` keeps the pictures).
   Tests never touch the network, the real apps, registry values, the Keychain, the real hand-over folder, a browser or LaunchAgents (`TestData`,
   `Ui.OpenExternalForTests`).
-  `THIXLAUNCHER_LIVE_FEEDS=1` enables `LiveFeedTests` (reads the real feeds of every app, downloads nothing).
+  `THIXLAUNCHER_LIVE_FEEDS=1` enables `LiveFeedTests` (reads the real feeds of every app, downloads no package; every picture of
+  the catalog must be in its repository, every commit feed readable).
 - Run: `dotnet run --project src/ThixLauncher` (with `THIXLAUNCHER_DATA_DIR=<folder>` an instance of its own). A development
   run works on the real computer: Installieren really installs the app.
 - **Snapshots:** `dotnet run --project src/ThixLauncher -- --snapshot docs/images` draws every window headless from sample
-  data (ThixClip 0.1.9 installed with 0.1.12 waiting, ThixNote 1.1.1 offered, pinned clock 16.11.2026 14:32, version 1.0.0,
-  ANNA-PC) in light and dark: `setup-*`, `main-{apps,installing,detail,settings,settings-cloud-code,settings-cloud,about,folded}` (the cloud tab against `SampleCloud`), `dialog-install-options` (ThixNote's), `dialog-uninstall`, `toast`,
-  `tray-icon-{windows,macos}[-updates]`. A new window or page: add it to `Snapshot.cs` and look at the pictures.
+  data (ThixClip 0.1.9 installed with 0.1.12 waiting, ThixFred 0.1.1 installed, ThixNote 1.1.1 offered, pinned clock 16.11.2026 14:32, version 1.0.0,
+  ANNA-PC) in light and dark: `setup-*`, `main-{apps,list,store,installing,detail,detail-changes,settings,settings-cloud-code,settings-cloud,about,folded}` (the cloud tab against `SampleCloud`), `dialog-install-options` (ThixNote's), `dialog-uninstall`, `toast`,
+  `tray-icon-{windows,macos}[-updates]`. The pictures of the store are the real screenshots of the apps when their
+  repositories lie next to this one (`../ThixClip/docs/images` …), else plain sample pictures. A new window or page: add it to
+  `Snapshot.cs` and look at the pictures.
 - The Windows publish (win-x64) is a **trimmed** single file (`TrimMode=partial`, about 33 MB). No `dynamic`, no built-in
   COM (`Platform/Windows/ShellLink` uses `[GeneratedComInterface]`). `ThixLauncher.exe --self-test <report>` checks the
   published program (JSON, installer.json and the install options, feeds, download + SHA-256, install/start/remove in memory, the sign-in at MatCloud and the hand-over with the
@@ -53,13 +56,17 @@ apps is read from the system and GitHub; settings are `settings.json`.
 src/ThixLauncher.Core   (no UI) models, business layer (static classes), infrastructure, platforms
   MatCloud/             COPY of MatCloud's contract (never edited here): CloudContract, CloudApps, the sign-in DTOs, DeviceHandoff*, MatCloudClient,
                         CloudHandoff (the hand-over file per app in %LOCALAPPDATA%ThixMatCloudhandoff)
-  Models/               ThixApp (catalog entry: feed kind, package patterns, Windows uninstall key + quiet arguments, mac bundle),
+  Models/               ThixApp (catalog entry: feed kind, package patterns, Windows uninstall key + quiet arguments, mac bundle,
+                        Screenshots = AppScreenshot(file in docs/images of its repository, caption)), AppChange (a commit),
                         AppVersion (release / nightly / local, build number compare), AppRelease, InstalledApp, AppStatus + AppState,
-                        AppQuery (search, AppFilter, AppSort), AppSettings (theme, AppChannel, updates, Cloud = CloudSettings – only CloudService
+                        AppQuery (search, AppFilter, AppSort), AppSettings (theme, AppChannel, updates, AppsView tiles / list, Cloud = CloudSettings – only CloudService
                         writes it –, ConnectInstalledApps), UpdateManifest (+ "installer"), BusinessException; ThixApp.CloudApp = its id at MatCloud;
                         InstallerConfig (SETUP-08: InstallerSwitch, InstallerFileType, InstallChoices, SetupAction, SetupRequest,
                         AppSetupCommand = how a platform runs an app's package)
-  Business/             AppCatalog (the apps), AppService (state per app in memory, Query/Count, RefreshAsync, InstallAsync = install or
+  Business/             AppCatalog (the apps), StoreService (the store's talk with GitHub WITHOUT the API: PictureAsync – raw.githubusercontent.com
+                        /<repo>/main/docs/images/<file>, kept in <data>/store/<app>/, asked again once a day with the ETag, "-dark" first in
+                        the dark theme, only PNG, safe names –, ChangesAsync – github.com/<repo>/commits/<main|dev>.atom, first line of the
+                        whole message, 6 h in memory –, Featured = the first app not installed), AppService (state per app in memory, Query/Count, RefreshAsync, InstallAsync = install or
                         update with download + SHA-256, UninstallAsync, Launch, UpdateAllAsync; one action per app; all checks),
                         CloudService (sign-in in the browser / with a password, CheckAsync in the background, HandOffAsync before the setup of a fresh
                         install: at most 8 s, never throws; ForgetHandoff after removing), SettingsService, AccessPolicy (LockConfiguration,
@@ -73,7 +80,8 @@ src/ThixLauncher.Core   (no UI) models, business layer (static classes), infrast
                         (SetupFor: first install "--quiet" + every offered option [+ "--start" with autostart], macOS "--configure …";
                         updates and builds without the block keep WindowsQuietInstallArguments); AppService.InstallOptionsOf)
   Infrastructure/       ReleaseFeed (manifest of a rolling channel, GitHub release list, download with checksum; HandlerForTests),
-                        SampleGitHub (GitHub in memory: tests, self test, snapshots; apps of one repository – ThixOffice – told apart
+                        SampleGitHub (GitHub in memory: tests, self test, snapshots; the store's pictures – Pictures, else SamplePicture
+                        PNGs, with ETag/304 – and commit feeds – Commits –; apps of one repository – ThixOffice – told apart
                         by the manifest's and the package's file name; a test may give its own apps; Installers = the "installer" block per
                         app, the sample ThixNote has one), SampleCloud (MatCloud in memory), TokenStore (DPAPI / Keychain),
                         SettingsStore, AppPaths, AppInfo, AppClock, Log, ProblemReports
@@ -89,13 +97,22 @@ src/ThixLauncher        (Avalonia app)
   UpdateCoordinator     the launcher's own updates (check, full auto update)
   AppActions            the actions of an app for every page and the tray: main button (Aktualisieren / Öffnen / Installieren),
                         second button, may it be removed, RunAsync (asks the install options before a first install, asks before removing)
-  MainWindow            MatTitleBar (logo, word mark, the installed apps to start), MatNav (Apps, Installiert, Updates (n),
-                        Einstellungen, version = About, fold), page host; keyboard (OnPreviewKeyDown)
-  Pages/                AppsPage (list page: title + state line, toolbar search / filter / sort / "Nach Updates suchen", the
-                        apps as card rows, actions of the chosen app below), AppDetailPage (header card, tabs Übersicht | Details,
-                        actions with Deinstallieren after a gap), SettingsPage (tabs Allgemein | Apps | Cloud | Updates | Erweitert;
+  MainWindow            MatTitleBar (logo, word mark, the installed apps to start), MatNav (Bibliothek, Store, Updates (n) = the
+                        library filtered, Einstellungen, version = About, fold), page host; an app's page goes back to where it was
+                        opened (store or library); keyboard (OnPreviewKeyDown)
+  Pages/                AppsPage = the LIBRARY, the start page (the installed apps; title with the compact toolbar beside it – search /
+                        filter "Alle installierten" | "Mit Update" / sort / "Nach Updates suchen" / tiles or list, under the title when
+                        narrow – and the state line; the apps as big tiles with their cover (default) or card rows, remembered via
+                        SettingsService.Remember; the last tile AddAppsCard "Apps hinzufügen" opens the store; actions of the chosen app
+                        below), StorePage (every app: one big – picture, logo, text, state, main action, "Mehr erfahren", ‹ n / 8 › –, then
+                        all as tiles; a click on a tile opens its page, its button acts; search hides the big one), TileStyles.axaml (the
+                        tile theme AppTile and the band styles, included by both), AppDetailPage (like a store page: header card with the
+                        actions – Deinstallieren after a gap –, the gallery: one picture big with its caption, the others as thumbnails;
+                        tabs Übersicht | Änderungen (StoreService.ChangesAsync, a row opens the commit) | Details), SettingsPage (tabs Allgemein | Apps | Cloud | Updates | Erweitert;
                         Cloud like ThixClip: the code in a card or user name and password; connected: the account, Abmelden, "Neue Apps gleich verbinden"), AboutPage
-  Controls/             ONE code base per control: AppRow, AppLogo, StateBadge, ActionBar, IconLabel, InfoBar, FormErrors
+  Controls/             ONE code base per control: AppCard (one app as tile – cover picture with the logo on it – or row, same parts),
+                        AddAppsCard, AppPicture (a picture of the store: loads when shown and on a theme change, the logo stands in),
+                        AppLogo, StateBadge, ActionBar, IconLabel, InfoBar, FormErrors
   Tray/                 TrayIcon (TRAY-01 order; own items: start each installed app, Nach Updates suchen, update; amber dot while
                         updates wait)
   Setup/                ThixLauncherSetup (MatSetupWindow: install, update, uninstall; the Options switches from installer.json)

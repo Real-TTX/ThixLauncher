@@ -4,39 +4,86 @@
              xmlns:controls="using:ThixLauncher.Controls"
              x:Class="ThixLauncher.Pages.AppDetailPage">
   <!--
-    One app (the single page of an item): the header card with logo, name, line, state and version, the areas in tabs
-    (Übersicht | Details), and the actions below in one row from positive to negative – the main action, Öffnen, Projekt,
-    Zurück – and Deinstallieren after a gap.
+    One app, like its page in a store: the header card with logo, name, line, state and version and the actions in one row
+    from positive to negative – the main action, Öffnen, Projekt, Zurück – and Deinstallieren after a gap; then the pictures
+    of the app from GitHub (one big with what it shows, the others small to choose), and the areas in tabs (Übersicht |
+    Änderungen – the newest commits on GitHub – | Details).
   -->
+  <UserControl.Styles>
+    <Style Selector="Button.thumbnail">
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="BorderThickness" Value="2" />
+      <Setter Property="CornerRadius" Value="{DynamicResource Mat.Radius}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Mat.Border}" />
+      <Setter Property="Background" Value="{DynamicResource Mat.Surface2}" />
+    </Style>
+    <Style Selector="Button.thumbnail.current">
+      <Setter Property="BorderBrush" Value="{DynamicResource Mat.Accent}" />
+    </Style>
+  </UserControl.Styles>
+
   <Border Background="{DynamicResource Mat.Surface}">
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-      <StackPanel Margin="28,22,28,28" MaxWidth="860" HorizontalAlignment="Left" Spacing="16">
-        <Button x:Name="BackLink" Theme="{StaticResource MatButton.Link}" Click="OnBackClick" HorizontalAlignment="Left" ToolTip.Tip="Zurück zu den Apps (Esc)">
-          <controls:IconLabel Icon="chevron-left" Text="Alle Apps" />
+    <ScrollViewer x:Name="Scroller" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel Margin="28,22,28,28" MaxWidth="920" HorizontalAlignment="Left" Spacing="16">
+        <Button x:Name="BackLink" Theme="{StaticResource MatButton.Link}" Click="OnBackClick" HorizontalAlignment="Left" ToolTip.Tip="Zurück (Esc)">
+          <controls:IconLabel x:Name="BackLinkLabel" Icon="chevron-left" Text="Store" />
         </Button>
 
-        <!-- The header card -->
+        <!-- The header card: the app and its actions -->
         <Border Theme="{StaticResource MatCard}" Padding="22">
-          <Grid ColumnDefinitions="Auto,*">
-            <controls:AppLogo x:Name="Logo" Size="96" Margin="0,0,22,0" />
-            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="6">
-              <TextBlock x:Name="NameText" FontSize="{DynamicResource Mat.FontSize2xl}" FontWeight="SemiBold" />
-              <TextBlock x:Name="TaglineText" Theme="{StaticResource MatText.Muted}" />
-              <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,4,0,0">
-                <controls:StateBadge x:Name="Badge" />
-                <TextBlock x:Name="VersionText" Theme="{StaticResource MatText.Muted}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+          <StackPanel Spacing="18">
+            <Grid ColumnDefinitions="Auto,*">
+              <controls:AppLogo x:Name="Logo" Size="96" Margin="0,0,22,0" />
+              <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="6">
+                <TextBlock x:Name="NameText" FontSize="{DynamicResource Mat.FontSize2xl}" FontWeight="SemiBold" />
+                <TextBlock x:Name="TaglineText" Theme="{StaticResource MatText.Muted}" TextWrapping="Wrap" />
+                <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,4,0,0">
+                  <controls:StateBadge x:Name="Badge" />
+                  <TextBlock x:Name="VersionText" Theme="{StaticResource MatText.Muted}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+                <ProgressBar x:Name="Progress" Theme="{StaticResource MatProgress}" Maximum="1" IsVisible="False" MaxWidth="420" HorizontalAlignment="Left" Margin="0,6,0,0" />
               </StackPanel>
-              <ProgressBar x:Name="Progress" Theme="{StaticResource MatProgress}" Maximum="1" IsVisible="False" MaxWidth="420" HorizontalAlignment="Left" Margin="0,6,0,0" />
-            </StackPanel>
-          </Grid>
+            </Grid>
+
+            <!-- One row: positive to negative, Deinstallieren after a gap -->
+            <controls:ActionBar>
+              <Button x:Name="PrimaryButton" Theme="{StaticResource MatButton.Primary}" Click="OnPrimaryClick">
+                <controls:IconLabel x:Name="PrimaryLabel" Icon="play" Text="Öffnen" />
+              </Button>
+              <Button x:Name="SecondaryButton" Click="OnSecondaryClick">
+                <controls:IconLabel x:Name="SecondaryLabel" Icon="play" Text="Öffnen" />
+              </Button>
+              <Button x:Name="ProjectButton" Click="OnProjectClick">
+                <controls:IconLabel Icon="external" Text="Projekt auf GitHub" />
+              </Button>
+              <Button x:Name="BackButton" Click="OnBackClick">
+                <controls:IconLabel Icon="back" Text="Zurück" />
+              </Button>
+              <Button x:Name="UninstallButton" Theme="{StaticResource MatButton.Danger}" controls:ActionBar.Separated="True" Click="OnUninstallClick">
+                <controls:IconLabel Icon="trash" Text="Deinstallieren" />
+              </Button>
+            </controls:ActionBar>
+          </StackPanel>
         </Border>
 
         <controls:InfoBar x:Name="PageMessage" Margin="0" />
 
+        <!-- The pictures: one big, the others small to choose -->
+        <StackPanel x:Name="Gallery" Spacing="10">
+          <Border CornerRadius="{DynamicResource Mat.RadiusLg}" ClipToBounds="True" BorderThickness="1"
+                  BorderBrush="{DynamicResource Mat.Border}" Background="{DynamicResource Mat.Surface2}">
+            <controls:AppPicture x:Name="BigPicture" Height="500" DecodeWidth="1800" LogoSize="96" />
+          </Border>
+          <TextBlock x:Name="CaptionText" Theme="{StaticResource MatText.Muted}" TextWrapping="Wrap" />
+          <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+            <StackPanel x:Name="Thumbnails" Orientation="Horizontal" Spacing="10" Margin="0,0,0,6" />
+          </ScrollViewer>
+        </StackPanel>
+
         <TabControl x:Name="Tabs">
           <TabItem x:Name="OverviewTab" Header="Übersicht">
             <StackPanel Spacing="16">
-              <TextBlock x:Name="DescriptionText" TextWrapping="Wrap" LineHeight="21" MaxWidth="720" HorizontalAlignment="Left" />
+              <TextBlock x:Name="DescriptionText" TextWrapping="Wrap" LineHeight="21" MaxWidth="760" HorizontalAlignment="Left" />
               <Border Theme="{StaticResource MatCard}" HorizontalAlignment="Left" MinWidth="460">
                 <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
                   <TextBlock Text="Installiert" Theme="{StaticResource MatText.Muted}" Margin="0,4,28,4" />
@@ -51,6 +98,18 @@
                   <TextBlock Grid.Row="4" Grid.Column="1" x:Name="SetupText" Margin="0,4" TextWrapping="Wrap" />
                 </Grid>
               </Border>
+            </StackPanel>
+          </TabItem>
+
+          <TabItem x:Name="ChangesTab" Header="Änderungen">
+            <StackPanel Spacing="12">
+              <TextBlock x:Name="ChangesIntro" Theme="{StaticResource MatText.Muted}" TextWrapping="Wrap" />
+              <Border Theme="{StaticResource MatCard}" HorizontalAlignment="Stretch" x:Name="ChangesCard">
+                <StackPanel x:Name="ChangesList" Spacing="2" />
+              </Border>
+              <Button x:Name="AllChangesButton" Theme="{StaticResource MatButton.Link}" Click="OnAllChangesClick" HorizontalAlignment="Left">
+                <controls:IconLabel Icon="external" Text="Alle Änderungen auf GitHub" />
+              </Button>
             </StackPanel>
           </TabItem>
 
@@ -71,25 +130,6 @@
             </Border>
           </TabItem>
         </TabControl>
-
-        <!-- One row: positive to negative, Deinstallieren after a gap -->
-        <controls:ActionBar>
-          <Button x:Name="PrimaryButton" Theme="{StaticResource MatButton.Primary}" Click="OnPrimaryClick">
-            <controls:IconLabel x:Name="PrimaryLabel" Icon="play" Text="Öffnen" />
-          </Button>
-          <Button x:Name="SecondaryButton" Click="OnSecondaryClick">
-            <controls:IconLabel x:Name="SecondaryLabel" Icon="play" Text="Öffnen" />
-          </Button>
-          <Button x:Name="ProjectButton" Click="OnProjectClick">
-            <controls:IconLabel Icon="external" Text="Projekt auf GitHub" />
-          </Button>
-          <Button x:Name="BackButton" Click="OnBackClick">
-            <controls:IconLabel Icon="back" Text="Zurück" />
-          </Button>
-          <Button x:Name="UninstallButton" Theme="{StaticResource MatButton.Danger}" controls:ActionBar.Separated="True" Click="OnUninstallClick">
-            <controls:IconLabel Icon="trash" Text="Deinstallieren" />
-          </Button>
-        </controls:ActionBar>
       </StackPanel>
     </ScrollViewer>
   </Border>

@@ -5,7 +5,8 @@ using ThixLauncher.Core.Models;
 namespace ThixLauncher.Tests;
 
 /// <summary>
-/// The real feeds of the apps on GitHub (read only: nothing is downloaded or installed). They run only with
+/// The real feeds of the apps on GitHub (read only: nothing is installed; the store's pictures and commit feeds are read into a
+/// temporary folder). They run only with
 /// THIXLAUNCHER_LIVE_FEEDS=1, so CI and offline runs do not depend on GitHub and its hourly limit.
 /// </summary>
 public sealed class LiveFeedTests
@@ -31,6 +32,37 @@ public sealed class LiveFeedTests
                 Assert.True(release.Sha256 is { Length: 64 }, $"{app.Name} {platform}: no checksum");
                 Assert.StartsWith("https://github.com/" + app.Repository + "/releases/download/", release.DownloadUrl);
             }
+        }
+    }
+
+    [Fact]
+    public async Task Every_picture_of_the_catalog_is_in_its_repository_and_every_repository_has_changes()
+    {
+        if (!IsEnabled)
+        {
+            return;
+        }
+
+        var folder = Path.Combine(Path.GetTempPath(), "thixlauncher-live", Guid.NewGuid().ToString("N"));
+        AppPaths.UseDirectoryForTests(folder);
+        ReleaseFeed.HandlerForTests = null;
+        StoreService.ResetForTests();
+        try
+        {
+            foreach (var app in AppCatalog.Apps)
+            {
+                foreach (var picture in app.Screenshots)
+                {
+                    Assert.True(await StoreService.PictureAsync(app, picture, dark: false) is not null, $"{app.Name}: {StoreService.PictureUrl(app, picture.File)} is missing");
+                }
+
+                Assert.NotEmpty(await StoreService.ChangesAsync(app));
+            }
+        }
+        finally
+        {
+            AppPaths.UseDirectoryForTests(null);
+            Directory.Delete(folder, recursive: true);
         }
     }
 }

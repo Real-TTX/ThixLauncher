@@ -17,6 +17,16 @@ public enum AppChannel
     Nightly = 1,
 }
 
+/// <summary>How the apps page shows the apps.</summary>
+public enum AppsView
+{
+    /// <summary>Big tiles side by side, like a launcher.</summary>
+    Tiles = 0,
+
+    /// <summary>One row per app.</summary>
+    List = 1,
+}
+
 /// <summary>The settings of this computer (settings.json). Only <see cref="Business.SettingsService"/> writes them.</summary>
 public sealed record AppSettings
 {
@@ -44,6 +54,9 @@ public sealed record AppSettings
 
     /// <summary>The menu at the left of the main window is folded to its icons.</summary>
     public bool IsSidebarCollapsed { get; init; }
+
+    /// <summary>The apps as tiles or as a list.</summary>
+    public AppsView AppsView { get; init; } = AppsView.Tiles;
 
     /// <summary>The connection to MatCloud. Only <see cref="Business.CloudService"/> writes it.</summary>
     public CloudSettings Cloud { get; init; } = new();

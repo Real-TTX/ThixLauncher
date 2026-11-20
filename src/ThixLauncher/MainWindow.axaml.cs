@@ -15,23 +15,26 @@ namespace ThixLauncher;
 
 /// <summary>
 /// The main window: MatDesktop's chrome (MatTitleBar, DESK-03; MatNav, DESK-04, folds to a rail of 68 px) around the pages
-/// (the apps, the page of one app, settings, about). The installed apps sit in the title bar to start them with one click.
-/// Keyboard: Ctrl/Cmd+1/2/3 the sections, +F search, +R or F5 look for updates, +, settings, +B fold the menu,
-/// Enter the details of the chosen app, Esc back from the details or hide the window.
+/// (the library = the installed apps, the store = every app, the page of one app, settings, about). The installed apps sit in
+/// the title bar to start them with one click. Keyboard: Ctrl/Cmd+1 library, +2 store, +3 updates, +F search, +R or F5 look
+/// for updates, +, settings, +B fold the menu, Enter the page of the chosen app, Esc back (from an app's page to where it was
+/// opened, from any other page to the library) or hide the window.
 /// Close, Esc and Alt+F4 hide the window; only "Beenden" ends ThixLauncher (DESK-06).
 /// </summary>
 public partial class MainWindow : MatWindow
 {
     private readonly AppsPage _apps = new();
+    private readonly StorePage _store = new();
     private readonly Lazy<AppDetailPage> _detail;
     private readonly Lazy<SettingsPage> _settings = new(() => new SettingsPage());
     private readonly Lazy<AboutPage> _about = new(() => new AboutPage());
     private readonly DispatcherTimer _sizeTimer = new() { Interval = TimeSpan.FromMilliseconds(600) };
-    private readonly MatNavItem _navAll;
-    private readonly MatNavItem _navInstalled;
+    private readonly MatNavItem _navLibrary;
+    private readonly MatNavItem _navStore;
     private readonly MatNavItem _navUpdates;
     private readonly MatNavItem _navSettings;
     private bool _refreshPosted;
+    private bool _detailFromStore;
 
     public MainWindow()
     {
@@ -49,11 +52,11 @@ public partial class MainWindow : MatWindow
         };
 
         var command = Ui.CommandKey.Name;
-        _navAll = new MatNavItem("apps", "Apps", $"{command}+1") { IsCurrent = true };
-        _navInstalled = new MatNavItem("check-circle", "Installiert", $"{command}+2");
+        _navLibrary = new MatNavItem("apps", "Bibliothek", $"{command}+1") { IsCurrent = true };
+        _navStore = new MatNavItem("store", "Store", $"{command}+2");
         _navUpdates = new MatNavItem("download", "Updates", $"{command}+3");
         _navSettings = new MatNavItem("settings", "Einstellungen", $"{command}+,");
-        Sidebar.Items.AddRange([_navAll, _navInstalled, _navUpdates]);
+        Sidebar.Items.AddRange([_navLibrary, _navStore, _navUpdates]);
         Sidebar.Settings = _navSettings;
         Sidebar.Version = AppInfo.Version;
         Sidebar.Channel = AppInfo.Channel;
@@ -68,10 +71,12 @@ public partial class MainWindow : MatWindow
         _detail = new Lazy<AppDetailPage>(() =>
         {
             var page = new AppDetailPage();
-            page.BackRequested += (_, _) => ShowApps(_apps.Filter, page.AppId);
+            page.BackRequested += (_, _) => GoBackFromDetails();
             return page;
         });
         _apps.DetailsRequested += (_, appId) => ShowDetails(appId);
+        _apps.StoreRequested += (_, _) => ShowStore();
+        _store.DetailsRequested += (_, appId) => ShowDetails(appId);
         _apps.FilterChanged += (_, filter) => Sidebar.Select(NavItemOf(filter));
         PageHost.Content = _apps;
 
@@ -98,7 +103,11 @@ public partial class MainWindow : MatWindow
     /// <summary>Set by App when the application ends: then the window really closes.</summary>
     public bool IsExiting { get; set; }
 
+    /// <summary>The library: the installed apps (the start page).</summary>
     public AppsPage Apps => _apps;
+
+    /// <summary>The store: every app.</summary>
+    public StorePage Store => _store;
 
     /// <summary>The page of one app (built when it is first shown).</summary>
     public AppDetailPage Detail => _detail.Value;
@@ -120,7 +129,7 @@ public partial class MainWindow : MatWindow
         AppService.DetectInstalled(); // an app installed or removed by hand meanwhile
     }
 
-    /// <summary>The list of the apps with a filter; optionally an app chosen.</summary>
+    /// <summary>The library with a filter (Installed – every installed app – or Updates); optionally an app chosen.</summary>
     public void ShowApps(AppFilter? filter = null, string? select = null)
     {
         if (filter is { } chosen)
@@ -138,9 +147,28 @@ public partial class MainWindow : MatWindow
         Dispatcher.UIThread.Post(_apps.FocusList, DispatcherPriority.Background);
     }
 
-    /// <summary>The page of one app.</summary>
+    /// <summary>The store; optionally an app chosen.</summary>
+    public void ShowStore(string? select = null)
+    {
+        PageHost.Content = _store;
+        Sidebar.Select(_navStore);
+        if (select is not null)
+        {
+            _store.Select(select);
+        }
+
+        Dispatcher.UIThread.Post(_store.FocusList, DispatcherPriority.Background);
+    }
+
+    /// <summary>The page of one app; "Zurück" goes to the page it was opened from (the store or the library).</summary>
     public void ShowDetails(string appId)
     {
+        if (PageHost.Content != Detail)
+        {
+            _detailFromStore = PageHost.Content == _store;
+        }
+
+        Detail.BackText = _detailFromStore ? "Store" : _apps.Filter == AppFilter.Updates ? "Updates" : "Bibliothek";
         Detail.Show(appId);
         PageHost.Content = Detail;
     }
@@ -171,12 +199,7 @@ public partial class MainWindow : MatWindow
         base.OnClosing(e);
     }
 
-    private MatNavItem NavItemOf(AppFilter filter) => filter switch
-    {
-        AppFilter.Installed => _navInstalled,
-        AppFilter.Updates => _navUpdates,
-        _ => _navAll,
-    };
+    private MatNavItem NavItemOf(AppFilter filter) => filter == AppFilter.Updates ? _navUpdates : _navLibrary;
 
     private void OnNavInvoked(MatNavItem item)
     {
@@ -186,7 +209,26 @@ public partial class MainWindow : MatWindow
             return;
         }
 
-        ShowApps(item == _navInstalled ? AppFilter.Installed : item == _navUpdates ? AppFilter.Updates : AppFilter.All);
+        if (item == _navStore)
+        {
+            ShowStore();
+            return;
+        }
+
+        ShowApps(item == _navUpdates ? AppFilter.Updates : AppFilter.Installed);
+    }
+
+    /// <summary>From an app's page back to where it was opened, with the app chosen.</summary>
+    private void GoBackFromDetails()
+    {
+        var appId = Detail.AppId;
+        if (_detailFromStore)
+        {
+            ShowStore(appId);
+            return;
+        }
+
+        ShowApps(null, appId);
     }
 
     private void PostRefresh()
@@ -251,7 +293,7 @@ public partial class MainWindow : MatWindow
             }
             catch (BusinessException exception)
             {
-                ShowApps(AppFilter.All, app.Id);
+                ShowApps(AppFilter.Installed, app.Id);
                 _apps.ShowMessage(exception.Message, InfoSeverity.Error);
             }
         };
@@ -266,11 +308,11 @@ public partial class MainWindow : MatWindow
             switch (e.Key)
             {
                 case Key.D1:
-                    ShowApps(AppFilter.All);
+                    ShowApps(AppFilter.Installed);
                     e.Handled = true;
                     return;
                 case Key.D2:
-                    ShowApps(AppFilter.Installed);
+                    ShowStore();
                     e.Handled = true;
                     return;
                 case Key.D3:
@@ -278,8 +320,18 @@ public partial class MainWindow : MatWindow
                     e.Handled = true;
                     return;
                 case Key.F:
-                    ShowApps();
-                    Dispatcher.UIThread.Post(_apps.FocusSearch, DispatcherPriority.Background); // after the focus ShowApps gives the list
+                    // The store searches every app, the library the installed ones (after the focus Show… gives the list).
+                    if (PageHost.Content == _store || (PageHost.Content == Detail && _detailFromStore))
+                    {
+                        ShowStore();
+                        Dispatcher.UIThread.Post(_store.FocusSearch, DispatcherPriority.Background);
+                    }
+                    else
+                    {
+                        ShowApps();
+                        Dispatcher.UIThread.Post(_apps.FocusSearch, DispatcherPriority.Background);
+                    }
+
                     e.Handled = true;
                     return;
                 case Key.R:
@@ -312,9 +364,17 @@ public partial class MainWindow : MatWindow
             {
                 _apps.SearchBox.Text = "";
             }
+            else if (PageHost.Content == _store && _store.SearchBox.IsFocused && !string.IsNullOrEmpty(_store.SearchBox.Text))
+            {
+                _store.SearchBox.Text = "";
+            }
+            else if (PageHost.Content is AppDetailPage)
+            {
+                GoBackFromDetails();
+            }
             else if (PageHost.Content != _apps)
             {
-                ShowApps(null, (PageHost.Content as AppDetailPage)?.AppId);
+                ShowApps();
             }
             else
             {

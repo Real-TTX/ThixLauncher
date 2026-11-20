@@ -5,7 +5,8 @@ namespace ThixLauncher.Core.Business;
 
 /// <summary>
 /// The Thix apps the launcher knows. A new app is one entry here (and its logo in the app's Assets/apps folder): where it
-/// publishes its builds, how its setup runs on Windows and how its bundle is called on macOS.
+/// publishes its builds, how its setup runs on Windows, how its bundle is called on macOS and which pictures of its repository
+/// (docs/images, the light ones; the store tries "-dark" in the dark theme) the store shows.
 /// </summary>
 public static class AppCatalog
 {
@@ -35,6 +36,13 @@ public static class AppCatalog
             WindowsQuietInstallArguments = "--update",
             MacBundleName = "ThixCalc.app",
             MacBundleId = "info.schmoldt.thixcalc",
+            Screenshots =
+            [
+                new AppScreenshot("thixcalc-main-light.png", "Tabellen mit Formeln und Zahlenformaten"),
+                new AppScreenshot("thixcalc-main-chart-light.png", "Diagramme aus den Daten der Tabelle"),
+                new AppScreenshot("thixcalc-main-formula-light.png", "Formeln mit deutschen Funktionsnamen"),
+                new AppScreenshot("thixcalc-dialog-format-cells-light.png", "Zellen formatieren wie gewohnt"),
+            ],
         },
         new ThixApp
         {
@@ -55,6 +63,13 @@ public static class AppCatalog
             WindowsQuietInstallArguments = "--update",
             MacBundleName = "ThixCalendar.app",
             MacBundleId = "info.schmoldt.thixcalendar",
+            Screenshots =
+            [
+                new AppScreenshot("desktop-week-light.png", "Alle Kalender in einer Woche"),
+                new AppScreenshot("desktop-month-light.png", "Der Monat auf einen Blick"),
+                new AppScreenshot("desktop-reminder-light.png", "Erinnerungen, die stehen bleiben"),
+                new AppScreenshot("desktop-editor-light.png", "Termine anlegen und bearbeiten"),
+            ],
         },
         new ThixApp
         {
@@ -74,6 +89,13 @@ public static class AppCatalog
             WindowsQuietInstallArguments = "--update",
             MacBundleName = "ThixClip.app",
             MacBundleId = "info.schmoldt.thixclip",
+            Screenshots =
+            [
+                new AppScreenshot("main-history-light.png", "Der Verlauf: Texte, Links und Bilder"),
+                new AppScreenshot("dialog-viewer-light.png", "Ein Eintrag mit erkanntem Text"),
+                new AppScreenshot("main-settings-light.png", "Tastenkürzel und Einstellungen"),
+                new AppScreenshot("main-cloud-light.png", "Mit der MatCloud auf allen Computern"),
+            ],
         },
         new ThixApp
         {
@@ -93,6 +115,14 @@ public static class AppCatalog
             WindowsQuietInstallArguments = "--update",
             MacBundleName = "ThixFred.app",
             MacBundleId = "info.schmoldt.thixfred",
+            Screenshots =
+            [
+                new AppScreenshot("main-themes-light.png", "Themes für den Launcher"),
+                new AppScreenshot("launcher-search-light.png", "Ein Suchfeld für Programme und Befehle"),
+                new AppScreenshot("launcher-calc-light.png", "Rechnen direkt im Launcher"),
+                new AppScreenshot("launcher-terminal-light.png", "Befehle im eingebauten Terminal"),
+                new AppScreenshot("main-plugins-light.png", "Plugins und eigene Skripte"),
+            ],
         },
         new ThixApp
         {
@@ -113,6 +143,13 @@ public static class AppCatalog
             WindowsQuietInstallArguments = "--update",
             MacBundleName = "ThixNote.app",
             MacBundleId = "info.schmoldt.thixnote",
+            Screenshots =
+            [
+                new AppScreenshot("main-notes-light.png", "Notizen als Dateien"),
+                new AppScreenshot("main-preview-light.png", "Markdown mit Vorschau"),
+                new AppScreenshot("main-compact-light.png", "Kompakt neben der Arbeit"),
+                new AppScreenshot("main-settings-cloud-light.png", "Mit der MatCloud auf allen Computern"),
+            ],
         },
         new ThixApp
         {
@@ -138,6 +175,13 @@ public static class AppCatalog
             WindowsQuietInstallArguments = "--update",
             MacBundleName = "ThixShow.app",
             MacBundleId = "info.schmoldt.thixshow",
+            Screenshots =
+            [
+                new AppScreenshot("thixshow-main-light.png", "Folien gestalten"),
+                new AppScreenshot("thixshow-main-design-light.png", "Designs für die ganze Präsentation"),
+                new AppScreenshot("thixshow-main-animations-light.png", "Animationen und Übergänge"),
+                new AppScreenshot("thixshow-main-sorter-light.png", "Alle Folien im Überblick"),
+            ],
         },
         new ThixApp
         {
@@ -157,6 +201,13 @@ public static class AppCatalog
             WindowsQuietInstallArguments = "--update",
             MacBundleName = "ThixTunnel.app",
             MacBundleId = "info.schmoldt.thixtunnel",
+            Screenshots =
+            [
+                new AppScreenshot("main-connections-light.png", "Verbindungen mit einem Klick"),
+                new AppScreenshot("main-profiles-light.png", "Server als Profile"),
+                new AppScreenshot("main-routes-light.png", "Weiterleitungen je Profil"),
+                new AppScreenshot("main-profile-edit-light.png", "Ein Profil bearbeiten"),
+            ],
         },
         new ThixApp
         {
@@ -182,6 +233,14 @@ public static class AppCatalog
             WindowsQuietInstallArguments = "--update",
             MacBundleName = "ThixWrite.app",
             MacBundleId = "info.schmoldt.thixwrite",
+            Screenshots =
+            [
+                new AppScreenshot("thixwrite-main-light.png", "Texte schreiben wie in Word"),
+                new AppScreenshot("thixwrite-main-table-light.png", "Tabellen im Dokument"),
+                new AppScreenshot("thixwrite-main-comments-light.png", "Kommentare und Überarbeitung"),
+                new AppScreenshot("thixwrite-main-spelling-light.png", "Rechtschreibprüfung"),
+                new AppScreenshot("thixwrite-backstage-print-light.png", "Drucken und als PDF exportieren"),
+            ],
         },
     ];
 

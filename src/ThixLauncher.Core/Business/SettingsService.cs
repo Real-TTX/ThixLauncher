@@ -29,7 +29,7 @@ public static class SettingsService
         return Save(_ => next);
     }
 
-    /// <summary>Things the app remembers by itself (window size, folded menu): no configuration lock.</summary>
+    /// <summary>Things the app remembers by itself (window size, folded menu, tiles or list): no configuration lock.</summary>
     public static AppSettings Remember(Func<AppSettings, AppSettings> change)
     {
         var current = SettingsStore.Read();
@@ -39,6 +39,7 @@ public static class SettingsService
             WindowWidth = Math.Clamp(next.WindowWidth, 640, 4000),
             WindowHeight = Math.Clamp(next.WindowHeight, 420, 3000),
             IsSidebarCollapsed = next.IsSidebarCollapsed,
+            AppsView = Enum.IsDefined(next.AppsView) ? next.AppsView : AppsView.Tiles,
         });
     }
 

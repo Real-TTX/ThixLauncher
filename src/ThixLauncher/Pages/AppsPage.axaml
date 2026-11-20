@@ -4,51 +4,82 @@
              xmlns:controls="using:ThixLauncher.Controls"
              x:Class="ThixLauncher.Pages.AppsPage">
   <!--
-    The apps (the list page): the title with the state of the catalog, the toolbar above the list (search, filter, sort and
-    "Nach Updates suchen"), the apps as cards (logo, name, version, state, the main action at the right) and the actions of
-    the chosen app below the list, left-aligned from positive to negative, Deinstallieren after a gap.
+    The library (the start page, the list page of the installed apps): the title with the compact toolbar beside it (search,
+    filter, sort, "Nach Updates suchen", tiles or list; on a narrow page the toolbar moves under the title), the state in one
+    line, then the installed apps as big tiles with their cover from GitHub (or as card rows) and as the last tile "Apps
+    hinzufügen" (opens the store), and the actions of the chosen app below, left-aligned from positive to negative,
+    Deinstallieren after a gap. "Updates" in the menu is this page with the filter "Mit Update".
   -->
+  <UserControl.Styles>
+    <StyleInclude Source="avares://ThixLauncher/Pages/TileStyles.axaml" />
+    <!-- The chosen view in the switch: the tint of the accent, like the current item of the menu. -->
+    <Style Selector="Button.view-choice">
+      <Setter Property="Width" Value="30" />
+      <Setter Property="Height" Value="28" />
+      <Setter Property="MinHeight" Value="28" />
+    </Style>
+    <Style Selector="Button.view-choice.current">
+      <Setter Property="Background" Value="{DynamicResource Mat.AccentSoftStrong}" />
+      <Setter Property="Foreground" Value="{DynamicResource Mat.AccentText}" />
+    </Style>
+  </UserControl.Styles>
+
   <Border Background="{DynamicResource Mat.Surface}">
-    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" Margin="28,22,28,20">
-      <StackPanel>
-        <TextBlock x:Name="TitleText" Text="Apps" Theme="{StaticResource MatText.PageTitle}" />
-        <TextBlock x:Name="SubtitleText" Theme="{StaticResource MatText.Muted}" Margin="0,4,0,0" TextWrapping="Wrap" />
-      </StackPanel>
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="28,20,28,20">
+      <!-- Title and toolbar in one row (the toolbar under the title on a narrow page: ArrangeHeader) -->
+      <Grid x:Name="Header" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
+        <TextBlock x:Name="TitleText" Text="Bibliothek" Theme="{StaticResource MatText.PageTitle}" TextWrapping="NoWrap"
+                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,16,0" />
+        <TextBlock Grid.Row="1" Grid.ColumnSpan="2" x:Name="SubtitleText" Theme="{StaticResource MatText.Muted}" Margin="0,2,0,0"
+                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+
+        <WrapPanel Grid.Column="1" x:Name="Toolbar" VerticalAlignment="Center" ItemSpacing="8" LineSpacing="8">
+          <TextBox x:Name="SearchBox" Theme="{StaticResource MatSearchBox}" Width="210"
+                   Watermark="Suchen" AutomationProperties.Name="Bibliothek durchsuchen" ToolTip.Tip="Bibliothek durchsuchen" />
+          <ComboBox x:Name="FilterChoice" Width="150" VerticalAlignment="Center"
+                    AutomationProperties.Name="Filter" ToolTip.Tip="Filter">
+            <ComboBoxItem Content="Alle installierten" />
+            <ComboBoxItem Content="Mit Update" />
+          </ComboBox>
+          <ComboBox x:Name="SortChoice" Width="132" VerticalAlignment="Center"
+                    AutomationProperties.Name="Sortierung" ToolTip.Tip="Sortierung">
+            <ComboBoxItem Content="Nach Name" />
+            <ComboBoxItem Content="Nach Status" />
+          </ComboBox>
+          <Button x:Name="RefreshButton" Padding="0" Width="{DynamicResource Mat.ControlHeight}" VerticalAlignment="Center"
+                  Click="OnRefreshClick" AutomationProperties.Name="Nach Updates suchen">
+            <mat:MatIcon Icon="refresh" Size="16" />
+          </Button>
+          <!-- Tiles or list -->
+          <Border BorderBrush="{DynamicResource Mat.BorderStrong}" BorderThickness="1" CornerRadius="{DynamicResource Mat.Radius}"
+                  Padding="2" VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal" Spacing="2">
+              <Button x:Name="TilesButton" Theme="{StaticResource MatButton.Icon}" Classes="view-choice" Click="OnTilesClick"
+                      AutomationProperties.Name="Kacheln" ToolTip.Tip="Kacheln">
+                <mat:MatIcon Icon="grid" Size="16" />
+              </Button>
+              <Button x:Name="ListButton" Theme="{StaticResource MatButton.Icon}" Classes="view-choice" Click="OnListClick"
+                      AutomationProperties.Name="Liste" ToolTip.Tip="Liste">
+                <mat:MatIcon Icon="list" Size="16" />
+              </Button>
+            </StackPanel>
+          </Border>
+        </WrapPanel>
+      </Grid>
 
       <controls:InfoBar Grid.Row="1" x:Name="PageMessage" Margin="0,14,0,0" />
 
-      <!-- The toolbar: search, filter, sort, check -->
-      <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,16,0,14">
-        <TextBox x:Name="SearchBox" Theme="{StaticResource MatSearchBox}" MaxWidth="360" HorizontalAlignment="Stretch"
-                 Watermark="Apps durchsuchen" AutomationProperties.Name="Apps durchsuchen" />
-        <ComboBox Grid.Column="1" x:Name="FilterChoice" MinWidth="170" Margin="12,0,0,0" VerticalAlignment="Center"
-                  AutomationProperties.Name="Filter" ToolTip.Tip="Filter">
-          <ComboBoxItem Content="Alle Apps" />
-          <ComboBoxItem Content="Installiert" />
-          <ComboBoxItem Content="Updates" />
-          <ComboBoxItem Content="Nicht installiert" />
-        </ComboBox>
-        <ComboBox Grid.Column="2" x:Name="SortChoice" MinWidth="150" Margin="8,0,0,0" VerticalAlignment="Center"
-                  AutomationProperties.Name="Sortierung" ToolTip.Tip="Sortierung">
-          <ComboBoxItem Content="Nach Name" />
-          <ComboBoxItem Content="Nach Status" />
-        </ComboBox>
-        <Button Grid.Column="3" x:Name="RefreshButton" Margin="8,0,0,0" VerticalAlignment="Center" Click="OnRefreshClick">
-          <controls:IconLabel x:Name="RefreshLabel" Icon="refresh" Text="Nach Updates suchen" />
-        </Button>
-      </Grid>
-
-      <Panel Grid.Row="3">
+      <Panel Grid.Row="2" Margin="0,18,0,0">
         <ListBox x:Name="AppList" Theme="{StaticResource MatList}" ItemContainerTheme="{StaticResource MatCardRow}" SelectionMode="Single"
-                 AutomationProperties.Name="Apps" />
+                 AutomationProperties.Name="Bibliothek" />
         <StackPanel x:Name="EmptyState" IsVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
           <mat:MatIcon Icon="search" Size="32" HorizontalAlignment="Center" Foreground="{DynamicResource Mat.TextFaint}" />
           <TextBlock x:Name="EmptyText" Theme="{StaticResource MatText.Muted}" HorizontalAlignment="Center" TextAlignment="Center" />
         </StackPanel>
       </Panel>
 
-      <!-- The actions of the chosen app: below the list, left-aligned, positive to negative, delete after a gap -->
-      <controls:ActionBar Grid.Row="4" x:Name="Actions" Margin="0,8,0,0">
+      <!-- The actions of the chosen app: below the apps, left-aligned, positive to negative, delete after a gap -->
+      <controls:ActionBar Grid.Row="3" x:Name="Actions" Margin="0,8,0,0">
         <Button x:Name="PrimaryButton" Theme="{StaticResource MatButton.Primary}" Click="OnPrimaryClick">
           <controls:IconLabel x:Name="PrimaryLabel" Icon="play" Text="Öffnen" />
         </Button>

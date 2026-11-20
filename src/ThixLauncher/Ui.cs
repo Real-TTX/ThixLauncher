@@ -17,6 +17,7 @@ namespace ThixLauncher;
 internal static class Ui
 {
     private static readonly Dictionary<string, Bitmap?> AppLogos = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, Task<Bitmap?>> Pictures = new(StringComparer.OrdinalIgnoreCase);
     private static WindowIcon? _appIcon;
     private static Bitmap? _logo;
 
@@ -38,6 +39,34 @@ internal static class Ui
         var logo = AssetLoader.Exists(uri) ? new Bitmap(AssetLoader.Open(uri)) : null;
         AppLogos[appId] = logo;
         return logo;
+    }
+
+    /// <summary>
+    /// A picture of the store (a file <see cref="Core.Business.StoreService"/> keeps), decoded in the background to
+    /// <paramref name="width"/> pixels; kept while the file is unchanged. Null when the file is no picture.
+    /// </summary>
+    public static Task<Bitmap?> PictureAsync(string path, int width)
+    {
+        var key = $"{path}|{width}|{File.GetLastWriteTimeUtc(path).Ticks}";
+        if (!Pictures.TryGetValue(key, out var picture))
+        {
+            picture = Task.Run(() =>
+            {
+                try
+                {
+                    using var stream = File.OpenRead(path);
+                    return (Bitmap?)Bitmap.DecodeToWidth(stream, width, BitmapInterpolationMode.HighQuality);
+                }
+                catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or NotSupportedException)
+                {
+                    Log.Warning($"Picture {path}: {exception.Message}");
+                    return null;
+                }
+            });
+            Pictures[key] = picture;
+        }
+
+        return picture;
     }
 
     /// <summary>
@@ -147,6 +176,28 @@ internal static class Ui
             _ => "Für dieses System gibt es noch keinen Build.",
         };
     }
+
+    /// <summary>The short line of a tile: "0.1.9 → 0.1.12", "Version 1.1.1 · 12 MB" (the versions without their build date).</summary>
+    public static string ShortVersionLine(AppStatus status)
+    {
+        if (status.Progress is not null || status.State is not (AppState.UpdateAvailable or AppState.Installed) && status.Latest is null)
+        {
+            return VersionLine(status);
+        }
+
+        var installed = WithoutDate(status.Installed?.VersionText);
+        var latest = WithoutDate(status.Latest?.Version.Text);
+        return status.State switch
+        {
+            AppState.UpdateAvailable => $"{installed} → {latest}",
+            AppState.Installed => installed is null ? "Installiert" : $"Version {installed}",
+            _ => $"Version {latest}" + (status.Latest!.Size is { } size ? $" · {FormatBytes(size)}" : ""),
+        };
+    }
+
+    /// <summary>"0.1.12-20261115" → "0.1.12", "nightly-43-20261116" → "nightly-43".</summary>
+    private static string? WithoutDate(string? version) =>
+        version is { Length: > 9 } && version[^9] == '-' && version[^8..].All(char.IsAsciiDigit) ? version[..^9] : version;
 }
 
 /// <summary>The name and the modifier of the command key of the platform.</summary>

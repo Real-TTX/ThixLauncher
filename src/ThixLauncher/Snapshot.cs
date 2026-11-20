@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Styling;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using MatCloud.Contract;
 using MatDesktop;
 using ThixLauncher.Core.Business;
@@ -16,7 +17,9 @@ namespace ThixLauncher;
 /// "ThixLauncher --snapshot &lt;folder&gt;": draws the windows of ThixLauncher into PNG files without a screen (Avalonia
 /// headless with Skia, the real windows, themes and fonts of the machine), in light and dark – the pictures of the README
 /// and of MatDesign. It works in a temporary data folder (Program sets it) with sample data only: GitHub in memory
-/// (<see cref="SampleGitHub"/>), a computer in memory with ThixClip 0.1.9 installed (<see cref="SampleAppSystem"/>), a pinned
+/// (<see cref="SampleGitHub"/>; the pictures of the store are the real screenshots of the apps when their repositories lie next
+/// to this one – ../ThixClip/docs/images … –, else plain sample pictures), a computer in memory with ThixClip 0.1.9 and
+/// ThixFred 0.1.1 installed (<see cref="SampleAppSystem"/>), a pinned
 /// clock, version 1.0.0 on the release channel and a fixed computer name, MatCloud in memory (<see cref="SampleCloud"/>). No app, registry value,
 /// browser or network is touched.
 /// </summary>
@@ -41,7 +44,7 @@ internal static class Snapshot
     private static readonly string[] ThemedPictures =
     [
         "setup-welcome", "setup-options", "setup-progress", "setup-finish", "setup-update", "setup-uninstall",
-        "main-apps", "main-installing", "main-detail", "main-settings", "main-settings-cloud-code", "main-settings-cloud", "main-about", "main-folded", "dialog-install-options", "dialog-uninstall", "toast",
+        "main-apps", "main-list", "main-store", "main-installing", "main-detail", "main-detail-changes", "main-settings", "main-settings-cloud-code", "main-settings-cloud", "main-about", "main-folded", "dialog-install-options", "dialog-uninstall", "toast",
     ];
 
     /// <summary>Every file a snapshot writes (the tray icons are the same in both themes).</summary>
@@ -111,7 +114,7 @@ internal static class Snapshot
         var report = new SnapshotReport();
         var previousTheme = Application.Current!.RequestedThemeVariant;
         var system = new SampleAppSystem();
-        using (Isolate(system))
+        using (Isolate(system, folder))
         {
             foreach (var theme in Themes)
             {
@@ -129,11 +132,12 @@ internal static class Snapshot
         return report;
     }
 
-    /// <summary>The sample state: ThixClip 0.1.9 installed (0.1.12 waits), ThixNote not installed, the feeds read.</summary>
+    /// <summary>The sample state: ThixClip 0.1.9 installed (0.1.12 waits), ThixFred 0.1.1 installed, the rest not installed, the feeds read.</summary>
     private static void ResetSample(SampleAppSystem system)
     {
         system.Installed.Clear();
         system.Add(AppCatalog.Find("thixclip")!, "0.1.9-20261110");
+        system.Add(AppCatalog.Find("thixfred")!, "0.1.1-20261117");
         AppService.ResetForTests();
         Wait(AppService.RefreshAsync());
     }
@@ -197,9 +201,22 @@ internal static class Snapshot
         window.Width = 1180;
         window.Height = 760;
         Settle(window, waitLonger: true);
+
+        // The library: the installed apps with their covers, "Apps hinzufügen" last; then the same as a list.
+        window.Apps.ShowView(AppsView.Tiles, remember: false);
         window.Apps.Select("thixclip");
-        Settle(window, waitLonger: true);
+        SettlePictures(window);
         Save(window, folder, $"main-apps-{theme}.png", report);
+        window.Apps.ShowView(AppsView.List, remember: false);
+        Settle(window, waitLonger: true);
+        Save(window, folder, $"main-list-{theme}.png", report);
+        window.Apps.ShowView(AppsView.Tiles, remember: false);
+        Settle(window);
+
+        // The store: ThixCalc big (the first app not installed), every app below.
+        window.ShowStore();
+        SettlePictures(window);
+        Save(window, folder, $"main-store-{theme}.png", report);
 
         // The install options of ThixNote (SETUP-08) before its first install; closed again without installing.
         var asking = AppActions.RunAsync(AppAction.Install, AppService.Get("thixnote"), window);
@@ -211,21 +228,27 @@ internal static class Snapshot
         Wait(asking);
         Settle(window);
 
-        // ThixNote while it installs: the progress of the download in its row.
+        // ThixNote while it installs, big in the store.
         system.Hold = new TaskCompletionSource();
         var installing = AppService.InstallAsync("thixnote");
-        Settle(window, waitLonger: true);
-        window.Apps.Select("thixnote");
-        Settle(window, waitLonger: true);
+        window.Store.ShowHero("thixnote");
+        SettlePictures(window);
         Save(window, folder, $"main-installing-{theme}.png", report);
         system.Hold.TrySetResult();
         Wait(installing);
         system.Hold = null;
         Settle(window);
+        window.Store.ShowHero("thixcalc");
 
+        // The page of ThixClip opened from the store: its pictures, then its changes on GitHub.
         window.ShowDetails("thixclip");
-        Settle(window, waitLonger: true);
+        SettlePictures(window);
         Save(window, folder, $"main-detail-{theme}.png", report);
+        window.Detail.SelectChangesTab();
+        Settle(window, waitLonger: true);
+        window.Detail.Tabs.BringIntoView();
+        Settle(window, waitLonger: true);
+        Save(window, folder, $"main-detail-changes-{theme}.png", report);
 
         window.ShowSettings(Pages.SettingsPage.AppsTab);
         Settle(window);
@@ -255,7 +278,7 @@ internal static class Snapshot
         Settle(window);
         Save(window, folder, $"main-about-{theme}.png", report);
 
-        window.ShowApps(AppFilter.All, "thixclip");
+        window.ShowApps(AppFilter.Installed, "thixclip");
         window.ToggleSidebar();
         Settle(window, waitLonger: true);
         Save(window, folder, $"main-folded-{theme}.png", report);
@@ -311,6 +334,18 @@ internal static class Snapshot
         task.GetAwaiter().GetResult();
     }
 
+    /// <summary>Settles until every picture of the store on the window is shown (they load and decode in the background), at most 5 s.</summary>
+    private static void SettlePictures(Window window)
+    {
+        var until = DateTime.UtcNow.AddSeconds(5);
+        do
+        {
+            Settle(window, waitLonger: true);
+        }
+        while (DateTime.UtcNow < until && window.GetVisualDescendants().OfType<Controls.AppPicture>()
+                   .Any(picture => picture.IsEffectivelyVisible && picture.Picture is not null && !picture.HasPicture));
+    }
+
     /// <summary>Lets the dispatcher, the layout and the render timer run; longer for images and animations.</summary>
     private static void Settle(TopLevel topLevel, bool waitLonger = false)
     {
@@ -334,7 +369,7 @@ internal static class Snapshot
     }
 
     /// <summary>Pins clock, version and computer name, and puts GitHub, the computer, policies and autostart in memory.</summary>
-    private static IDisposable Isolate(SampleAppSystem system)
+    private static IDisposable Isolate(SampleAppSystem system, string folder)
     {
         AppClock.Pin(Moment);
         AppInfo.Pin(Version, Channel, buildNumber: 0, MachineName);
@@ -343,6 +378,7 @@ internal static class Snapshot
         AppSystem.UseForTests(system);
         var github = SampleGitHub.WithSampleReleases();
         github.PublishedAt = Moment.AddDays(-1);
+        github.Pictures = PicturesNextTo(folder);
         ReleaseFeed.HandlerForTests = github;
         var cloud = new SampleCloud();
         CloudService.HandlerForTests = () => cloud;
@@ -365,6 +401,28 @@ internal static class Snapshot
             AppInfo.Pin(null);
             AppClock.Pin(null);
         });
+    }
+
+    /// <summary>
+    /// The pictures of the store for the snapshots: the real ones of an app when its repository lies in a folder above
+    /// <paramref name="folder"/> (…/Development/ThixClip/docs/images), else a plain sample picture for each light one of the catalog.
+    /// </summary>
+    private static Func<ThixApp, string, byte[]?> PicturesNextTo(string folder)
+    {
+        return (app, file) =>
+        {
+            var repository = app.Repository.Split('/')[^1];
+            for (var directory = new DirectoryInfo(folder); directory is not null; directory = directory.Parent)
+            {
+                var path = Path.Combine(directory.FullName, repository, "docs", "images", file);
+                if (File.Exists(path))
+                {
+                    return File.ReadAllBytes(path);
+                }
+            }
+
+            return app.Screenshots.Any(picture => picture.File == file) ? SamplePicture.Png(app.Id + file) : null;
+        };
     }
 
     private sealed class Restore(Action restore) : IDisposable

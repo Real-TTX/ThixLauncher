@@ -1,5 +1,9 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
+using Avalonia.Media;
+using MatDesktop;
 using ThixLauncher.Controls;
 using ThixLauncher.Core.Business;
 using ThixLauncher.Core.Models;
@@ -7,22 +11,26 @@ using ThixLauncher.Core.Models;
 namespace ThixLauncher.Pages;
 
 /// <summary>
-/// The page of one app: what it is, what is installed and what the channel offers, where it lives and how its package is
-/// checked, with every action. It follows the state of the app while it is shown (an installation from the list or the
-/// tray shows here too).
+/// The page of one app, like a store: what it is, its pictures from GitHub (<see cref="StoreService.PictureAsync"/>: one big, the
+/// others to choose), its newest changes on GitHub (<see cref="StoreService.ChangesAsync"/>), what is installed and what the channel
+/// offers, where it lives and how its package is checked, with every action. It follows the state of the app while it is shown
+/// (an installation from the store or the tray shows here too).
 /// </summary>
 public partial class AppDetailPage : UserControl
 {
     private bool _refreshPosted;
+    private int _changesLoad;
+    private string? _changesOf;
 
     public AppDetailPage()
     {
         InitializeComponent();
+        BigPicture.Stretch = Stretch.Uniform;
         AppService.Changed += (_, _) => PostRefresh();
         SettingsService.Changed += (_, _) => PostRefresh();
     }
 
-    /// <summary>"Zurück" (Esc): back to the list.</summary>
+    /// <summary>"Zurück" (Esc): back to where the page was opened (the store or the library).</summary>
     public event EventHandler? BackRequested;
 
     /// <summary>The app shown (null: none yet).</summary>
@@ -30,13 +38,139 @@ public partial class AppDetailPage : UserControl
 
     public AppStatus? Status => AppId is null ? null : AppService.Get(AppId);
 
-    /// <summary>Shows the app with the overview in front.</summary>
+    /// <summary>The words of the link back ("Store", "Bibliothek").</summary>
+    public string BackText
+    {
+        get => BackLinkLabel.Text;
+        set => BackLinkLabel.Text = value;
+    }
+
+    /// <summary>The small pictures under the big one (tests).</summary>
+    public IReadOnlyList<Button> ThumbnailButtons => Thumbnails.Children.OfType<Button>().ToList();
+
+    /// <summary>The changes shown, their first lines (tests).</summary>
+    public IReadOnlyList<string> ChangeTitles { get; private set; } = [];
+
+    /// <summary>Shows the app with the overview in front and its first picture big; reads its changes from GitHub.</summary>
     public void Show(string appId)
     {
         AppId = appId;
         PageMessage.Hide();
         Tabs.SelectedItem = OverviewTab;
+        Scroller.Offset = default;
+        ShowGallery(AppService.Get(appId).App);
         Refresh();
+        _ = LoadChangesAsync(AppService.Get(appId).App);
+    }
+
+    /// <summary>Shows the picture at <paramref name="index"/> big and marks its small one.</summary>
+    public void ShowPicture(int index)
+    {
+        if (Status is not { } status || index < 0 || index >= status.App.Screenshots.Count)
+        {
+            return;
+        }
+
+        var picture = status.App.Screenshots[index];
+        BigPicture.Show(status.App, picture);
+        CaptionText.Text = $"{picture.Caption}  ·  Bild {index + 1} von {status.App.Screenshots.Count}";
+        foreach (var (button, position) in ThumbnailButtons.Select((button, position) => (button, position)))
+        {
+            button.Classes.Set("current", position == index);
+        }
+    }
+
+    public void SelectChangesTab() => Tabs.SelectedItem = ChangesTab;
+
+    /// <summary>The big picture and a small button per picture; no pictures – no gallery.</summary>
+    private void ShowGallery(ThixApp app)
+    {
+        Thumbnails.Children.Clear();
+        Gallery.IsVisible = app.Screenshots.Count > 0;
+        for (var index = 0; index < app.Screenshots.Count; index++)
+        {
+            var picture = app.Screenshots[index];
+            var thumbnail = new AppPicture { Width = 156, Height = 96, DecodeWidth = 320, LogoSize = 32 };
+            thumbnail.Show(app, picture);
+            var button = new Button { Content = thumbnail, Tag = index };
+            button.Classes.Add("thumbnail");
+            ToolTip.SetTip(button, picture.Caption);
+            Avalonia.Automation.AutomationProperties.SetName(button, $"Bild {index + 1}: {picture.Caption}");
+            button.Click += (_, _) => ShowPicture((int)button.Tag!);
+            Thumbnails.Children.Add(button);
+        }
+
+        if (app.Screenshots.Count > 0)
+        {
+            ShowPicture(0);
+        }
+        else
+        {
+            BigPicture.Show(app, null);
+        }
+    }
+
+    /// <summary>The newest commits of the app's repository (the branch of the channel), in the tab "Änderungen".</summary>
+    private async Task LoadChangesAsync(ThixApp app)
+    {
+        var load = ++_changesLoad;
+        if (_changesOf != app.Id)
+        {
+            ChangeTitles = [];
+            ChangesList.Children.Clear();
+        }
+
+        _changesOf = app.Id;
+        ChangesIntro.Text = $"Die neuesten Änderungen im Projekt {app.Repository} auf GitHub (Branch {StoreService.ChangesBranch}, Kanal {AppService.ChannelName}) – werden gelesen …";
+        ChangesCard.IsVisible = ChangesList.Children.Count > 0;
+        try
+        {
+            var changes = await StoreService.ChangesAsync(app);
+            if (load != _changesLoad)
+            {
+                return;
+            }
+
+            ChangesIntro.Text = changes.Count == 0
+                ? $"Im Projekt {app.Repository} gibt es noch keine Änderungen auf GitHub."
+                : $"Die neuesten Änderungen im Projekt {app.Repository} auf GitHub (Branch {StoreService.ChangesBranch}, Kanal {AppService.ChannelName}).";
+            ChangeTitles = changes.Select(change => change.Title).ToList();
+            ChangesList.Children.Clear();
+            foreach (var change in changes)
+            {
+                ChangesList.Children.Add(ChangeRow(change));
+            }
+
+            ChangesCard.IsVisible = changes.Count > 0;
+        }
+        catch (BusinessException exception)
+        {
+            if (load == _changesLoad)
+            {
+                ChangesIntro.Text = exception.Message;
+            }
+        }
+    }
+
+    /// <summary>One change: the day, the first line of the commit, a click opens it on GitHub.</summary>
+    private static Button ChangeRow(AppChange change)
+    {
+        var day = new TextBlock { Text = Ui.FormatDate(change.Date), Width = 96, VerticalAlignment = VerticalAlignment.Top }
+            .Use(TextBlock.ForegroundProperty, "Mat.TextMuted");
+        var title = new TextBlock { Text = change.Title, TextWrapping = TextWrapping.Wrap };
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), Children = { day, title } };
+        Grid.SetColumn(title, 1);
+        var button = new Button
+        {
+            Content = row,
+            Theme = Ui.Theme("MatButton.Ghost"),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            Padding = new Thickness(8, 6),
+        };
+        ToolTip.SetTip(button, "Auf GitHub öffnen");
+        button.Click += (_, _) => Ui.OpenExternal(change.Url);
+        return button;
     }
 
     public void SelectDetailsTab() => Tabs.SelectedItem = DetailsTab;
@@ -148,4 +282,12 @@ public partial class AppDetailPage : UserControl
     }
 
     private void OnBackClick(object? sender, RoutedEventArgs e) => BackRequested?.Invoke(this, EventArgs.Empty);
+
+    private void OnAllChangesClick(object? sender, RoutedEventArgs e)
+    {
+        if (Status is { } status)
+        {
+            Ui.OpenExternal(StoreService.ChangesPage(status.App));
+        }
+    }
 }

@@ -35,14 +35,23 @@ public sealed class UiTests
     private static RawInputModifiers RawCommand => OperatingSystem.IsMacOS() ? RawInputModifiers.Meta : RawInputModifiers.Control;
 
     [AvaloniaFact]
-    public async Task The_list_shows_every_app_with_its_state_and_action()
+    public async Task The_store_shows_every_app_and_the_library_the_installed_ones()
     {
         using var data = new TestData();
         data.System.Add(AppCatalog.Find("thixclip")!, "0.1.9-20261110");
         await AppService.RefreshAsync();
         var window = Open();
 
-        var rows = window.Apps.Rows;
+        // the library is the start page: the installed apps, "Apps hinzufügen" last
+        Assert.Same(window.Apps, window.PageHost.Content);
+        Assert.Equal(["ThixClip"], window.Apps.Cards.Select(card => card.App.Name));
+        Assert.True(window.Apps.ShowsAddCard);
+        Assert.StartsWith("1 App installiert · 1 Update · Kanal Release · geprüft Heute, ", window.Apps.SubtitleText.Text);
+
+        // the store: every app with its state and action
+        window.ShowStore();
+        Settle(window);
+        var rows = window.Store.Cards;
         Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixFred", "ThixNote", "ThixShow", "ThixTunnel", "ThixWrite"], rows.Select(row => row.App.Name));
         var clip = rows[2];
         Assert.Equal("Aktualisieren", clip.ActionText);
@@ -56,18 +65,18 @@ public sealed class UiTests
         window.QuickLaunchButtons[0].RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Assert.Equal(["thixclip"], data.System.Launched);
 
-        // the menu counts the updates
-        Assert.StartsWith("8 Apps · 1 installiert · 1 Update · Kanal Release · geprüft Heute, ", window.Apps.SubtitleText.Text);
+        Assert.StartsWith("8 Thix-Apps · 7 noch nicht installiert", window.Store.SubtitleText.Text);
         window.Close();
     }
 
     [AvaloniaFact]
-    public async Task Installing_from_the_row_updates_the_row_and_the_title_bar()
+    public async Task Installing_from_the_store_updates_the_tile_the_library_and_the_title_bar()
     {
         using var data = new TestData();
         await AppService.RefreshAsync();
         var window = Open();
-        var note = window.Apps.Rows.Single(row => row.App.Id == "thixnote");
+        Assert.Empty(window.Apps.Cards);
+        var note = window.Store.Cards.Single(row => row.App.Id == "thixnote");
 
         // ThixNote offers install options (SETUP-08): they are asked first, set to its defaults
         var install = AppActions.RunAsync(AppAction.Install, note.Status!, window);
@@ -89,6 +98,7 @@ public sealed class UiTests
         Assert.Equal("Öffnen", note.ActionText);
         Assert.Equal("Installiert", note.Badge.Text);
         Assert.Single(window.QuickLaunchButtons);
+        Assert.Equal(["ThixNote"], window.Apps.Cards.Select(card => card.App.Name));
         window.Close();
     }
 
@@ -117,27 +127,29 @@ public sealed class UiTests
     }
 
     [AvaloniaFact]
-    public async Task Keyboard_filters_opens_details_and_goes_back()
+    public async Task Keyboard_goes_through_library_store_and_updates_opens_pages_and_goes_back()
     {
         using var data = new TestData();
         data.System.Add(AppCatalog.Find("thixnote")!, "1.1.1-20261116");
         await AppService.RefreshAsync();
         var window = Open();
 
-        // Ctrl/Cmd+2: the installed apps only
-        window.KeyPressQwerty(PhysicalKey.Digit2, RawCommand);
+        // Ctrl/Cmd+1: the library, the installed apps only
+        window.KeyPressQwerty(PhysicalKey.Digit1, RawCommand);
         Settle(window);
         Assert.Equal(AppFilter.Installed, window.Apps.Filter);
-        Assert.Equal(["ThixNote"], window.Apps.Rows.Select(row => row.App.Name));
-        Assert.Equal("Installierte Apps", window.Apps.TitleText.Text);
+        Assert.Equal(["ThixNote"], window.Apps.Cards.Select(row => row.App.Name));
+        Assert.Equal("Bibliothek", window.Apps.TitleText.Text);
 
-        // Enter on the list: the page of the chosen app; Esc: back to the list with the app still chosen
+        // Enter on the library: the page of the chosen app ("Bibliothek" back); Esc: back with the app still chosen
+        window.Apps.Select("thixnote");
         window.Apps.FocusList();
         window.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
         Settle(window);
         var detail = Assert.IsType<AppDetailPage>(window.PageHost.Content);
         Assert.Equal("thixnote", detail.AppId);
         Assert.Equal("ThixNote", detail.NameText.Text);
+        Assert.Equal("Bibliothek", detail.BackText);
         Assert.Equal("1.1.1-20261116", detail.InstalledText.Text);
         Assert.True(detail.UninstallButton.IsVisible);
 
@@ -146,14 +158,137 @@ public sealed class UiTests
         Assert.Same(window.Apps, window.PageHost.Content);
         Assert.Equal("thixnote", window.Apps.Selected?.App.Id);
 
-        // Ctrl/Cmd+F: the search, typing filters at once
+        // Ctrl/Cmd+3: the updates – none
+        window.KeyPressQwerty(PhysicalKey.Digit3, RawCommand);
+        Settle(window);
+        Assert.Equal("Updates", window.Apps.TitleText.Text);
+        Assert.Empty(window.Apps.Cards);
+        Assert.False(window.Apps.ShowsAddCard);
+
+        // Ctrl/Cmd+2: the store; Enter on a tile opens its page ("Store" back), Esc goes back to the store
+        window.KeyPressQwerty(PhysicalKey.Digit2, RawCommand);
+        Settle(window);
+        Assert.Same(window.Store, window.PageHost.Content);
+        window.Store.Select("thixclip");
+        window.Store.FocusList();
+        window.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+        Settle(window);
+        Assert.Equal("thixclip", Assert.IsType<AppDetailPage>(window.PageHost.Content).AppId);
+        Assert.Equal("Store", window.Detail.BackText);
+        window.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
+        Settle(window);
+        Assert.Same(window.Store, window.PageHost.Content);
+
+        // Ctrl/Cmd+F in the store searches every app; in the library only the installed ones
+        window.KeyPressQwerty(PhysicalKey.F, RawCommand);
+        Settle(window);
+        window.KeyTextInput("clip");
+        Settle(window);
+        Assert.Equal(["ThixClip"], window.Store.Cards.Select(row => row.App.Name));
+        Assert.Null(window.Store.HeroAppId);
+
         window.KeyPressQwerty(PhysicalKey.Digit1, RawCommand);
         window.KeyPressQwerty(PhysicalKey.F, RawCommand);
         Settle(window);
         window.KeyTextInput("clip");
         Settle(window);
-        Assert.Equal(["ThixClip"], window.Apps.Rows.Select(row => row.App.Name));
+        Assert.Empty(window.Apps.Cards);
+        Assert.Contains("im Store gibt es alle Apps", window.Apps.EmptyText.Text);
         window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task The_add_tile_of_the_library_opens_the_store()
+    {
+        using var data = new TestData();
+        await AppService.RefreshAsync();
+        var window = Open();
+
+        // nothing installed yet: the library is only the add tile
+        Assert.Empty(window.Apps.Cards);
+        Assert.True(window.Apps.ShowsAddCard);
+        window.Apps.AppList.SelectedItem = window.Apps.AddCard;
+        Settle(window);
+        Assert.False(window.Apps.Actions.IsVisible);
+        window.Apps.AppList.ContainerFromItem(window.Apps.AddCard)!.Focus();
+        window.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+        Settle(window);
+        Assert.Same(window.Store, window.PageHost.Content);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task The_store_shows_one_app_big_and_the_page_of_an_app_its_pictures_and_changes_from_GitHub()
+    {
+        using var data = new TestData();
+        data.System.Add(AppCatalog.Find("thixcalc")!, "0.1.1-20261119");
+        await AppService.RefreshAsync();
+        var window = Open();
+        window.ShowStore();
+        Settle(window);
+
+        // the first app not installed is big; ‹ › go round the catalog
+        Assert.Equal("thixcalendar", window.Store.HeroAppId);
+        window.Store.MoveHero(1);
+        Assert.Equal("thixclip", window.Store.HeroAppId);
+        window.Store.MoveHero(-3);
+        Assert.Equal("thixwrite", window.Store.HeroAppId);
+
+        // every tile gets its cover from the app's repository
+        var clip = window.Store.Cards.Single(card => card.App.Id == "thixclip");
+        await WaitUntil(window, () => clip.Cover.HasPicture);
+        Assert.Contains("https://raw.githubusercontent.com/Real-TTX/ThixClip/main/docs/images/main-history-light.png", data.GitHub.Requests);
+
+        // the page of an app: a small picture per screenshot, a click shows it big; the changes of its repository
+        window.ShowDetails("thixclip");
+        Settle(window);
+        var detail = window.Detail;
+        Assert.Equal(AppCatalog.Find("thixclip")!.Screenshots.Count, detail.ThumbnailButtons.Count);
+        await WaitUntil(window, () => detail.BigPicture.HasPicture);
+        Assert.Equal("main-history-light.png", detail.BigPicture.Picture?.File);
+        detail.ThumbnailButtons[2].RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+        Assert.Equal(AppCatalog.Find("thixclip")!.Screenshots[2], detail.BigPicture.Picture);
+        Assert.Contains("Bild 3 von 4", detail.CaptionText.Text);
+        Assert.Contains("current", detail.ThumbnailButtons[2].Classes);
+
+        await WaitUntil(window, () => detail.ChangeTitles.Count > 0);
+        Assert.Equal(data.GitHub.Commits.Select(commit => commit.Message.Split('\n')[0]), detail.ChangeTitles);
+        Assert.Contains("https://github.com/Real-TTX/ThixClip/commits/main.atom", data.GitHub.Requests);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task The_apps_switch_between_tiles_and_list_and_the_choice_stays()
+    {
+        using var data = new TestData();
+        data.System.Add(AppCatalog.Find("thixclip")!, "0.1.9-20261110");
+        await AppService.RefreshAsync();
+        var window = Open();
+
+        // tiles first, like a launcher; a tile names the versions short
+        Assert.Equal(AppsView.Tiles, window.Apps.View);
+        Assert.All(window.Apps.Cards, card => Assert.Equal(AppsView.Tiles, card.View));
+        Assert.Equal("0.1.9 → 0.1.12", Ui.ShortVersionLine(AppService.Get("thixclip")));
+        Assert.True(window.Apps.Select("thixclip"));
+
+        window.Apps.ListButton.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+        Assert.Equal(AppsView.List, window.Apps.View);
+        Assert.All(window.Apps.Cards, card => Assert.Equal(AppsView.List, card.View));
+        Assert.Equal(AppsView.List, window.Apps.AddCard.View);
+        Assert.Single(window.Apps.Cards);
+        Assert.Equal("thixclip", window.Apps.Selected?.App.Id);
+        Assert.Equal(AppsView.List, SettingsService.Get().AppsView);
+        window.Close();
+
+        // the next window opens with the list
+        var again = Open();
+        Assert.Equal(AppsView.List, again.Apps.View);
+        again.Apps.TilesButton.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Settle(again);
+        Assert.Equal(AppsView.Tiles, SettingsService.Get().AppsView);
+        again.Close();
     }
 
     [AvaloniaFact]
@@ -182,7 +317,7 @@ public sealed class UiTests
         await AppService.RefreshAsync();
         var window = Open();
 
-        var rows = window.Apps.Rows;
+        var rows = window.Store.Cards;
         Assert.Equal("Öffnen", rows.Single(row => row.App.Id == "thixclip").ActionText);
         Assert.Null(rows.Single(row => row.App.Id == "thixnote").MainAction.Action);
         window.Apps.Select("thixclip");

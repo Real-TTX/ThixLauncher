@@ -15,6 +15,12 @@ public sealed record AppRelease(
     string ReleasePage,
     InstallerConfig? Installer = null);
 
+/// <summary>A picture of an app in its repository (<see cref="ThixApp.Screenshots"/>): the file in docs/images and what it shows.</summary>
+public sealed record AppScreenshot(string File, string Caption);
+
+/// <summary>A change of an app on GitHub (a commit of the branch of the channel): its first line, when, and its page.</summary>
+public sealed record AppChange(string Title, DateTimeOffset Date, string Url);
+
 /// <summary>An installation the launcher found on this computer (installed by the launcher or by hand).</summary>
 public sealed record InstalledApp(
     string? VersionText,

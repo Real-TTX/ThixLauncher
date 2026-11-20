@@ -10,7 +10,8 @@ namespace ThixLauncher.Core.Infrastructure;
 /// <summary>
 /// GitHub in memory, for the tests, the self test and the snapshots (<see cref="ReleaseFeed.HandlerForTests"/>): it answers
 /// the manifests of the rolling channels (every app of the catalog and ThixLauncher), the release list of the GitHub API (an app
-/// with <see cref="FeedKind.GitHubReleases"/>) and the downloads, with the versions set in <see cref="Versions"/>. A package is a small text whose SHA-256 the feeds declare,
+/// with <see cref="FeedKind.GitHubReleases"/>), the downloads, the pictures of the store (raw.githubusercontent.com, with ETag) and
+/// the commit feeds (github.com/…/commits/&lt;branch&gt;.atom), with the versions set in <see cref="Versions"/>. A package is a small text whose SHA-256 the feeds declare,
 /// so the whole way – feed, download, checksum, install – runs as it does with the real GitHub. Never used by the real app.
 /// Several apps may publish from one repository (ThixOffice): the manifest's file name and the package's file name say which app is meant.
 /// </summary>
@@ -52,6 +53,20 @@ internal sealed class SampleGitHub(IReadOnlyList<ThixApp>? apps = null) : HttpMe
 
     /// <summary>Every URL asked for, in order.</summary>
     public List<string> Requests { get; } = [];
+
+    /// <summary>
+    /// The pictures of the store: (app, file in docs/images) → the PNG, null = none (404). Not set: a plain sample picture
+    /// (<see cref="SamplePicture"/>) for every light picture of the catalog, no dark ones.
+    /// </summary>
+    public Func<ThixApp, string, byte[]?>? Pictures { get; set; }
+
+    /// <summary>The commits every repository's feed lists (newest first): the message and how many hours before <see cref="PublishedAt"/>.</summary>
+    public List<(string Message, int HoursBefore)> Commits { get; } =
+    [
+        ("Install options (SETUP-08): the setup asks for the desktop shortcut, autostart and file types\n\nThe launcher passes them on.", 2),
+        ("Settings: the window remembers its size", 26),
+        ("Fix: the tray icon shows waiting updates again", 50),
+    ];
 
     /// <summary>The block "installer" of an app's manifests (SETUP-08); an app without one publishes manifests without it (an older build).</summary>
     public Dictionary<string, InstallerConfig> Installers { get; } = new(StringComparer.OrdinalIgnoreCase);
@@ -119,12 +134,26 @@ internal sealed class SampleGitHub(IReadOnlyList<ThixApp>? apps = null) : HttpMe
             return Task.FromResult(new HttpResponseMessage(status));
         }
 
-        return Task.FromResult(Answer(request.RequestUri!) ?? new HttpResponseMessage(HttpStatusCode.NotFound));
+        return Task.FromResult(Answer(request) ?? new HttpResponseMessage(HttpStatusCode.NotFound));
     }
 
-    private HttpResponseMessage? Answer(Uri uri)
+    private HttpResponseMessage? Answer(HttpRequestMessage request)
     {
+        var uri = request.RequestUri!;
         var path = uri.AbsolutePath.Trim('/').Split('/');
+
+        // raw.githubusercontent.com/<owner>/<repo>/<branch>/docs/images/<file> – a picture of the store
+        if (uri.Host == "raw.githubusercontent.com" && path is [_, var pictureRepo, _, "docs", "images", var picture])
+        {
+            return PictureAnswer(request, AppsOf(pictureRepo), picture);
+        }
+
+        // github.com/<owner>/<repo>/commits/<branch>.atom – the changes
+        if (uri.Host == "github.com" && path is [_, var commitRepo, "commits", var feed] && feed.EndsWith(".atom", StringComparison.Ordinal) &&
+            AppsOf(commitRepo) is [var commitApp, ..])
+        {
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(CommitFeed(commitApp), Encoding.UTF8, "application/atom+xml") };
+        }
 
         // api.github.com/repos/<owner>/<repo>/releases – only a repository of one app publishes single releases
         if (uri.Host == "api.github.com" && path is ["repos", _, var repoName, "releases"] && AppsOf(repoName) is [var listApp])
@@ -232,6 +261,61 @@ internal sealed class SampleGitHub(IReadOnlyList<ThixApp>? apps = null) : HttpMe
         }
 
         return [.. releases];
+    }
+
+    private HttpResponseMessage? PictureAnswer(HttpRequestMessage request, List<ThixApp> apps, string file)
+    {
+        byte[]? bytes = null;
+        foreach (var app in apps)
+        {
+            bytes ??= Pictures is { } pictures
+                ? pictures(app, file)
+                : app.Screenshots.Any(picture => picture.File == file) ? SamplePicture.Png(app.Id + file) : null;
+        }
+
+        if (bytes is null)
+        {
+            return null;
+        }
+
+        var etag = $"\"{Convert.ToHexString(SHA256.HashData(bytes))[..16]}\"";
+        if (request.Headers.IfNoneMatch.Any(tag => tag.Tag == etag))
+        {
+            return new HttpResponseMessage(HttpStatusCode.NotModified);
+        }
+
+        var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(bytes) };
+        response.Headers.ETag = new System.Net.Http.Headers.EntityTagHeaderValue(etag);
+        return response;
+    }
+
+    /// <summary>A commit feed like GitHub's: the title cut, the whole message as HTML in the content.</summary>
+    private string CommitFeed(ThixApp app)
+    {
+        var entries = Commits.Select((commit, index) =>
+        {
+            var sha = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(app.Repository + index))).ToLowerInvariant()[..40];
+            var title = commit.Message.Split('\n')[0];
+            var html = System.Net.WebUtility.HtmlEncode($"<pre style='white-space:pre-wrap'>{System.Net.WebUtility.HtmlEncode(commit.Message)}</pre>");
+            return $"""
+                      <entry>
+                        <id>tag:github.com,2008:Grit::Commit/{sha}</id>
+                        <link type="text/html" rel="alternate" href="https://github.com/{app.Repository}/commit/{sha}"/>
+                        <title>
+                            {System.Net.WebUtility.HtmlEncode(title.Length > 70 ? title[..69] + "…" : title)}
+                        </title>
+                        <updated>{PublishedAt.AddHours(-commit.HoursBefore).UtcDateTime:yyyy-MM-ddTHH:mm:ssZ}</updated>
+                        <content type="html">{html}</content>
+                      </entry>
+                    """;
+        });
+        return $"""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en-US">
+                  <title>Recent Commits</title>
+                {string.Join("\n", entries)}
+                </feed>
+                """;
     }
 
     private string Sha(string appId, string version) =>

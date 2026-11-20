@@ -1,0 +1,46 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!--
+    The tiles of the library and the store (AppCard as a tile, AddAppsCard): the look of the tile itself and of the band on
+    top (the cover picture of the app, or its logo). Included by every page that shows tiles.
+  -->
+  <Styles.Resources>
+    <!-- A tile: a card of fixed size side by side with the others; the band of the card is clipped to its corners. -->
+    <ControlTheme x:Key="AppTile" TargetType="ListBoxItem" BasedOn="{StaticResource MatCardRow}">
+      <Setter Property="Width" Value="264" />
+      <Setter Property="Height" Value="318" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Margin" Value="0,0,16,16" />
+      <Style Selector="^ /template/ Border#Frame">
+        <Setter Property="ClipToBounds" Value="True" />
+      </Style>
+    </ControlTheme>
+  </Styles.Resources>
+
+  <!-- The band behind the cover or logo of a tile follows the state of the tile (pointer, chosen), like the card itself. -->
+  <Style Selector="Border.app-band">
+    <Setter Property="Background" Value="{DynamicResource Mat.Surface2}" />
+  </Style>
+  <Style Selector="ListBoxItem:pointerover Border.app-band">
+    <Setter Property="Background" Value="{DynamicResource Mat.Surface3}" />
+  </Style>
+  <Style Selector="ListBoxItem:selected Border.app-band">
+    <Setter Property="Background" Value="{DynamicResource Mat.AccentSoftStrong}" />
+  </Style>
+  <Style Selector="Border.cover-shade">
+    <Setter Property="Background" Value="{DynamicResource Mat.Text}" />
+    <Setter Property="Opacity" Value="0" />
+  </Style>
+  <!-- The cover darkens a little under the pointer: the tile is a button to the app's page. -->
+  <Style Selector="ListBoxItem:pointerover Border.app-band > Panel > Border.cover-shade">
+    <Setter Property="Opacity" Value="0.08" />
+  </Style>
+  <!-- The logo on the cover gets a ring in the colour of the page so it stands out from any picture. -->
+  <Style Selector="Border.logo-ring">
+    <Setter Property="Background" Value="{DynamicResource Mat.Surface}" />
+    <Setter Property="CornerRadius" Value="16" />
+    <Setter Property="Padding" Value="3" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Mat.Border}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+</Styles>
