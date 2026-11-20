@@ -6,7 +6,7 @@
   <!--
     The library (the start page, the list page of the installed apps): the title with the compact toolbar beside it (search,
     filter, sort, "Nach Updates suchen", tiles or list; on a narrow page the toolbar moves under the title), the state in one
-    line, then the installed apps as big tiles with their cover from GitHub (or as card rows) and as the last tile "Apps
+    line, then the installed apps as app tiles with their logo big (or as card rows) and as the last tile "Apps
     hinzufügen" (opens the store), and the actions of the chosen app below, left-aligned from positive to negative,
     Deinstallieren after a gap. "Updates" in the menu is this page with the filter "Mit Update".
   -->

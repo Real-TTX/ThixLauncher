@@ -11,10 +11,10 @@ namespace ThixLauncher.Controls;
 /// <summary>
 /// One app of the library or the store, as a tile or as a row (<see cref="ShowView"/>): its logo, the name with its line, the
 /// state as a badge, the version or what is happening right now, and the main action (Öffnen, Installieren, Aktualisieren –
-/// like a store). The tile is a poster: the first picture of the app from GitHub as its cover (<see cref="AppPicture"/>) with
-/// the logo on it – an app without pictures: the logo big on the band (class <c>app-band</c>, the page colours it with the
-/// state of the tile) –, the name under it, the action across the foot. While the app is being changed a progress bar runs
-/// (tile: at the foot of the band, row: under the text).
+/// like a store). The tile of the library is an app tile: the logo big on the band (class <c>app-band</c>, the page colours it
+/// with the state of the tile), name, line and state centred under it, the action across the foot. The tile of the store
+/// (<see cref="ShowsCover"/>) is a poster: the first picture of the app from GitHub as its cover (<see cref="AppPicture"/>) with
+/// the logo on it. While the app is being changed a progress bar runs (tile: at the foot of the band, row: under the text).
 /// The card is built once and shows each new state (<see cref="Show"/>); both layouts use the same parts.
 /// </summary>
 public sealed class AppCard : Decorator
@@ -33,11 +33,12 @@ public sealed class AppCard : Decorator
     private readonly Button _action = new() { VerticalAlignment = VerticalAlignment.Center, MinWidth = 132 };
     private readonly IconLabel _actionLabel = new();
 
-    public AppCard(ThixApp app, AppsView view)
+    public AppCard(ThixApp app, AppsView view, bool showsCover = false)
     {
         App = app;
+        ShowsCover = showsCover && app.Screenshots.Count > 0;
         _logo = new AppLogo { AppId = app.Id, FallbackIcon = app.Icon };
-        _cover.Show(app, app.Screenshots.FirstOrDefault());
+        _cover.Show(app, ShowsCover ? app.Screenshots[0] : null);
         _tagline.Use(TextBlock.ForegroundProperty, "Mat.TextMuted");
         _version.Use(TextBlock.ForegroundProperty, "Mat.TextFaint");
         _progress.Themed("MatProgress");
@@ -61,6 +62,9 @@ public sealed class AppCard : Decorator
     public event EventHandler<AppAction>? ActionRequested;
 
     public ThixApp App { get; }
+
+    /// <summary>The tile shows the app's first picture as its cover (the store); else the logo big (the library).</summary>
+    public bool ShowsCover { get; }
 
     /// <summary>Tile or row.</summary>
     public AppsView View { get; private set; }
@@ -121,15 +125,19 @@ public sealed class AppCard : Decorator
         }
     }
 
-    /// <summary>The tile: the cover with the logo on it (or the logo big on its band), name, line and state, the action across the foot.</summary>
+    /// <summary>
+    /// The tile: the logo big on its band with name, line and state centred (library) or the cover with the logo on it and the
+    /// texts at the left (store); the action across the foot.
+    /// </summary>
     private Grid BuildTile()
     {
-        var hasCover = App.Screenshots.Count > 0;
+        var hasCover = ShowsCover;
+        var alignment = hasCover ? HorizontalAlignment.Left : HorizontalAlignment.Center;
         _logo.Size = hasCover ? CoverLogoSize : TileLogoSize;
         _logo.Margin = default;
         _logo.HorizontalAlignment = HorizontalAlignment.Center;
-        _name.FontSize = MatTokens.Type.FsLg;
-        _name.TextAlignment = _tagline.TextAlignment = _version.TextAlignment = TextAlignment.Left;
+        _name.FontSize = hasCover ? MatTokens.Type.FsLg : MatTokens.Type.FsXl;
+        _name.TextAlignment = _tagline.TextAlignment = _version.TextAlignment = hasCover ? TextAlignment.Left : TextAlignment.Center;
         _name.HorizontalAlignment = _tagline.HorizontalAlignment = HorizontalAlignment.Stretch;
         _version.HorizontalAlignment = HorizontalAlignment.Left;
         _version.VerticalAlignment = VerticalAlignment.Center;
@@ -162,7 +170,7 @@ public sealed class AppCard : Decorator
 
         var band = new Border { Height = 150, CornerRadius = new CornerRadius(radius, radius, 0, 0), ClipToBounds = true, Child = bandContent };
         band.Classes.Add("app-band");
-        var state = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 0), Children = { _badge, _version } };
+        var state = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = alignment, Margin = new Thickness(0, 10, 0, 0), Children = { _badge, _version } };
         var texts = new StackPanel { Margin = new Thickness(16, 12, 16, 10), ClipToBounds = true, Children = { _name, _tagline, state } };
         var tile = new Grid { RowDefinitions = new RowDefinitions("Auto,*,Auto"), Children = { band, texts, _action } };
         Grid.SetColumn(texts, 0);

@@ -81,7 +81,7 @@ Nightlies aus dem Branch `dev` stehen im Pre-Release `nightly-channel`.
 
   ![Installationsoptionen](docs/images/dialog-install-options-light.png)
 - **Entfernen:** mit dem Deinstallationsprogramm der App (das stille, wenn es eines gibt). Die Daten der App bleiben.
-- **Bibliothek** (Startseite): die installierten Apps als große Kacheln mit ihrem Screenshot als Cover (oder als Liste – der
+- **Bibliothek** (Startseite): die installierten Apps als App-Kacheln mit großem Logo (oder als Liste – der
   Schalter neben der Suche, die Wahl bleibt), die letzte Kachel **„Apps hinzufügen“** öffnet den Store. „Updates“ im Menü ist die
   Bibliothek mit den Apps, für die es ein Update gibt.
 - **Store:** eine App groß (zuerst die erste, die noch nicht installiert ist; ‹ › blättert durch alle) und darunter alle Apps als

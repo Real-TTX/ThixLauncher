@@ -102,7 +102,7 @@ src/ThixLauncher        (Avalonia app)
                         opened (store or library); keyboard (OnPreviewKeyDown)
   Pages/                AppsPage = the LIBRARY, the start page (the installed apps; title with the compact toolbar beside it – search /
                         filter "Alle installierten" | "Mit Update" / sort / "Nach Updates suchen" / tiles or list, under the title when
-                        narrow – and the state line; the apps as big tiles with their cover (default) or card rows, remembered via
+                        narrow – and the state line; the apps as app tiles – the logo big, the texts centred – (default) or card rows, remembered via
                         SettingsService.Remember; the last tile AddAppsCard "Apps hinzufügen" opens the store; actions of the chosen app
                         below), StorePage (every app: one big – picture, logo, text, state, main action, "Mehr erfahren", ‹ n / 8 › –, then
                         all as tiles; a click on a tile opens its page, its button acts; search hides the big one), TileStyles.axaml (the

@@ -29,7 +29,7 @@ public partial class StorePage : UserControl
             : throw new InvalidOperationException("The control theme AppTile is missing (Pages/TileStyles.axaml).");
         foreach (var app in AppCatalog.Apps)
         {
-            var card = new AppCard(app, AppsView.Tiles);
+            var card = new AppCard(app, AppsView.Tiles, showsCover: true);
             card.ActionRequested += async (_, action) => await RunAsync(action, card.Status!);
             _cards[app.Id] = card;
         }

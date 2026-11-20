@@ -39,6 +39,8 @@ public sealed class AddAppsCard : Decorator
                 Child = Plus(64, 30),
             };
             band.Classes.Add("app-band");
+            title.HorizontalAlignment = HorizontalAlignment.Center;
+            line.TextAlignment = TextAlignment.Center;
             var texts = new StackPanel { Margin = new Thickness(16, 12, 16, 10), Spacing = 4, Children = { title, line } };
             var grid = new Grid { RowDefinitions = new RowDefinitions("Auto,*"), Children = { band, texts } };
             Grid.SetRow(texts, 1);

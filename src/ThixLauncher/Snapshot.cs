@@ -202,7 +202,7 @@ internal static class Snapshot
         window.Height = 760;
         Settle(window, waitLonger: true);
 
-        // The library: the installed apps with their covers, "Apps hinzufügen" last; then the same as a list.
+        // The library: the installed apps as app tiles, "Apps hinzufügen" last; then the same as a list.
         window.Apps.ShowView(AppsView.Tiles, remember: false);
         window.Apps.Select("thixclip");
         SettlePictures(window);

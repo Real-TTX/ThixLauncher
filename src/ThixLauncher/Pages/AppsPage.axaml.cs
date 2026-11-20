@@ -11,7 +11,7 @@ using ThixLauncher.Core.Models;
 namespace ThixLauncher.Pages;
 
 /// <summary>
-/// The library: the installed apps, as tiles (a launcher, with their covers) or as a list (<see cref="View"/>, remembered in the
+/// The library: the installed apps, as app tiles (the logo big) or as a list (<see cref="View"/>, remembered in the
 /// settings), the last tile "Apps hinzufügen" opens the store (<see cref="StoreRequested"/>). The toolbar beside the title (search,
 /// filter "Alle installierten" / "Mit Update", sort) asks <see cref="AppService.Query"/>; every card is built once and shows each
 /// new state (a running installation updates its card many times a second without rebuilding the list). Enter or a double click
