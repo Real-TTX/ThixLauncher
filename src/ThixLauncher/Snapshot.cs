@@ -414,7 +414,7 @@ internal static class Snapshot
             var repository = app.Repository.Split('/')[^1];
             for (var directory = new DirectoryInfo(folder); directory is not null; directory = directory.Parent)
             {
-                var path = Path.Combine(directory.FullName, repository, "docs", "images", file);
+                var path = Path.Combine(directory.FullName, repository, app.ScreenshotFolder, file);
                 if (File.Exists(path))
                 {
                     return File.ReadAllBytes(path);

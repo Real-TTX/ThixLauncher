@@ -140,12 +140,20 @@ internal static class ReleaseFeed
     }
 
     /// <summary>A file name the launcher writes to disk and runs: no folders, no tricks.</summary>
-    internal static bool IsSafeFileName(string fileName) =>
+    internal static bool IsSafeFileName(string fileName, bool allowMsi = false) =>
         fileName.Length is > 0 and < 200 &&
         (fileName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ||
-         fileName.EndsWith(".dmg", StringComparison.OrdinalIgnoreCase)) &&
+         fileName.EndsWith(".dmg", StringComparison.OrdinalIgnoreCase) ||
+         allowMsi && fileName.EndsWith(".msi", StringComparison.OrdinalIgnoreCase)) &&
         fileName.IndexOfAny(Path.GetInvalidFileNameChars()) < 0 && !fileName.Contains("..", StringComparison.Ordinal) &&
         !fileName.Contains('/') && !fileName.Contains('\\');
+
+    internal static bool IsAppPackageFileName(ThixApp app, string platformKey, string fileName)
+    {
+        var usesMsi = app.WindowsMsiUpgradeCode.HasValue && platformKey.StartsWith("win-", StringComparison.Ordinal);
+        return IsSafeFileName(fileName, allowMsi: usesMsi) &&
+               (!usesMsi || fileName.EndsWith(".msi", StringComparison.OrdinalIgnoreCase));
+    }
 
     private static async Task<AppRelease?> FromManifestAsync(ThixApp app, string channel, string platformKey, CancellationToken cancellationToken)
     {
@@ -157,7 +165,7 @@ internal static class ReleaseFeed
 
         var package = manifest.PackageFor(platformKey);
         var version = AppVersion.Parse(manifest.Version);
-        if (package is null || version is null || !IsSafeFileName(package.File))
+        if (package is null || version is null || !IsAppPackageFileName(app, platformKey, package.File))
         {
             return null;
         }
@@ -166,7 +174,8 @@ internal static class ReleaseFeed
         version = version with { BuildNumber = manifest.BuildNumber > 0 ? manifest.BuildNumber : version.BuildNumber };
         var tag = $"{channel}-channel";
         return new AppRelease(app.Id, version, package.File, $"https://github.com/{app.Repository}/releases/download/{tag}/{package.File}",
-            package.Sha256, null, manifest.PublishedAt, $"https://github.com/{app.Repository}/releases/tag/{tag}", manifest.Installer);
+            package.Sha256, null, manifest.PublishedAt, $"https://github.com/{app.Repository}/releases/tag/{tag}",
+            package.File.EndsWith(".msi", StringComparison.OrdinalIgnoreCase) ? null : manifest.Installer);
     }
 
     private static async Task<AppRelease?> FromReleaseListAsync(ThixApp app, string channel, string platformKey, CancellationToken cancellationToken)
@@ -201,7 +210,7 @@ internal static class ReleaseFeed
             foreach (var asset in release.GetProperty("assets").EnumerateArray())
             {
                 var name = asset.GetProperty("name").GetString() ?? "";
-                if (!packagePattern.IsMatch(name) || !IsSafeFileName(name))
+                if (!packagePattern.IsMatch(name) || !IsAppPackageFileName(app, platformKey, name))
                 {
                     continue;
                 }

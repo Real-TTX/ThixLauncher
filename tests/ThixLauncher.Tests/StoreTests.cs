@@ -56,6 +56,22 @@ public sealed class StoreTests
     }
 
     [Fact]
+    public async Task ThixShot_uses_its_published_pictures_in_both_themes()
+    {
+        using var data = new TestData();
+        var shot = AppCatalog.Find("thixshot")!;
+        Assert.Equal(["aufnahmestudio.png", "videoeditor.png", "bereitschaft.png"], shot.Screenshots.Select(picture => picture.File));
+        foreach (var picture in shot.Screenshots)
+        {
+            Assert.Equal(picture.File, StoreService.DarkFileOf(picture.File));
+            var dark = await StoreService.PictureAsync(shot, picture, dark: true);
+            Assert.Equal(picture.File, Path.GetFileName(dark));
+            Assert.Equal(dark, await StoreService.PictureAsync(shot, picture, dark: false));
+        }
+        Assert.Equal(shot.Screenshots.Select(picture => $"https://raw.githubusercontent.com/Real-TTX/ThixShot/main/docs/{picture.File}"), data.GitHub.Requests);
+    }
+
+    [Fact]
     public async Task Only_a_PNG_with_a_safe_name_is_taken_and_without_GitHub_the_copy_stays()
     {
         using var data = new TestData();
@@ -141,7 +157,7 @@ public sealed class StoreTests
             Assert.All(app.Screenshots, picture =>
             {
                 Assert.True(StoreService.IsSafePictureName(picture.File), $"{app.Id}: {picture.File}");
-                Assert.EndsWith("-light.png", picture.File);
+                Assert.EndsWith(".png", picture.File);
                 Assert.False(string.IsNullOrWhiteSpace(picture.Caption));
             });
         }

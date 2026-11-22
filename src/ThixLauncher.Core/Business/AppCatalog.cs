@@ -217,6 +217,31 @@ public static class AppCatalog
         },
         new ThixApp
         {
+            Id = "thixshot",
+            Name = "ThixShot",
+            Tagline = "Screenshots und Bildschirmvideos mit bearbeitbaren Zooms",
+            Description = "Nimm den Bildschirm oder einen Ausschnitt auf. Screenshots kannst du mit Zeitverzögerung aufnehmen, " +
+                          "zuschneiden und markieren. Im Videoeditor lassen sich Zooms nachträglich setzen, verschieben und anpassen. " +
+                          "Die schwebende Aufnahmeleiste startet Screenshots und Videos direkt vom Desktop.",
+            Icon = "monitor",
+            Repository = "Real-TTX/ThixShot",
+            Feed = FeedKind.ChannelManifest,
+            ManifestFileName = "thixshot-update.json",
+            WindowsExecutable = "ThixShot.exe",
+            WindowsUninstallKey = "ThixShot",
+            WindowsMsiUpgradeCode = new Guid("B75BDAC5-9408-45CC-B1BE-0AE9049DD8C0"),
+            MacBundleName = "ThixShot.app",
+            MacBundleId = "de.thixapps.thixshot",
+            ScreenshotFolder = "docs",
+            Screenshots =
+            [
+                new AppScreenshot("aufnahmestudio.png", "Screenshots und Bildschirmvideos im Aufnahmestudio"),
+                new AppScreenshot("videoeditor.png", "Zooms auf der Zeitleiste des Videoeditors bearbeiten"),
+                new AppScreenshot("bereitschaft.png", "Die Aufnahmeleiste am Bildschirmrand"),
+            ],
+        },
+        new ThixApp
+        {
             Id = "thixshow",
             CloudApp = CloudApps.Show,
             Name = "ThixShow",

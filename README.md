@@ -3,7 +3,7 @@
 # ThixLauncher
 
 Der Launcher für die Thix-Apps unter **Windows und macOS**: installieren mit einem Klick, aktuell halten, starten – und
-wieder entfernen. Dabei sind **ThixCalc** (Tabellenkalkulation für Zahlen, Listen und Auswertungen), **ThixCalendar** (alle Kalender, keine verpasste Erinnerung), **ThixClip** (Zwischenablage-Verlauf), **ThixContacts** (Adressbuch für Kontakte und Kontaktgruppen), **ThixFred** (Launcher für Programme und Befehle), **ThixMail** (E-Mail, Kalender und Personen in einem Fenster), **ThixNote** (Notizen als Dateien), **ThixShow** (Präsentationen mit Folien, Designs und Bildschirmpräsentation), **ThixTunnel** (SSH-Tunnel) und **ThixWrite** (Textverarbeitung für Dokumente, Briefe und Berichte).
+wieder entfernen. Dabei sind **ThixCalc** (Tabellenkalkulation für Zahlen, Listen und Auswertungen), **ThixCalendar** (alle Kalender, keine verpasste Erinnerung), **ThixClip** (Zwischenablage-Verlauf), **ThixContacts** (Adressbuch für Kontakte und Kontaktgruppen), **ThixFred** (Launcher für Programme und Befehle), **ThixMail** (E-Mail, Kalender und Personen in einem Fenster), **ThixNote** (Notizen als Dateien), **ThixShot** (Screenshots und Bildschirmvideos mit Zoom-Editor), **ThixShow** (Präsentationen mit Folien, Designs und Bildschirmpräsentation), **ThixTunnel** (SSH-Tunnel) und **ThixWrite** (Textverarbeitung für Dokumente, Briefe und Berichte).
 Läuft im Infobereich bzw. in der Menüleiste, ohne Administratorrechte. Aufgebaut wie ein Store: die **Bibliothek** mit den
 installierten Apps, der **Store** mit allen Apps – mit ihren Screenshots und Änderungen direkt aus ihren GitHub-Repositorys.
 
@@ -60,7 +60,7 @@ Nightlies aus dem Branch `dev` stehen im Pre-Release `nightly-channel`.
 - **Die Apps** stehen im Katalog (`AppCatalog`): wo sie ihre Builds veröffentlichen und wie ihr Setup läuft. ThixLauncher
   liest bei jedem Start und alle 6 Stunden, was installiert ist und was der gewählte Kanal anbietet (Release oder
   Nightly) – direkt aus den GitHub-Releases der Apps:
-  - **ThixCalc**, **ThixCalendar**, **ThixClip**, **ThixContacts**, **ThixFred**, **ThixMail**, **ThixNote**, **ThixShow**, **ThixTunnel** und **ThixWrite:** das Manifest (`thixcalc-update.json`, `thixcalendar-update.json`, `thixclip-update.json`, `thixcontacts-update.json`, `thixfred-update.json`, `thixmail-update.json`, `thixnote-update.json`, `thixshow-update.json`, `thixtunnel-update.json`, `thixwrite-update.json`) im Release
+  - **ThixCalc**, **ThixCalendar**, **ThixClip**, **ThixContacts**, **ThixFred**, **ThixMail**, **ThixNote**, **ThixShot**, **ThixShow**, **ThixTunnel** und **ThixWrite:** das Manifest (`thixcalc-update.json`, `thixcalendar-update.json`, `thixclip-update.json`, `thixcontacts-update.json`, `thixfred-update.json`, `thixmail-update.json`, `thixnote-update.json`, `thixshot-update.json`, `thixshow-update.json`, `thixtunnel-update.json`, `thixwrite-update.json`) im Release
     `release-channel` / `nightly-channel`. Mehrere Apps aus einem Repository (ThixOffice) teilen sich diese Releases, jede mit
     eigenem Manifest. Eine App, die nur einzelne Releases veröffentlicht, liest ThixLauncher auch
     (`FeedKind.GitHubReleases`: `v…` für Release, Pre-Release `nightly-…` für Nightly, das Paket über seinen Dateinamen).
@@ -69,7 +69,7 @@ Nightlies aus dem Branch `dev` stehen im Pre-Release `nightly-channel`.
 - **Sicher:** Jedes Paket wird vor der Installation per **SHA-256** geprüft (aus dem Manifest bzw. GitHubs Digest). Ein
   Paket ohne Prüfsumme wird nie installiert.
 - **Installieren / Aktualisieren:** unter Windows läuft das Setup der App selbst, ohne Rückfrage
-  (`--update`). Ein Setup, das nachfragt, öffnet sich, und ThixLauncher wartet, bis es geschlossen ist. Unter macOS
+  (`--update`). ThixShot wird über sein MSI pro Benutzer installiert und aktualisiert. Ein Setup, das nachfragt, öffnet sich, und ThixLauncher wartet, bis es geschlossen ist. Unter macOS
   ersetzt ThixLauncher das App-Bundle in `/Applications` (bzw. `~/Applications`) und beendet eine laufende App vorher.
 - **Installationsoptionen (SETUP-08):** Hat das Manifest einer App den Block `installer` (was ihr Setup anbietet), fragt
   ThixLauncher vor der **ersten** Installation dasselbe wie ihr Setup-Assistent – Desktop-Verknüpfung, Beim Anmelden starten,

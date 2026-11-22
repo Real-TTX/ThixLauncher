@@ -56,6 +56,9 @@ public sealed record ThixApp
     /// <summary>Windows: the name of the entry under ...\CurrentVersion\Uninstall (the app writes it, per user).</summary>
     public required string WindowsUninstallKey { get; init; }
 
+    /// <summary>Windows Installer family of an MSI app. Its ProductCode can change with every release.</summary>
+    public Guid? WindowsMsiUpgradeCode { get; init; }
+
     /// <summary>
     /// Windows: the arguments with which the app's setup installs or updates without a window ("--update"); null = the setup
     /// of the app opens and asks (the launcher waits until it is closed).
@@ -74,8 +77,11 @@ public sealed record ThixApp
     /// </summary>
     public string? CloudApp { get; init; }
 
+    /// <summary>The repository folder containing the screenshots displayed in the store.</summary>
+    public string ScreenshotFolder { get; init; } = Business.StoreService.ImagesFolder;
+
     /// <summary>
-    /// The pictures of the app for the store, files in <c>docs/images</c> of its repository (the light ones, "…-light.png"; in the
+    /// The pictures of the app for the store, files in <see cref="ScreenshotFolder"/> (the light ones, "…-light.png"; in the
     /// dark theme the store asks for "…-dark.png" first). The first is the cover of its tile. Read by <see cref="Business.StoreService"/>.
     /// </summary>
     public IReadOnlyList<AppScreenshot> Screenshots { get; init; } = [];
@@ -84,5 +90,5 @@ public sealed record ThixApp
     public string ProjectUrl => $"https://github.com/{Repository}";
 
     /// <summary>True when the app installs and updates without asking on this system.</summary>
-    public bool InstallsQuietly => !OperatingSystem.IsWindows() || WindowsQuietInstallArguments is not null;
+    public bool InstallsQuietly => !OperatingSystem.IsWindows() || WindowsMsiUpgradeCode.HasValue || WindowsQuietInstallArguments is not null;
 }

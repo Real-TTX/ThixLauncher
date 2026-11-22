@@ -11,7 +11,7 @@ namespace ThixLauncher.Core.Business;
 /// <summary>
 /// What the store shows of an app beyond its build, straight from its GitHub repository (public, no token, and not the API –
 /// its limit of 60 requests an hour is left to the feeds):
-///  - the pictures (<see cref="ThixApp.Screenshots"/>) from <c>raw.githubusercontent.com/&lt;repo&gt;/main/docs/images/&lt;file&gt;</c>,
+///  - the pictures (<see cref="ThixApp.Screenshots"/>) from the app's screenshot folder on its main branch,
 ///    kept in the data folder (<c>store/&lt;app&gt;/</c>) and asked again at most once a day, with the ETag (unchanged = 304, nothing
 ///    downloaded); in the dark theme "…-dark.png" first, the light one when the repository has no dark one;
 ///  - the changes: the commits of the branch of the channel (release = main, nightly = dev) from GitHub's Atom feed
@@ -46,7 +46,7 @@ public static partial class StoreService
 
     /// <summary>The address of a picture of <paramref name="app"/> in its repository.</summary>
     public static string PictureUrl(ThixApp app, string file) =>
-        $"https://raw.githubusercontent.com/{app.Repository}/{ImagesBranch}/{ImagesFolder}/{file}";
+        $"https://raw.githubusercontent.com/{app.Repository}/{ImagesBranch}/{app.ScreenshotFolder}/{file}";
 
     /// <summary>"main-light.png" → "main-dark.png" (a file without "-light" has no dark one: itself).</summary>
     public static string DarkFileOf(string file) =>

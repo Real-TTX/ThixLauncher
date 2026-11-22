@@ -52,7 +52,7 @@ public sealed class UiTests
         window.ShowStore();
         Settle(window);
         var rows = window.Store.Cards;
-        Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixMail", "ThixNote", "ThixShow", "ThixTunnel", "ThixWrite"], rows.Select(row => row.App.Name));
+        Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixMail", "ThixNote", "ThixShot", "ThixShow", "ThixTunnel", "ThixWrite"], rows.Select(row => row.App.Name));
         var clip = rows[2];
         Assert.Equal("Aktualisieren", clip.ActionText);
         Assert.Equal("Update verfügbar", clip.Badge.Text);
@@ -65,7 +65,7 @@ public sealed class UiTests
         window.QuickLaunchButtons[0].RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Assert.Equal(["thixclip"], data.System.Launched);
 
-        Assert.StartsWith("10 Thix-Apps · 9 noch nicht installiert", window.Store.SubtitleText.Text);
+        Assert.StartsWith("11 Thix-Apps · 10 noch nicht installiert", window.Store.SubtitleText.Text);
         window.Close();
     }
 
@@ -255,6 +255,11 @@ public sealed class UiTests
         await WaitUntil(window, () => detail.ChangeTitles.Count > 0);
         Assert.Equal(data.GitHub.Commits.Select(commit => commit.Message.Split('\n')[0]), detail.ChangeTitles);
         Assert.Contains("https://github.com/Real-TTX/ThixClip/commits/main.atom", data.GitHub.Requests);
+        window.ShowDetails("thixshot");
+        Settle(window);
+        Assert.Equal("–", window.Detail.PublishedText.Text);
+        await WaitUntil(window, () => window.Detail.BigPicture.Picture?.File == "aufnahmestudio.png" && window.Detail.BigPicture.HasPicture);
+        Assert.Contains("https://raw.githubusercontent.com/Real-TTX/ThixShot/main/docs/aufnahmestudio.png", data.GitHub.Requests);
         window.Close();
     }
 

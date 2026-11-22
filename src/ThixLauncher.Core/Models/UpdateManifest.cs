@@ -17,9 +17,9 @@ public sealed record UpdateManifest(
     [property: JsonPropertyName("version")] string Version,
     [property: JsonPropertyName("channel")] string Channel,
     [property: JsonPropertyName("buildNumber")] int BuildNumber,
-    [property: JsonPropertyName("setup")] string Setup,
-    [property: JsonPropertyName("sha256")] string Sha256,
-    [property: JsonPropertyName("publishedAt")] DateTimeOffset PublishedAt,
+    [property: JsonPropertyName("setup")] string? Setup,
+    [property: JsonPropertyName("sha256")] string? Sha256,
+    [property: JsonPropertyName("publishedAt")] DateTimeOffset? PublishedAt,
     [property: JsonPropertyName("packages")] Dictionary<string, UpdatePackage>? Packages = null,
     [property: JsonPropertyName("installer")] InstallerConfig? Installer = null)
 {
@@ -31,6 +31,8 @@ public sealed record UpdateManifest(
             return package;
         }
 
-        return platformKey.StartsWith("win-", StringComparison.Ordinal) && Setup.Length > 0 ? new UpdatePackage(Setup, Sha256) : null;
+        return platformKey.StartsWith("win-", StringComparison.Ordinal) && Setup is { Length: > 0 }
+            ? new UpdatePackage(Setup, Sha256 ?? string.Empty)
+            : null;
     }
 }

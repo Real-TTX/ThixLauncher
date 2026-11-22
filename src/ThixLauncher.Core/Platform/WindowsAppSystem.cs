@@ -31,6 +31,11 @@ internal sealed class WindowsAppSystem : IAppSystem
 
     public InstalledApp? Detect(ThixApp app)
     {
+        if (app.WindowsMsiUpgradeCode is { } family)
+        {
+            return WindowsInstaller.Detect(app, family);
+        }
+
         foreach (var hive in new[] { Registry.CurrentUser, Registry.LocalMachine })
         {
             using var key = hive.OpenSubKey($@"{UninstallRoot}\{app.WindowsUninstallKey}");
@@ -64,6 +69,14 @@ internal sealed class WindowsAppSystem : IAppSystem
 
     public async Task InstallAsync(ThixApp app, string packageFile, InstalledApp? installed, AppSetupCommand setup, IProgress<string> progress, CancellationToken cancellationToken)
     {
+        if (app.WindowsMsiUpgradeCode is { } family)
+        {
+            WindowsInstaller.VerifyPackage(app, packageFile, family);
+            progress.Report(installed is null ? $"{app.Name} wird installiert" : $"{app.Name} wird aktualisiert");
+            await RunMsiAsync(app, "/i", Path.GetFullPath(packageFile), progress, cancellationToken);
+            return;
+        }
+
         if (!packageFile.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
         {
             throw new AppSystemException($"Das Paket von {app.Name} ist kein Windows-Setup.");
@@ -103,6 +116,17 @@ internal sealed class WindowsAppSystem : IAppSystem
 
     public async Task UninstallAsync(ThixApp app, InstalledApp installed, IProgress<string> progress, CancellationToken cancellationToken)
     {
+        if (app.WindowsMsiUpgradeCode is { } family)
+        {
+            // Resolve the family again: a major upgrade can replace its ProductCode while the store is open.
+            if (WindowsInstaller.FindProduct(family) is { } product)
+            {
+                progress.Report($"{app.Name} wird entfernt");
+                await RunMsiAsync(app, "/x", product, progress, cancellationToken);
+            }
+            return;
+        }
+
         var isQuiet = installed.QuietUninstallCommand is { Length: > 0 };
         var command = CommandLine.Split(isQuiet ? installed.QuietUninstallCommand : installed.UninstallCommand)
                       ?? throw new AppSystemException($"{app.Name} hat kein Deinstallationsprogramm eingetragen – bitte unter „Installierte Apps“ entfernen.");
@@ -134,6 +158,21 @@ internal sealed class WindowsAppSystem : IAppSystem
         catch (Win32Exception exception)
         {
             throw new AppSystemException($"{app.Name} konnte nicht gestartet werden: {exception.Message}", exception);
+        }
+    }
+
+    private static async Task RunMsiAsync(ThixApp app, string action, string target, IProgress<string> progress, CancellationToken cancellationToken)
+    {
+        var startInfo = WindowsInstaller.Command(action, target);
+        var (exitCode, _) = await RunAsync(startInfo, QuietTimeout, app, cancellationToken);
+        if (!WindowsInstaller.Succeeded(exitCode))
+        {
+            throw new AppSystemException($"Windows Installer konnte den Vorgang für {app.Name} nicht abschließen (Fehler {exitCode}).");
+        }
+
+        if (exitCode != 0)
+        {
+            progress.Report("Windows Installer meldet einen erforderlichen Neustart.");
         }
     }
 

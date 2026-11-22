@@ -85,7 +85,7 @@ internal sealed class SampleGitHub(IReadOnlyList<ThixApp>? apps = null) : HttpMe
     };
 
     /// <summary>
-    /// The sample state of the snapshots: ThixCalc 0.1.1, ThixClip 0.1.12 in release (installed: 0.1.9), ThixContacts 0.1.1, ThixFred 0.1.1, ThixMail 0.1.1, ThixNote 1.1.1, ThixShow 0.1.1, ThixTunnel 0.2.8, ThixWrite 0.1.1, nightlies of all;
+    /// The sample state of the snapshots: ThixCalc 0.1.1, ThixClip 0.1.12 in release (installed: 0.1.9), ThixContacts 0.1.1, ThixFred 0.1.1, ThixMail 0.1.1, ThixNote 1.1.1, ThixShot 0.2.7, ThixShow 0.1.1, ThixTunnel 0.2.8, ThixWrite 0.1.1, nightlies of all;
     /// ThixNote with install options (<see cref="SampleNoteInstaller"/>), the others as builds without them.
     /// </summary>
     public static SampleGitHub WithSampleReleases()
@@ -106,6 +106,8 @@ internal sealed class SampleGitHub(IReadOnlyList<ThixApp>? apps = null) : HttpMe
         github.Versions[("thixmail", AppVersion.Nightly)] = "nightly-3-20261122";
         github.Versions[("thixnote", AppVersion.Release)] = "1.1.1-20261116";
         github.Versions[("thixnote", AppVersion.Nightly)] = "nightly-5-20261116";
+        github.Versions[("thixshot", AppVersion.Release)] = "0.2.7-20261122";
+        github.Versions[("thixshot", AppVersion.Nightly)] = "nightly-8-20261122";
         github.Versions[("thixshow", AppVersion.Release)] = "0.1.1-20261119";
         github.Versions[("thixshow", AppVersion.Nightly)] = "nightly-2-20261119";
         github.Versions[("thixtunnel", AppVersion.Release)] = "0.2.8-20261117";
@@ -146,10 +148,11 @@ internal sealed class SampleGitHub(IReadOnlyList<ThixApp>? apps = null) : HttpMe
         var uri = request.RequestUri!;
         var path = uri.AbsolutePath.Trim('/').Split('/');
 
-        // raw.githubusercontent.com/<owner>/<repo>/<branch>/docs/images/<file> – a picture of the store
-        if (uri.Host == "raw.githubusercontent.com" && path is [_, var pictureRepo, _, "docs", "images", var picture])
+        // Each store picture comes from the directory the app's repository publishes.
+        if (uri.Host == "raw.githubusercontent.com" && path is [_, var pictureRepo, _, .., var picture])
         {
-            return PictureAnswer(request, AppsOf(pictureRepo), picture);
+            var pictureApps = AppsOf(pictureRepo).Where(app => StoreService.PictureUrl(app, picture) == uri.AbsoluteUri).ToList();
+            return PictureAnswer(request, pictureApps, picture);
         }
 
         // github.com/<owner>/<repo>/commits/<branch>.atom – the changes
@@ -198,10 +201,11 @@ internal sealed class SampleGitHub(IReadOnlyList<ThixApp>? apps = null) : HttpMe
     private static string ManifestFileOf(ThixApp app) => app.ManifestFileName ?? $"{app.Id}-update.json";
 
     /// <summary>The packages a channel manifest names, after the app like the real ones: win-x64 ThixWriteSetup.exe, osx-arm64 ThixWrite-macOS-arm64.zip, osx-x64 ….</summary>
-    private static (string Platform, string File)[] ManifestPackages(ThixApp app) =>
-    [
-        ("win-x64", $"{app.Name}Setup.exe"), ("osx-arm64", $"{app.Name}-macOS-arm64.zip"), ("osx-x64", $"{app.Name}-macOS-x64.zip"),
-    ];
+    private static (string Platform, string File)[] ManifestPackages(ThixApp app) => app.Id switch
+    {
+        "thixshot" => [("win-x64", "ThixShot-win-x64.msi"), ("osx-arm64", "ThixShot-osx-arm64.zip"), ("osx-x64", "ThixShot-osx-x64.zip")],
+        _ => [("win-x64", $"{app.Name}Setup.exe"), ("osx-arm64", $"{app.Name}-macOS-arm64.zip"), ("osx-x64", $"{app.Name}-macOS-x64.zip")],
+    };
 
     /// <summary>The assets of a single release (<see cref="FeedKind.GitHubReleases"/>).</summary>
     private static string[] ReleaseAssets(ThixApp app, string version) =>
@@ -219,16 +223,22 @@ internal sealed class SampleGitHub(IReadOnlyList<ThixApp>? apps = null) : HttpMe
     {
         var parsed = AppVersion.Parse(version)!;
         var sha = OmitDigests ? string.Empty : Sha(app.Id, version);
-        var packages = ManifestPackages(app);
+        var files = ManifestPackages(app);
+        var packages = files.ToDictionary(package => package.Platform, package => new { file = package.File, sha256 = sha });
+        if (app.Id == "thixshot")
+        {
+            return new { version, channel, buildNumber = parsed.BuildNumber, packages };
+        }
+
         return new
         {
             version,
             channel,
             buildNumber = parsed.BuildNumber,
-            setup = packages[0].File,
+            setup = files[0].File,
             sha256 = sha,
             publishedAt = PublishedAt,
-            packages = packages.ToDictionary(package => package.Platform, package => (object)new { file = package.File, sha256 = sha }),
+            packages,
             installer = Installers.GetValueOrDefault(app.Id),
         };
     }

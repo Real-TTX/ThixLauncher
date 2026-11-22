@@ -44,6 +44,33 @@ public sealed class AppServiceTests
         Assert.Contains(data.GitHub.Requests, url => url.Contains("/nightly-channel/thixclip-update.json"));
     }
 
+    [Theory]
+    [InlineData("release", "win-x64", "ThixShot-win-x64.msi", "0.2.7-20261122", 7)]
+    [InlineData("release", "osx-arm64", "ThixShot-osx-arm64.zip", "0.2.7-20261122", 7)]
+    [InlineData("release", "osx-x64", "ThixShot-osx-x64.zip", "0.2.7-20261122", 7)]
+    [InlineData("nightly", "win-x64", "ThixShot-win-x64.msi", "nightly-8-20261122", 8)]
+    [InlineData("nightly", "osx-arm64", "ThixShot-osx-arm64.zip", "nightly-8-20261122", 8)]
+    [InlineData("nightly", "osx-x64", "ThixShot-osx-x64.zip", "nightly-8-20261122", 8)]
+    public async Task ThixShot_channel_manifests_offer_checked_packages_without_setup_fields_or_publication_date(
+        string channel, string platform, string file, string version, int build)
+    {
+        using var data = new TestData();
+        var shot = AppCatalog.Find("thixshot")!;
+        var release = Assert.IsType<AppRelease>(await ReleaseFeed.LatestAsync(shot, channel, platform, CancellationToken.None));
+        Assert.Equal(version, release.Version.Text);
+        Assert.Equal(channel, release.Version.Channel);
+        Assert.Equal(build, release.Version.BuildNumber);
+        Assert.Equal(file, release.PackageFile);
+        var root = $"https://github.com/Real-TTX/ThixShot/releases/download/{channel}-channel";
+        Assert.Equal(root + "/thixshot-update.json", Assert.Single(data.GitHub.Requests));
+        Assert.Equal(root + "/" + file, release.DownloadUrl);
+        Assert.Null(release.PublishedAt);
+        Assert.Null(release.Installer);
+        var download = Path.Combine(data.Folder, file);
+        await ReleaseFeed.DownloadAsync(release.DownloadUrl, download, release.Sha256!, null, CancellationToken.None);
+        Assert.Equal(("thixshot", version), SampleGitHub.ReadPackage(download));
+    }
+
     [Fact]
     public async Task After_a_change_of_the_channel_the_old_builds_no_longer_count()
     {
@@ -226,12 +253,13 @@ public sealed class AppServiceTests
         data.System.Add(AppCatalog.Find("thixnote")!, "1.0.1-20261115");
         await AppService.RefreshAsync();
 
-        Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixMail", "ThixNote", "ThixShow", "ThixTunnel", "ThixWrite"], Names(new AppQuery()));
-        Assert.Equal(["ThixNote", "ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixMail", "ThixShow", "ThixTunnel", "ThixWrite"], Names(new AppQuery(Sort: AppSort.State)));
+        Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixMail", "ThixNote", "ThixShot", "ThixShow", "ThixTunnel", "ThixWrite"], Names(new AppQuery()));
+        Assert.Equal(["ThixNote", "ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixMail", "ThixShot", "ThixShow", "ThixTunnel", "ThixWrite"], Names(new AppQuery(Sort: AppSort.State)));
         Assert.Equal(["ThixNote"], Names(new AppQuery(Filter: AppFilter.Installed)));
         Assert.Equal(["ThixNote"], Names(new AppQuery(Filter: AppFilter.Updates)));
-        Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixMail", "ThixShow", "ThixTunnel", "ThixWrite"], Names(new AppQuery(Filter: AppFilter.NotInstalled)));
+        Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixMail", "ThixShot", "ThixShow", "ThixTunnel", "ThixWrite"], Names(new AppQuery(Filter: AppFilter.NotInstalled)));
         Assert.Equal(["ThixFred"], Names(new AppQuery("terminal")));
+        Assert.Equal(["ThixShot"], Names(new AppQuery("screenshot")));
         Assert.Equal(["ThixTunnel"], Names(new AppQuery("ssh")));
         Assert.Equal(["ThixClip"], Names(new AppQuery("zwischenablage")));
         Assert.Equal(["ThixNote"], Names(new AppQuery("markdown")));

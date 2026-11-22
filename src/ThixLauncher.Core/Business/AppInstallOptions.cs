@@ -34,7 +34,9 @@ public static class AppInstallOptions
     /// </summary>
     public static AppSetupCommand SetupFor(ThixApp app, InstallerConfig? installer, InstallChoices? choices, bool isUpdate)
     {
-        var legacy = new AppSetupCommand(CommandLine.Arguments(app.WindowsQuietInstallArguments), app.WindowsQuietInstallArguments is not null);
+        var legacy = app.WindowsMsiUpgradeCode.HasValue
+            ? new AppSetupCommand([], WindowsQuiet: true)
+            : new AppSetupCommand(CommandLine.Arguments(app.WindowsQuietInstallArguments), app.WindowsQuietInstallArguments is not null);
         if (isUpdate || installer is null)
         {
             return legacy;
@@ -50,7 +52,7 @@ public static class AppInstallOptions
 
         var mac = new List<string> { InstallerOptions.ConfigureArgument };
         mac.AddRange(InstallerOptions.ToArguments(wanted with { DesktopShortcut = null }));
-        return new AppSetupCommand(windows, WindowsQuiet: true, mac);
+        return new AppSetupCommand(app.WindowsMsiUpgradeCode.HasValue ? [] : windows, WindowsQuiet: true, mac);
     }
 
     /// <summary>Only what <paramref name="installer"/> offers; file types by the spelling of the block, each once.</summary>

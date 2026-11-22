@@ -5,7 +5,7 @@ Guidance for working in this repository. Keep it in sync with the code: update i
 ## What ThixLauncher is
 
 The launcher of the Thix apps for **Windows and macOS** (desktop app, tray / menu bar): it installs the apps with one
-click, keeps them up to date, starts them and removes them. The catalog has **ThixCalc**, **ThixCalendar**, **ThixClip**, **ThixContacts**, **ThixFred**, **ThixMail**, **ThixNote**, **ThixShow**, **ThixTunnel** and **ThixWrite**
+click, keeps them up to date, starts them and removes them. The catalog has **ThixCalc**, **ThixCalendar**, **ThixClip**, **ThixContacts**, **ThixFred**, **ThixMail**, **ThixNote**, **ThixShot**, **ThixShow**, **ThixTunnel** and **ThixWrite**
 (`AppCatalog`; ThixWrite, ThixCalc, ThixShow, ThixContacts and ThixMail come from ThixOffice, one repository with shared rolling releases); a new app is one entry there plus its logo in `src/ThixLauncher/Assets/apps/<id>.png`. The apps come
 straight from their GitHub releases (public, no token), every package is checked by **SHA-256** before it runs.
 With **MatCloud** (`../MatCloud`, the cloud of the Thix apps) the launcher signs in once and
@@ -56,15 +56,15 @@ apps is read from the system and GitHub; settings are `settings.json`.
 src/ThixLauncher.Core   (no UI) models, business layer (static classes), infrastructure, platforms
   MatCloud/             COPY of MatCloud's contract (never edited here): CloudContract, CloudApps, the sign-in DTOs, DeviceHandoff*, MatCloudClient,
                         CloudHandoff (the hand-over file per app in %LOCALAPPDATA%ThixMatCloudhandoff)
-  Models/               ThixApp (catalog entry: feed kind, package patterns, Windows uninstall key + quiet arguments, mac bundle,
-                        Screenshots = AppScreenshot(file in docs/images of its repository, caption)), AppChange (a commit),
+  Models/               ThixApp (catalog entry: feed kind, package patterns, Windows uninstall key or MSI upgrade code, mac bundle,
+                        Screenshots = AppScreenshot(file in ScreenshotFolder, caption)), AppChange (a commit),
                         AppVersion (release / nightly / local, build number compare), AppRelease, InstalledApp, AppStatus + AppState,
                         AppQuery (search, AppFilter, AppSort), AppSettings (theme, AppChannel, updates, AppsView tiles / list, Cloud = CloudSettings – only CloudService
                         writes it –, ConnectInstalledApps), UpdateManifest (+ "installer"), BusinessException; ThixApp.CloudApp = its id at MatCloud;
                         InstallerConfig (SETUP-08: InstallerSwitch, InstallerFileType, InstallChoices, SetupAction, SetupRequest,
                         AppSetupCommand = how a platform runs an app's package)
   Business/             AppCatalog (the apps), StoreService (the store's talk with GitHub WITHOUT the API: PictureAsync – raw.githubusercontent.com
-                        /<repo>/main/docs/images/<file>, kept in <data>/store/<app>/, asked again once a day with the ETag, "-dark" first in
+                        /<repo>/main/<ScreenshotFolder>/<file>, kept in <data>/store/<app>/, asked again once a day with the ETag, "-dark" first in
                         the dark theme, only PNG, safe names –, ChangesAsync – github.com/<repo>/commits/<main|dev>.atom, first line of the
                         whole message, 6 h in memory –, Featured = the first app not installed), AppService (state per app in memory, Query/Count, RefreshAsync, InstallAsync = install or
                         update with download + SHA-256, UninstallAsync, Launch, UpdateAllAsync; one action per app; all checks),
@@ -85,7 +85,7 @@ src/ThixLauncher.Core   (no UI) models, business layer (static classes), infrast
                         by the manifest's and the package's file name; a test may give its own apps; Installers = the "installer" block per
                         app, the sample ThixNote has one), SampleCloud (MatCloud in memory), TokenStore (DPAPI / Keychain),
                         SettingsStore, AppPaths, AppInfo, AppClock, Log, ProblemReports
-  Platform/             IAppSystem + AppSystem (the current one; UseForTests), WindowsAppSystem (uninstall entry, the app's setup with
+  Platform/             IAppSystem + AppSystem (the current one; UseForTests), WindowsAppSystem (uninstall entry, MSI products by their upgrade code, the app's setup with
                         the AppSetupCommand – quiet: stderr is read, exit code 2 = the setup refused the options –, its uninstaller),
                         MacAppSystem (bundle in /Applications or ~/Applications, ditto / hdiutil, quit, swap, then "--configure …"),
                         SampleAppSystem (a computer in memory; Setups records every AppSetupCommand, RefuseOptions), InstallInfo (DisplayIcon path, bundle version), CommandLine, Windows/ShellLink
