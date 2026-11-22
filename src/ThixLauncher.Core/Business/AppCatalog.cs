@@ -274,6 +274,32 @@ public static class AppCatalog
         },
         new ThixApp
         {
+            Id = "thixspace",
+            CloudApp = CloudApps.Space,
+            Name = "ThixSpace",
+            Tagline = "Speicheranalyse mit interaktiver Karte",
+            Description = "ThixSpace analysiert Laufwerke und SMB-Freigaben und zeigt auf einer interaktiven Karte, was wie viel Platz belegt. " +
+                          "Dateien und Ordner öffnest oder löschst du direkt dort, und jede neue Analyse zeigt, was seit der letzten gewachsen " +
+                          "oder geschrumpft ist. Mit der MatCloud sind Quellen und Analysen auf all deinen Computern gleich.",
+            Icon = "hard-drive",
+            Repository = "Real-TTX/ThixSpace",
+            Feed = FeedKind.ChannelManifest,
+            ManifestFileName = "thixspace-update.json",
+            WindowsExecutable = "ThixSpace.exe",
+            WindowsUninstallKey = "ThixSpace",
+            // ThixSpaceSetup.exe --update installs or updates without a window and starts ThixSpace in the tray.
+            WindowsQuietInstallArguments = "--update",
+            MacBundleName = "ThixSpace.app",
+            MacBundleId = "info.schmoldt.thixspace",
+            Screenshots =
+            [
+                new AppScreenshot("main-map-light.png", "Die Speicherkarte"),
+                new AppScreenshot("main-sources-light.png", "Quellen"),
+                new AppScreenshot("main-analyses-light.png", "Analysen und Veränderungen"),
+            ],
+        },
+        new ThixApp
+        {
             Id = "thixtunnel",
             Name = "ThixTunnel",
             Tagline = "SSH-Tunnel",

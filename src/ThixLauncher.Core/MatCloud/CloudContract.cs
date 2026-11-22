@@ -1,4 +1,4 @@
-// MatCloud.Contract 1.5.0 – a copy from MatCloud, do not edit here
+// MatCloud.Contract 1.6.0 – a copy from MatCloud, do not edit here
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -100,6 +100,9 @@ public static class CloudApps
     /// <summary>ThixMail (e-mail): reads and writes the contacts and the calendar of its account (the grants of those modules); mail itself stays on the computer.</summary>
     public const string Mail = "mail";
 
+    /// <summary>ThixSpace (disk usage): its sources and analyses in the general sync.</summary>
+    public const string Space = "space";
+
     public static readonly IReadOnlyList<CloudApp> All =
     [
         new(Clip, "ThixClip", "Der Zwischenablage-Verlauf auf allen Geräten"),
@@ -114,6 +117,7 @@ public static class CloudApps
         new(Fred, "ThixFred", "Der Launcher: Einstellungen, Themes, Websuchen, Skripte und Plugins"),
         new(Contacts, "ThixContacts", "Kontakte und Kontaktgruppen auf allen Geräten und im Browser"),
         new(Mail, "ThixMail", "E-Mail: Konten-Einstellungen, Kontakte und Kalender aus der Cloud"),
+        new(Space, "ThixSpace", "Speicheranalyse: Quellen und Analysen auf allen Geräten"),
     ];
 
     public static CloudApp? Find(string? id) => All.FirstOrDefault(a => string.Equals(a.Id, id, StringComparison.Ordinal));
