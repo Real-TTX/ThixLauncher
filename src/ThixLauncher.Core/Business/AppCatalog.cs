@@ -22,7 +22,7 @@ public static class AppCatalog
                           "Drucken und Export als PDF. Excel-Mappen (.xlsx, .xlsm) und CSV-Dateien öffnet und speichert ThixCalc " +
                           "direkt, mit der MatCloud auch in ThixDrive.",
             Icon = "table",
-            // ThixOffice publishes every app of the suite (ThixWrite, ThixCalc, ThixShow) into the same rolling releases;
+            // ThixOffice publishes every app of the suite (ThixWrite, ThixCalc, ThixShow, ThixContacts) into the same rolling releases;
             // the manifest and the package names tell them apart.
             Repository = "Real-TTX/ThixOffice",
             Feed = FeedKind.ChannelManifest,
@@ -99,6 +99,38 @@ public static class AppCatalog
         },
         new ThixApp
         {
+            Id = "thixcontacts",
+            CloudApp = CloudApps.Contacts,
+            Name = "ThixContacts",
+            Tagline = "Adressbuch für Kontakte und Kontaktgruppen",
+            Description = "Kontakte verwalten wie in Outlook: Personen mit Adressen, Telefonnummern und Bild, Gruppen, Kategorien und " +
+                          "Favoriten, doppelte Kontakte finden und zusammenführen, Import und Export als vCard und CSV, Drucken und " +
+                          "Export als PDF. Mit der MatCloud sind die Kontakte auf all deinen Computern und im Browser gleich.",
+            Icon = "users",
+            // ThixOffice publishes every app of the suite (ThixWrite, ThixCalc, ThixShow, ThixContacts) into the same rolling
+            // releases; the manifest and the package names tell them apart.
+            Repository = "Real-TTX/ThixOffice",
+            Feed = FeedKind.ChannelManifest,
+            ManifestFileName = "thixcontacts-update.json",
+            WindowsExecutable = "ThixContacts.exe",
+            WindowsUninstallKey = "ThixContacts",
+            // ThixContactsSetup.exe (the program itself, the same install code as the other ThixOffice apps) --update installs or
+            // updates without a window: a fresh install takes the default choices (Start menu, "Öffnen mit" for vCard files, no
+            // desktop shortcut, no default program taken); a running ThixContacts ends (its contacts are in its store), it is not
+            // started again (that would take "--restart").
+            WindowsQuietInstallArguments = "--update",
+            MacBundleName = "ThixContacts.app",
+            MacBundleId = "info.schmoldt.thixcontacts",
+            Screenshots =
+            [
+                new AppScreenshot("thixcontacts-main-light.png", "Alle Kontakte mit Suche und Visitenkarte"),
+                new AppScreenshot("thixcontacts-dialog-edit-light.png", "Einen Kontakt bearbeiten"),
+                new AppScreenshot("thixcontacts-dialog-merge-light.png", "Doppelte Kontakte zusammenführen"),
+                new AppScreenshot("thixcontacts-dialog-import-mapping-light.png", "Import aus CSV mit Spaltenzuordnung"),
+            ],
+        },
+        new ThixApp
+        {
             Id = "thixfred",
             CloudApp = CloudApps.Fred,
             Name = "ThixFred",
@@ -161,7 +193,7 @@ public static class AppCatalog
                           "Übergänge und Animationen, Bildschirmpräsentation mit Referentenansicht, Drucken und Export als PDF. " +
                           "PowerPoint-Präsentationen (.pptx, .pptm) öffnet und speichert ThixShow direkt, mit der MatCloud auch in ThixDrive.",
             Icon = "tv",
-            // ThixOffice publishes every app of the suite (ThixWrite, ThixCalc, ThixShow) into the same rolling releases; the
+            // ThixOffice publishes every app of the suite (ThixWrite, ThixCalc, ThixShow, ThixContacts) into the same rolling releases; the
             // manifest and the package names tell them apart.
             Repository = "Real-TTX/ThixOffice",
             Feed = FeedKind.ChannelManifest,
@@ -219,7 +251,7 @@ public static class AppCatalog
                           "Export als PDF. Word-Dokumente (.docx) öffnet und speichert ThixWrite direkt – was es noch nicht anzeigt, " +
                           "bleibt beim Speichern erhalten.",
             Icon = "file-text",
-            // ThixOffice publishes every app of the suite (ThixWrite, ThixCalc, ThixShow) into the same rolling releases;
+            // ThixOffice publishes every app of the suite (ThixWrite, ThixCalc, ThixShow, ThixContacts) into the same rolling releases;
             // the manifest and the package names tell them apart.
             Repository = "Real-TTX/ThixOffice",
             Feed = FeedKind.ChannelManifest,

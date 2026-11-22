@@ -226,11 +226,11 @@ public sealed class AppServiceTests
         data.System.Add(AppCatalog.Find("thixnote")!, "1.0.1-20261115");
         await AppService.RefreshAsync();
 
-        Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixFred", "ThixNote", "ThixShow", "ThixTunnel", "ThixWrite"], Names(new AppQuery()));
-        Assert.Equal(["ThixNote", "ThixCalc", "ThixCalendar", "ThixClip", "ThixFred", "ThixShow", "ThixTunnel", "ThixWrite"], Names(new AppQuery(Sort: AppSort.State)));
+        Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixNote", "ThixShow", "ThixTunnel", "ThixWrite"], Names(new AppQuery()));
+        Assert.Equal(["ThixNote", "ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixShow", "ThixTunnel", "ThixWrite"], Names(new AppQuery(Sort: AppSort.State)));
         Assert.Equal(["ThixNote"], Names(new AppQuery(Filter: AppFilter.Installed)));
         Assert.Equal(["ThixNote"], Names(new AppQuery(Filter: AppFilter.Updates)));
-        Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixFred", "ThixShow", "ThixTunnel", "ThixWrite"], Names(new AppQuery(Filter: AppFilter.NotInstalled)));
+        Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixShow", "ThixTunnel", "ThixWrite"], Names(new AppQuery(Filter: AppFilter.NotInstalled)));
         Assert.Equal(["ThixFred"], Names(new AppQuery("terminal")));
         Assert.Equal(["ThixTunnel"], Names(new AppQuery("ssh")));
         Assert.Equal(["ThixClip"], Names(new AppQuery("zwischenablage")));
@@ -242,6 +242,9 @@ public sealed class AppServiceTests
         Assert.Equal(["ThixShow"], Names(new AppQuery("powerpoint")));
         Assert.Equal(["ThixShow"], Names(new AppQuery("folien")));
         Assert.Equal(["ThixShow"], Names(new AppQuery("pptx")));
+        Assert.Equal(["ThixContacts"], Names(new AppQuery("kontakte")));
+        Assert.Equal(["ThixContacts"], Names(new AppQuery("adressbuch")));
+        Assert.Equal(["ThixContacts"], Names(new AppQuery("vcard")));
 
         static List<string> Names(AppQuery query) => AppService.Query(query).Select(status => status.App.Name).ToList();
     }

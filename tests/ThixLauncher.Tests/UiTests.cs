@@ -52,7 +52,7 @@ public sealed class UiTests
         window.ShowStore();
         Settle(window);
         var rows = window.Store.Cards;
-        Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixFred", "ThixNote", "ThixShow", "ThixTunnel", "ThixWrite"], rows.Select(row => row.App.Name));
+        Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixNote", "ThixShow", "ThixTunnel", "ThixWrite"], rows.Select(row => row.App.Name));
         var clip = rows[2];
         Assert.Equal("Aktualisieren", clip.ActionText);
         Assert.Equal("Update verfügbar", clip.Badge.Text);
@@ -65,7 +65,7 @@ public sealed class UiTests
         window.QuickLaunchButtons[0].RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Assert.Equal(["thixclip"], data.System.Launched);
 
-        Assert.StartsWith("8 Thix-Apps · 7 noch nicht installiert", window.Store.SubtitleText.Text);
+        Assert.StartsWith("9 Thix-Apps · 8 noch nicht installiert", window.Store.SubtitleText.Text);
         window.Close();
     }
 
