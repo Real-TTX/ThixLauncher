@@ -22,7 +22,7 @@ public static class AppCatalog
                           "Drucken und Export als PDF. Excel-Mappen (.xlsx, .xlsm) und CSV-Dateien öffnet und speichert ThixCalc " +
                           "direkt, mit der MatCloud auch in ThixDrive.",
             Icon = "table",
-            // ThixOffice publishes every app of the suite (ThixWrite, ThixCalc, ThixShow, ThixContacts) into the same rolling releases;
+            // ThixOffice publishes every app of the suite (ThixWrite, ThixCalc, ThixShow, ThixContacts, ThixMail) into the same rolling releases;
             // the manifest and the package names tell them apart.
             Repository = "Real-TTX/ThixOffice",
             Feed = FeedKind.ChannelManifest,
@@ -107,7 +107,7 @@ public static class AppCatalog
                           "Favoriten, doppelte Kontakte finden und zusammenführen, Import und Export als vCard und CSV, Drucken und " +
                           "Export als PDF. Mit der MatCloud sind die Kontakte auf all deinen Computern und im Browser gleich.",
             Icon = "users",
-            // ThixOffice publishes every app of the suite (ThixWrite, ThixCalc, ThixShow, ThixContacts) into the same rolling
+            // ThixOffice publishes every app of the suite (ThixWrite, ThixCalc, ThixShow, ThixContacts, ThixMail) into the same rolling
             // releases; the manifest and the package names tell them apart.
             Repository = "Real-TTX/ThixOffice",
             Feed = FeedKind.ChannelManifest,
@@ -158,6 +158,38 @@ public static class AppCatalog
         },
         new ThixApp
         {
+            Id = "thixmail",
+            CloudApp = CloudApps.Mail,
+            Name = "ThixMail",
+            Tagline = "E-Mail, Kalender und Personen in einem Fenster",
+            Description = "Mailen wie in Outlook: Konten über IMAP und SMTP, offline lesen, schreiben und ordnen, Unterhaltungen, Suche und " +
+                          "Einladungen zu Terminen. Mit der MatCloud kommen Kalender und Personen ins selbe Fenster; die Nachrichten bleiben " +
+                          "auf dem Mailserver und deinem Computer. Gmail und Microsoft 365 brauchen vorerst ein App-Passwort.",
+            Icon = "mail",
+            // ThixOffice publishes every app of the suite (ThixWrite, ThixCalc, ThixShow, ThixContacts, ThixMail) into the same
+            // rolling releases; the manifest and the package names tell them apart.
+            Repository = "Real-TTX/ThixOffice",
+            Feed = FeedKind.ChannelManifest,
+            ManifestFileName = "thixmail-update.json",
+            WindowsExecutable = "ThixMail.exe",
+            WindowsUninstallKey = "ThixMail",
+            // ThixMailSetup.exe (the program itself, the same install code as the other ThixOffice apps) --update installs or
+            // updates without a window: a fresh install takes the default choices (Start menu, "Öffnen mit" for .eml files, no
+            // desktop shortcut, no default program taken); a running ThixMail ends (its messages are in its store and on the mail
+            // server), it is not started again (that would take "--restart").
+            WindowsQuietInstallArguments = "--update",
+            MacBundleName = "ThixMail.app",
+            MacBundleId = "info.schmoldt.thixmail",
+            Screenshots =
+            [
+                new AppScreenshot("thixmail-main-newsletter-light.png", "Posteingang mit Lesebereich"),
+                new AppScreenshot("thixmail-compose-light.png", "Eine Nachricht verfassen"),
+                new AppScreenshot("thixmail-main-calendar-light.png", "Der Kalender im selben Fenster"),
+                new AppScreenshot("thixmail-main-invitation-light.png", "Einladungen zusagen oder absagen"),
+            ],
+        },
+        new ThixApp
+        {
             Id = "thixnote",
             CloudApp = CloudApps.Note,
             Name = "ThixNote",
@@ -193,7 +225,7 @@ public static class AppCatalog
                           "Übergänge und Animationen, Bildschirmpräsentation mit Referentenansicht, Drucken und Export als PDF. " +
                           "PowerPoint-Präsentationen (.pptx, .pptm) öffnet und speichert ThixShow direkt, mit der MatCloud auch in ThixDrive.",
             Icon = "tv",
-            // ThixOffice publishes every app of the suite (ThixWrite, ThixCalc, ThixShow, ThixContacts) into the same rolling releases; the
+            // ThixOffice publishes every app of the suite (ThixWrite, ThixCalc, ThixShow, ThixContacts, ThixMail) into the same rolling releases; the
             // manifest and the package names tell them apart.
             Repository = "Real-TTX/ThixOffice",
             Feed = FeedKind.ChannelManifest,
@@ -251,7 +283,7 @@ public static class AppCatalog
                           "Export als PDF. Word-Dokumente (.docx) öffnet und speichert ThixWrite direkt – was es noch nicht anzeigt, " +
                           "bleibt beim Speichern erhalten.",
             Icon = "file-text",
-            // ThixOffice publishes every app of the suite (ThixWrite, ThixCalc, ThixShow, ThixContacts) into the same rolling releases;
+            // ThixOffice publishes every app of the suite (ThixWrite, ThixCalc, ThixShow, ThixContacts, ThixMail) into the same rolling releases;
             // the manifest and the package names tell them apart.
             Repository = "Real-TTX/ThixOffice",
             Feed = FeedKind.ChannelManifest,

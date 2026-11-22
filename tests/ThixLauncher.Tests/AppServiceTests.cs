@@ -226,16 +226,17 @@ public sealed class AppServiceTests
         data.System.Add(AppCatalog.Find("thixnote")!, "1.0.1-20261115");
         await AppService.RefreshAsync();
 
-        Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixNote", "ThixShow", "ThixTunnel", "ThixWrite"], Names(new AppQuery()));
-        Assert.Equal(["ThixNote", "ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixShow", "ThixTunnel", "ThixWrite"], Names(new AppQuery(Sort: AppSort.State)));
+        Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixMail", "ThixNote", "ThixShow", "ThixTunnel", "ThixWrite"], Names(new AppQuery()));
+        Assert.Equal(["ThixNote", "ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixMail", "ThixShow", "ThixTunnel", "ThixWrite"], Names(new AppQuery(Sort: AppSort.State)));
         Assert.Equal(["ThixNote"], Names(new AppQuery(Filter: AppFilter.Installed)));
         Assert.Equal(["ThixNote"], Names(new AppQuery(Filter: AppFilter.Updates)));
-        Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixShow", "ThixTunnel", "ThixWrite"], Names(new AppQuery(Filter: AppFilter.NotInstalled)));
+        Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixMail", "ThixShow", "ThixTunnel", "ThixWrite"], Names(new AppQuery(Filter: AppFilter.NotInstalled)));
         Assert.Equal(["ThixFred"], Names(new AppQuery("terminal")));
         Assert.Equal(["ThixTunnel"], Names(new AppQuery("ssh")));
         Assert.Equal(["ThixClip"], Names(new AppQuery("zwischenablage")));
         Assert.Equal(["ThixNote"], Names(new AppQuery("markdown")));
-        Assert.Equal(["ThixCalendar"], Names(new AppQuery("kalender")));
+        // ThixMail shows the calendar of the account too
+        Assert.Equal(["ThixCalendar", "ThixMail"], Names(new AppQuery("kalender")));
         Assert.Equal(["ThixWrite"], Names(new AppQuery("dokument")));
         Assert.Equal(["ThixCalc"], Names(new AppQuery("tabellen")));
         Assert.Equal(["ThixShow"], Names(new AppQuery("präsentation")));
@@ -245,6 +246,9 @@ public sealed class AppServiceTests
         Assert.Equal(["ThixContacts"], Names(new AppQuery("kontakte")));
         Assert.Equal(["ThixContacts"], Names(new AppQuery("adressbuch")));
         Assert.Equal(["ThixContacts"], Names(new AppQuery("vcard")));
+        Assert.Equal(["ThixMail"], Names(new AppQuery("e-mail")));
+        Assert.Equal(["ThixMail"], Names(new AppQuery("imap")));
+        Assert.Equal(["ThixMail"], Names(new AppQuery("smtp")));
 
         static List<string> Names(AppQuery query) => AppService.Query(query).Select(status => status.App.Name).ToList();
     }
