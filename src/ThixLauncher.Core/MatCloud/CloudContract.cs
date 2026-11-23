@@ -1,4 +1,4 @@
-// MatCloud.Contract 1.6.0 – a copy from MatCloud, do not edit here
+// MatCloud.Contract 1.7.0 – a copy from MatCloud, do not edit here
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -12,7 +12,7 @@ namespace MatCloud.Contract;
 /// A device belongs to ONE app (<see cref="DeviceLoginRequest.App"/>): its token reads and writes only the data of that app. Apps with a module in
 /// MatCloud (ThixClip: <see cref="Clip.ClipContract"/>) have routes of their own; every other app keeps its data in the general sync
 /// (<see cref="SyncContract"/>). The one exception is granted by a module, explicitly: the Drive lets the office apps in
-/// (<see cref="Drive.DriveContract.GuestApps"/>: a device of ThixWrite, ThixCalc or ThixShow reaches the Drive of its account).
+/// (<see cref="Drive.DriveContract.GuestApps"/>: a device of ThixWrite, ThixCalc, ThixShow or ThixSync reaches the Drive of its account).
 /// </summary>
 public static class CloudContract
 {
@@ -103,6 +103,9 @@ public static class CloudApps
     /// <summary>ThixSpace (disk usage): its sources and analyses in the general sync.</summary>
     public const string Space = "space";
 
+    /// <summary>ThixSync (file sync and backup): its sync jobs and connections in the general sync; reaches the Drive of its account as a source or target (<see cref="Drive.DriveContract.GuestApps"/>).</summary>
+    public const string Sync = "sync";
+
     public static readonly IReadOnlyList<CloudApp> All =
     [
         new(Clip, "ThixClip", "Der Zwischenablage-Verlauf auf allen Geräten"),
@@ -118,6 +121,7 @@ public static class CloudApps
         new(Contacts, "ThixContacts", "Kontakte und Kontaktgruppen auf allen Geräten und im Browser"),
         new(Mail, "ThixMail", "E-Mail: Konten-Einstellungen, Kontakte und Kalender aus der Cloud"),
         new(Space, "ThixSpace", "Speicheranalyse: Quellen und Analysen auf allen Geräten"),
+        new(Sync, "ThixSync", "Synchronisation und Backup: Aufträge und Verbindungen auf allen Geräten, ThixDrive als Ziel"),
     ];
 
     public static CloudApp? Find(string? id) => All.FirstOrDefault(a => string.Equals(a.Id, id, StringComparison.Ordinal));

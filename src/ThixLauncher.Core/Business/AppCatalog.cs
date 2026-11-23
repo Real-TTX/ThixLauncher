@@ -300,6 +300,32 @@ public static class AppCatalog
         },
         new ThixApp
         {
+            Id = "thixsync",
+            CloudApp = CloudApps.Sync,
+            Name = "ThixSync",
+            Tagline = "Synchronisation und Backup für alle Speicher",
+            Description = "ThixSync gleicht Ordner zwischen Computer, USB-Laufwerk, NAS, Server und Cloud ab – bidirektional, als Spiegel oder als " +
+                          "Backup mit Versionen. Konflikte erkennt es, Änderungen zeigt es vorher, und viele kleine Dateien kopiert es parallel. " +
+                          "SMB, SFTP, FTP, WebDAV, S3, Google Drive, OneDrive, Dropbox und mehr; mit der MatCloud sind Aufträge auf allen Computern gleich.",
+            Icon = "refresh",
+            Repository = "Real-TTX/ThixSync",
+            Feed = FeedKind.ChannelManifest,
+            ManifestFileName = "thixsync-update.json",
+            WindowsExecutable = "ThixSync.exe",
+            WindowsUninstallKey = "ThixSync",
+            // ThixSyncSetup.exe --update installs or updates without a window and starts ThixSync in the tray.
+            WindowsQuietInstallArguments = "--update",
+            MacBundleName = "ThixSync.app",
+            MacBundleId = "info.schmoldt.thixsync",
+            Screenshots =
+            [
+                new AppScreenshot("main-jobs-light.png", "Synchronisationen"),
+                new AppScreenshot("main-activity-light.png", "Aktivität mit Geschwindigkeit"),
+                new AppScreenshot("main-connections-light.png", "Geräte und Cloud-Speicher"),
+            ],
+        },
+        new ThixApp
+        {
             Id = "thixtunnel",
             Name = "ThixTunnel",
             Tagline = "SSH-Tunnel",
