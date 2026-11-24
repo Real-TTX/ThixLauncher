@@ -76,6 +76,7 @@ public partial class MainWindow : MatWindow
         });
         _apps.DetailsRequested += (_, appId) => ShowDetails(appId);
         _apps.StoreRequested += (_, _) => ShowStore();
+        _apps.LauncherUpdateRequested += (_, _) => ShowSettings(SettingsPage.UpdatesTab);
         _store.DetailsRequested += (_, appId) => ShowDetails(appId);
         _apps.FilterChanged += (_, filter) => Sidebar.Select(NavItemOf(filter));
         PageHost.Content = _apps;
@@ -121,6 +122,13 @@ public partial class MainWindow : MatWindow
     public Button VersionButton => Sidebar.VersionButton;
 
     public void ToggleSidebar() => Sidebar.IsFolded = !Sidebar.IsFolded;
+
+    /// <summary>"Alle aktualisieren" (Ctrl/Cmd+U, the tray): the page "Updates", then every update one after the other.</summary>
+    public void UpdateAllApps()
+    {
+        ShowApps(AppFilter.Updates);
+        _ = _apps.UpdateAllAsync();
+    }
 
     /// <summary>Shows the window (tray, second start, Dock) and brings it to the front.</summary>
     public void ShowWindow()
@@ -337,6 +345,10 @@ public partial class MainWindow : MatWindow
                 case Key.R:
                     ShowApps();
                     _ = _apps.CheckForUpdatesAsync();
+                    e.Handled = true;
+                    return;
+                case Key.U:
+                    UpdateAllApps();
                     e.Handled = true;
                     return;
                 case Key.OemComma:

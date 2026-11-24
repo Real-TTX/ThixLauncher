@@ -127,6 +127,44 @@ public sealed class UiTests
     }
 
     [AvaloniaFact]
+    public async Task Alle_aktualisieren_updates_every_app_with_an_update_and_then_goes_away()
+    {
+        using var data = new TestData();
+        data.System.Add(AppCatalog.Find("thixclip")!, "0.1.9-20261110");
+        data.System.Add(AppCatalog.Find("thixnote")!, "1.0.1-20261115");
+        await AppService.RefreshAsync();
+        var window = Open();
+
+        // the library offers it beside the search while updates wait
+        var button = window.Apps.UpdateAllButton;
+        var waiting = AppService.All().Count(status => status.HasUpdate);
+        Assert.Equal(2, waiting);
+        Assert.True(button.IsVisible);
+        Assert.True(button.IsEnabled);
+        Assert.Equal($"Alle aktualisieren ({waiting})", window.Apps.UpdateAllLabel.Text);
+
+        // Ctrl/Cmd+U: the page "Updates", every update one after the other – no dialog, also not for ThixNote's options
+        window.KeyPressQwerty(PhysicalKey.U, RawCommand);
+        Settle(window);
+        Assert.Equal(AppFilter.Updates, window.Apps.Filter);
+        await WaitUntil(window, () => !AppService.IsUpdatingAll && AppService.All().All(status => !status.HasUpdate));
+        Settle(window);
+        Assert.Empty(window.OwnedWindows.OfType<Dialogs.InstallOptionsDialog>());
+        Assert.Equal("0.1.12-20261115", AppService.Get("thixclip").Installed!.VersionText);
+        Assert.Equal("1.1.1-20261116", AppService.Get("thixnote").Installed!.VersionText);
+        Assert.Equal(2, data.System.Setups.Count);
+        Assert.Contains("Apps wurden aktualisiert: ", window.Apps.PageMessage.Text);
+        Assert.Contains("ThixClip", window.Apps.PageMessage.Text);
+        Assert.Contains("ThixNote", window.Apps.PageMessage.Text);
+
+        // nothing left to update: the button goes away, the page says so
+        Assert.False(button.IsVisible);
+        Assert.Empty(window.Apps.Cards);
+        Assert.Equal("Alles aktuell – keine Updates.", window.Apps.EmptyText.Text);
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public async Task Keyboard_goes_through_library_store_and_updates_opens_pages_and_goes_back()
     {
         using var data = new TestData();

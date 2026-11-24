@@ -122,8 +122,8 @@ internal sealed class TrayIcon : IDisposable
         _menu.AddOwn("Nach Updates suchen", () => _ = AppCoordinator.RefreshAsync(automatic: false), !AppService.IsRefreshing);
         if (updates > 0 && !AccessPolicy.AreAppChangesDisabled)
         {
-            _menu.AddOwn(updates == 1 ? "Update installieren (1 App) …" : $"Alle Apps aktualisieren ({updates}) …",
-                () => _app.ShowMainWindow(window => window.ShowApps(AppFilter.Updates)));
+            _menu.AddOwn(updates == 1 ? "Update installieren (1 App)" : $"Alle Apps aktualisieren ({updates})",
+                () => _app.ShowMainWindow(window => window.UpdateAllApps()), AppService.CanUpdateAll);
         }
     }
 

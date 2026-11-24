@@ -15,6 +15,7 @@ public static class AppService
     private static readonly object Gate = new();
     private static readonly Dictionary<string, Entry> Entries = new(StringComparer.OrdinalIgnoreCase);
     private static Task? _refresh;
+    private static bool _isUpdatingAll;
 
     /// <summary>Raised after every change of an app's state (any thread).</summary>
     public static event EventHandler? Changed;
@@ -35,6 +36,25 @@ public static class AppService
             }
         }
     }
+
+    /// <summary>"Alle aktualisieren" (or the automatic update) is running.</summary>
+    public static bool IsUpdatingAll
+    {
+        get
+        {
+            lock (Gate)
+            {
+                return _isUpdatingAll;
+            }
+        }
+    }
+
+    /// <summary>
+    /// "Alle aktualisieren" can be offered: an installed app has an update, none of them is being changed right now, the
+    /// organisation allows changes and the system is supported.
+    /// </summary>
+    public static bool CanUpdateAll =>
+        !AccessPolicy.AreAppChangesDisabled && IsSupported && !IsUpdatingAll && All().Any(status => status.HasUpdate && !status.IsBusy);
 
     /// <summary>"release" or "nightly": the channel of the apps (setting "Kanal").</summary>
     public static string Channel => SettingsService.Get().AppChannel == AppChannel.Nightly ? AppVersion.Nightly : AppVersion.Release;
@@ -272,23 +292,48 @@ public static class AppService
 
     /// <summary>
     /// Updates every app that has an update; <paramref name="quietOnly"/> leaves out apps whose setup asks (the automatic
-    /// update runs without anybody at the computer). Returns what was updated and what failed, with the reason.
+    /// update runs without anybody at the computer). One after the other; an app that is being changed right now is left
+    /// alone. Only one run at a time. Returns what was updated and what failed, with the reason.
     /// </summary>
     public static async Task<AppUpdateReport> UpdateAllAsync(bool quietOnly, CancellationToken cancellationToken = default)
     {
         AccessPolicy.EnsureAppChangesAllowed();
-        var report = new AppUpdateReport();
-        foreach (var status in All().Where(status => status.HasUpdate && (!quietOnly || status.App.InstallsQuietly)))
+        EnsureSupported();
+        lock (Gate)
         {
-            try
+            if (_isUpdatingAll)
             {
-                await InstallAsync(status.App.Id, cancellationToken: cancellationToken);
-                report.Updated.Add(status.App.Name);
+                throw new BusinessException("Die Apps werden gerade aktualisiert – bitte warten, bis das fertig ist.");
             }
-            catch (BusinessException exception)
+
+            _isUpdatingAll = true;
+        }
+
+        RaiseChanged();
+        var report = new AppUpdateReport();
+        try
+        {
+            foreach (var status in All().Where(status => status.HasUpdate && !status.IsBusy && (!quietOnly || status.App.InstallsQuietly)))
             {
-                report.Failed.Add((status.App.Name, exception.Message));
+                try
+                {
+                    await InstallAsync(status.App.Id, cancellationToken: cancellationToken);
+                    report.Updated.Add(status.App.Name);
+                }
+                catch (BusinessException exception)
+                {
+                    report.Failed.Add((status.App.Name, exception.Message));
+                }
             }
+        }
+        finally
+        {
+            lock (Gate)
+            {
+                _isUpdatingAll = false;
+            }
+
+            RaiseChanged();
         }
 
         return report;
@@ -301,6 +346,7 @@ public static class AppService
         {
             Entries.Clear();
             _refresh = null;
+            _isUpdatingAll = false;
             LastRefresh = null;
         }
 

@@ -6,6 +6,7 @@ using Avalonia.Styling;
 using Avalonia.VisualTree;
 using ThixLauncher.Controls;
 using ThixLauncher.Core.Business;
+using ThixLauncher.Core.Infrastructure;
 using ThixLauncher.Core.Models;
 
 namespace ThixLauncher.Pages;
@@ -13,14 +14,18 @@ namespace ThixLauncher.Pages;
 /// <summary>
 /// The library: the installed apps, as app tiles (the logo big) or as a list (<see cref="View"/>, remembered in the
 /// settings), the last tile "Apps hinzufügen" opens the store (<see cref="StoreRequested"/>). The toolbar beside the title (search,
-/// filter "Alle installierten" / "Mit Update", sort) asks <see cref="AppService.Query"/>; every card is built once and shows each
-/// new state (a running installation updates its card many times a second without rebuilding the list). Enter or a double click
-/// opens the details; the actions below act on the chosen app.
+/// filter "Alle installierten" / "Mit Update", sort, "Alle aktualisieren (n)" while updates wait) asks <see cref="AppService.Query"/>;
+/// every card is built once and shows each new state (a running installation updates its card many times a second without
+/// rebuilding the list). Enter or a double click opens the details; the actions below act on the chosen app. On "Updates" a
+/// waiting update of ThixLauncher itself is shown above the apps (<see cref="LauncherUpdateRequested"/>).
 /// </summary>
 public partial class AppsPage : UserControl
 {
     /// <summary>Below this width of the page the toolbar goes under the title.</summary>
     private const double WideHeaderWidth = 900;
+
+    /// <summary>The margin of the page left and right (AppsPage.axaml).</summary>
+    private const double PageMargin = 56;
 
     private static readonly FuncTemplate<Panel?> TilePanel = new(() => new WrapPanel());
     private static readonly FuncTemplate<Panel?> ListPanel = new(() => new StackPanel());
@@ -50,6 +55,7 @@ public partial class AppsPage : UserControl
 
         ShowView(View, remember: false);
         ToolTip.SetTip(RefreshButton, $"Nach Updates suchen ({Ui.CommandKey.Name}+R)");
+        ToolTip.SetTip(UpdateAllButton, $"Jede installierte App mit Update auf den neuesten Stand bringen ({Ui.CommandKey.Name}+U)");
         SizeChanged += (_, e) => ArrangeHeader(e.NewSize.Width);
 
         _isLoading = true;
@@ -74,6 +80,7 @@ public partial class AppsPage : UserControl
 
         AppService.Changed += (_, _) => PostRefresh();
         SettingsService.Changed += (_, _) => PostRefresh();
+        UpdateCoordinator.Checked += (_, _) => PostRefresh();
         Refresh();
         if (AppList.ItemCount > 0)
         {
@@ -86,6 +93,9 @@ public partial class AppsPage : UserControl
 
     /// <summary>"Apps hinzufügen" was chosen: the store.</summary>
     public event EventHandler? StoreRequested;
+
+    /// <summary>"ThixLauncher aktualisieren" was chosen (Einstellungen › Updates installs it).</summary>
+    public event EventHandler? LauncherUpdateRequested;
 
     /// <summary>The filter changed (the menu marks its item).</summary>
     public event EventHandler<AppFilter>? FilterChanged;
@@ -201,6 +211,48 @@ public partial class AppsPage : UserControl
         }
     }
 
+    /// <summary>
+    /// "Alle aktualisieren": every installed app with an update, one after the other (their cards show the progress); the
+    /// result above the apps – what was updated, what failed and why.
+    /// </summary>
+    public async Task UpdateAllAsync()
+    {
+        if (!AppService.CanUpdateAll)
+        {
+            return;
+        }
+
+        PageMessage.Hide();
+        try
+        {
+            var report = await AppService.UpdateAllAsync(quietOnly: false);
+            if (report.Failed.Count > 0)
+            {
+                var lines = report.Failed.Select(failed => $"{failed.App}: {failed.Reason}").ToList();
+                if (report.Updated.Count > 0)
+                {
+                    lines.Insert(0, $"Aktualisiert: {string.Join(", ", report.Updated)}.");
+                }
+
+                PageMessage.Show(string.Join(Environment.NewLine, lines), InfoSeverity.Warning);
+            }
+            else if (report.Updated.Count > 0)
+            {
+                PageMessage.Show(report.Updated.Count == 1
+                    ? $"{report.Updated[0]} wurde aktualisiert."
+                    : $"{report.Updated.Count} Apps wurden aktualisiert: {string.Join(", ", report.Updated)}.", InfoSeverity.Success);
+            }
+            else
+            {
+                PageMessage.Show("Alle installierten Apps sind aktuell.", InfoSeverity.Info);
+            }
+        }
+        catch (BusinessException exception)
+        {
+            PageMessage.Show(exception.Message, InfoSeverity.Error);
+        }
+    }
+
     /// <summary>Asks the business layer for the list of the toolbar and shows it; the chosen app stays chosen.</summary>
     public void Refresh()
     {
@@ -229,7 +281,25 @@ public partial class AppsPage : UserControl
             ? $"Keine installierte App passt zu „{search}“ – im Store gibt es alle Apps."
             : Filter == AppFilter.Updates ? "Alles aktuell – keine Updates." : "Noch keine App installiert.";
         RefreshSubtitle();
+        RefreshUpdates();
         RefreshActions();
+        ArrangeHeader(Bounds.Width);
+    }
+
+    /// <summary>"Alle aktualisieren (n)" while updates wait; on "Updates" the waiting update of ThixLauncher.</summary>
+    private void RefreshUpdates()
+    {
+        var updates = AppService.All().Count(status => status.HasUpdate);
+        UpdateAllButton.IsVisible = updates > 0 && !AccessPolicy.AreAppChangesDisabled && AppService.IsSupported;
+        UpdateAllButton.IsEnabled = AppService.CanUpdateAll;
+        UpdateAllLabel.Text = AppService.IsUpdatingAll ? "Wird aktualisiert …" : $"Alle aktualisieren ({updates})";
+
+        var launcher = UpdateService.LastResult is { IsUpdateAvailable: true, Manifest: { } manifest } ? manifest : null;
+        LauncherUpdate.IsVisible = Filter == AppFilter.Updates && launcher is not null;
+        if (launcher is not null)
+        {
+            LauncherUpdateText.Text = $"ThixLauncher {launcher.Version} ist verfügbar (installiert: {AppInfo.Version}).";
+        }
     }
 
     private void OnToolbarChanged()
@@ -349,6 +419,10 @@ public partial class AppsPage : UserControl
 
     private async void OnRefreshClick(object? sender, RoutedEventArgs e) => await CheckForUpdatesAsync();
 
+    private async void OnUpdateAllClick(object? sender, RoutedEventArgs e) => await UpdateAllAsync();
+
+    private void OnLauncherUpdateClick(object? sender, RoutedEventArgs e) => LauncherUpdateRequested?.Invoke(this, EventArgs.Empty);
+
     private async void OnPrimaryClick(object? sender, RoutedEventArgs e)
     {
         if (Selected is { } status && AppActions.Primary(status).Action is { } action)
@@ -371,10 +445,21 @@ public partial class AppsPage : UserControl
 
     private void OnListClick(object? sender, RoutedEventArgs e) => ShowView(AppsView.List);
 
-    /// <summary>The toolbar beside the title while the page is wide, under the title (left) when it is narrow.</summary>
+    /// <summary>
+    /// The toolbar beside the title while title and toolbar fit in one line (and the page is at least <see cref="WideHeaderWidth"/>
+    /// wide), under the title (left) otherwise – "Alle aktualisieren" makes the toolbar wider while updates wait.
+    /// </summary>
     private void ArrangeHeader(double width)
     {
-        var isWide = width >= WideHeaderWidth;
+        if (width <= 0)
+        {
+            return;
+        }
+
+        Toolbar.Measure(Avalonia.Size.Infinity);
+        TitleText.Measure(Avalonia.Size.Infinity);
+        var oneLine = TitleText.DesiredSize.Width + Toolbar.DesiredSize.Width + PageMargin;
+        var isWide = width >= Math.Max(WideHeaderWidth, oneLine);
         Grid.SetRow(Toolbar, isWide ? 0 : 2);
         Grid.SetColumn(Toolbar, isWide ? 1 : 0);
         Grid.SetColumnSpan(Toolbar, isWide ? 1 : 2);

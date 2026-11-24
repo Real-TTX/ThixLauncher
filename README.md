@@ -83,7 +83,9 @@ Nightlies aus dem Branch `dev` stehen im Pre-Release `nightly-channel`.
 - **Entfernen:** mit dem Deinstallationsprogramm der App (das stille, wenn es eines gibt). Die Daten der App bleiben.
 - **Bibliothek** (Startseite): die installierten Apps als App-Kacheln mit großem Logo (oder als Liste – der
   Schalter neben der Suche, die Wahl bleibt), die letzte Kachel **„Apps hinzufügen“** öffnet den Store. „Updates“ im Menü ist die
-  Bibliothek mit den Apps, für die es ein Update gibt.
+  Bibliothek mit den Apps, für die es ein Update gibt. Solange Updates warten, bringt **„Alle aktualisieren (n)“** neben der Suche
+  (auch Strg+U und das Tray-Menü) jede dieser Apps nacheinander auf den neuesten Stand; was nicht ging, steht danach mit Grund über
+  den Apps. Wartet ein Update von ThixLauncher selbst, zeigt „Updates“ es darüber an.
 - **Store:** eine App groß (zuerst die erste, die noch nicht installiert ist; ‹ › blättert durch alle) und darunter alle Apps als
   Kacheln. Ein Klick öffnet die **Seite der App**: ihre Screenshots (eins groß, die anderen zum Anklicken), Übersicht,
   **Änderungen** und Details, mit Installieren / Aktualisieren / Öffnen / Deinstallieren.
@@ -110,6 +112,7 @@ Nightlies aus dem Branch `dev` stehen im Pre-Release `nightly-channel`.
 | Strg+1 / 2 / 3 | Bibliothek / Store / Updates |
 | Strg+F | Suchen (im Store alle Apps, in der Bibliothek die installierten) |
 | Strg+R oder F5 | Nach Updates suchen |
+| Strg+U | Alle Apps aktualisieren |
 | Enter | Seite der gewählten App (auf „Apps hinzufügen“: der Store) |
 | Esc | Zurück (von der Seite einer App dorthin, wo sie geöffnet wurde) / Fenster ausblenden |
 | Strg+, | Einstellungen |

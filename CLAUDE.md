@@ -101,8 +101,10 @@ src/ThixLauncher        (Avalonia app)
                         library filtered, Einstellungen, version = About, fold), page host; an app's page goes back to where it was
                         opened (store or library); keyboard (OnPreviewKeyDown)
   Pages/                AppsPage = the LIBRARY, the start page (the installed apps; title with the compact toolbar beside it – search /
-                        filter "Alle installierten" | "Mit Update" / sort / "Nach Updates suchen" / tiles or list, under the title when
-                        narrow – and the state line; the apps as app tiles – the logo big, the texts centred – (default) or card rows, remembered via
+                        filter "Alle installierten" | "Mit Update" / sort / "Nach Updates suchen" / "Alle aktualisieren (n)" while updates
+                        wait (AppService.UpdateAllAsync, one run at a time, IsUpdatingAll/CanUpdateAll; also Ctrl/Cmd+U and the tray) /
+                        tiles or list, under the title when narrow – and the state line; on "Updates" a waiting update of ThixLauncher
+                        itself (button → Einstellungen › Updates); the apps as app tiles – the logo big, the texts centred – (default) or card rows, remembered via
                         SettingsService.Remember; the last tile AddAppsCard "Apps hinzufügen" opens the store; actions of the chosen app
                         below), StorePage (every app: one big – picture, logo, text, state, main action, "Mehr erfahren", ‹ n / 8 › –, then
                         all as tiles; a click on a tile opens its page, its button acts; search hides the big one), TileStyles.axaml (the
@@ -113,7 +115,7 @@ src/ThixLauncher        (Avalonia app)
   Controls/             ONE code base per control: AppCard (one app as tile – cover picture with the logo on it – or row, same parts),
                         AddAppsCard, AppPicture (a picture of the store: loads when shown and on a theme change, the logo stands in),
                         AppLogo, StateBadge, ActionBar, IconLabel, InfoBar, FormErrors
-  Tray/                 TrayIcon (TRAY-01 order; own items: start each installed app, Nach Updates suchen, update; amber dot while
+  Tray/                 TrayIcon (TRAY-01 order; own items: start each installed app, Nach Updates suchen, Alle Apps aktualisieren; amber dot while
                         updates wait)
   Setup/                ThixLauncherSetup (MatSetupWindow: install, update, uninstall; the Options switches from installer.json)
   Dialogs/              ConfirmDialog, InstallOptionsDialog (SETUP-08: a switch per offered option, the app's defaults; Installieren /
