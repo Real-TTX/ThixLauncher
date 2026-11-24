@@ -15,6 +15,7 @@ public static class AppCatalog
         new ThixApp
         {
             Id = "thixcalc",
+            ShortName = "calc",
             CloudApp = CloudApps.Calc,
             Name = "ThixCalc",
             Tagline = "Tabellenkalkulation für Zahlen, Listen und Auswertungen",
@@ -47,6 +48,7 @@ public static class AppCatalog
         new ThixApp
         {
             Id = "thixcalendar",
+            ShortName = "calendar",
             CloudApp = CloudApps.Calendar,
             Name = "ThixCalendar",
             Tagline = "Alle Kalender, keine verpasste Erinnerung",
@@ -74,6 +76,7 @@ public static class AppCatalog
         new ThixApp
         {
             Id = "thixclip",
+            ShortName = "clip",
             CloudApp = CloudApps.Clip,
             Name = "ThixClip",
             Tagline = "Zwischenablage-Verlauf",
@@ -100,6 +103,7 @@ public static class AppCatalog
         new ThixApp
         {
             Id = "thixcontacts",
+            ShortName = "contacts",
             CloudApp = CloudApps.Contacts,
             Name = "ThixContacts",
             Tagline = "Adressbuch für Kontakte und Kontaktgruppen",
@@ -132,6 +136,7 @@ public static class AppCatalog
         new ThixApp
         {
             Id = "thixfred",
+            ShortName = "fred",
             CloudApp = CloudApps.Fred,
             Name = "ThixFred",
             Tagline = "Launcher für Programme und Befehle",
@@ -159,6 +164,7 @@ public static class AppCatalog
         new ThixApp
         {
             Id = "thixmail",
+            ShortName = "mail",
             CloudApp = CloudApps.Mail,
             Name = "ThixMail",
             Tagline = "E-Mail, Kalender und Personen in einem Fenster",
@@ -191,6 +197,7 @@ public static class AppCatalog
         new ThixApp
         {
             Id = "thixnote",
+            ShortName = "note",
             CloudApp = CloudApps.Note,
             Name = "ThixNote",
             Tagline = "Notizen als Dateien",
@@ -218,6 +225,7 @@ public static class AppCatalog
         new ThixApp
         {
             Id = "thixshot",
+            ShortName = "shot",
             Name = "ThixShot",
             Tagline = "Screenshots und Bildschirmvideos mit bearbeitbaren Zooms",
             Description = "Nimm den Bildschirm oder einen Ausschnitt auf. Screenshots kannst du mit Zeitverzögerung aufnehmen, " +
@@ -243,6 +251,7 @@ public static class AppCatalog
         new ThixApp
         {
             Id = "thixshow",
+            ShortName = "show",
             CloudApp = CloudApps.Show,
             Name = "ThixShow",
             Tagline = "Präsentationen mit Folien, Designs und Bildschirmpräsentation",
@@ -275,6 +284,7 @@ public static class AppCatalog
         new ThixApp
         {
             Id = "thixspace",
+            ShortName = "space",
             CloudApp = CloudApps.Space,
             Name = "ThixSpace",
             Tagline = "Speicheranalyse mit interaktiver Karte",
@@ -301,6 +311,7 @@ public static class AppCatalog
         new ThixApp
         {
             Id = "thixsync",
+            ShortName = "sync",
             CloudApp = CloudApps.Sync,
             Name = "ThixSync",
             Tagline = "Synchronisation und Backup für alle Speicher",
@@ -327,6 +338,7 @@ public static class AppCatalog
         new ThixApp
         {
             Id = "thixtunnel",
+            ShortName = "tunnel",
             Name = "ThixTunnel",
             Tagline = "SSH-Tunnel",
             Description = "SSH-Profile, mehrere Hops und lokale Portweiterleitungen: ThixTunnel baut Tunnel mit dem OpenSSH des Systems " +
@@ -353,6 +365,7 @@ public static class AppCatalog
         new ThixApp
         {
             Id = "thixwrite",
+            ShortName = "write",
             CloudApp = CloudApps.Write,
             Name = "ThixWrite",
             Tagline = "Textverarbeitung für Dokumente, Briefe und Berichte",

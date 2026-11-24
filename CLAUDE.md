@@ -6,7 +6,7 @@ Guidance for working in this repository. Keep it in sync with the code: update i
 
 The launcher of the Thix apps for **Windows and macOS** (desktop app, tray / menu bar): it installs the apps with one
 click, keeps them up to date, starts them and removes them. The catalog has **ThixCalc**, **ThixCalendar**, **ThixClip**, **ThixContacts**, **ThixFred**, **ThixMail**, **ThixNote**, **ThixShot**, **ThixShow**, **ThixSpace**, **ThixSync**, **ThixTunnel** and **ThixWrite**
-(`AppCatalog`; ThixWrite, ThixCalc, ThixShow, ThixContacts and ThixMail come from ThixOffice, one repository with shared rolling releases); a new app is one entry there plus its logo in `src/ThixLauncher/Assets/apps/<id>.png`. The apps come
+(`AppCatalog`; ThixWrite, ThixCalc, ThixShow, ThixContacts and ThixMail come from ThixOffice, one repository with shared rolling releases); a new app is one entry there plus its logo in `src/ThixLauncher/Assets/apps/<id>.png`. Every app has a `ShortName` ("clip"): its page on the website is thixapps.de/apps/<short name>. The website (MatCMS plugin `thix-store`) reads **`docs/catalog.json`** = `WebCatalog.Json()` from main; `WebCatalogTests` keeps the file equal to the catalog (`THIXLAUNCHER_WRITE_CATALOG=1 dotnet test` writes it). The apps come
 straight from their GitHub releases (public, no token), every package is checked by **SHA-256** before it runs.
 With **MatCloud** (`../MatCloud`, the cloud of the Thix apps) the launcher signs in once and
 hands its sign-in to every app it installs (`CloudService`, contract `POST /api/v1/devices/handoff` + `CloudHandoff`); the cloud never holds up
@@ -63,7 +63,7 @@ src/ThixLauncher.Core   (no UI) models, business layer (static classes), infrast
                         writes it –, ConnectInstalledApps), UpdateManifest (+ "installer"), BusinessException; ThixApp.CloudApp = its id at MatCloud;
                         InstallerConfig (SETUP-08: InstallerSwitch, InstallerFileType, InstallChoices, SetupAction, SetupRequest,
                         AppSetupCommand = how a platform runs an app's package)
-  Business/             AppCatalog (the apps), StoreService (the store's talk with GitHub WITHOUT the API: PictureAsync – raw.githubusercontent.com
+  Business/             AppCatalog (the apps), WebCatalog (docs/catalog.json for the website), StoreService (the store's talk with GitHub WITHOUT the API: PictureAsync – raw.githubusercontent.com
                         /<repo>/main/<ScreenshotFolder>/<file>, kept in <data>/store/<app>/, asked again once a day with the ETag, "-dark" first in
                         the dark theme, only PNG, safe names –, ChangesAsync – github.com/<repo>/commits/<main|dev>.atom, first line of the
                         whole message, 6 h in memory –, Featured = the first app not installed), AppService (state per app in memory, Query/Count, RefreshAsync, InstallAsync = install or

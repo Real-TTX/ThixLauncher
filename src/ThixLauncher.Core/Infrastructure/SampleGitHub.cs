@@ -21,6 +21,7 @@ internal sealed class SampleGitHub(IReadOnlyList<ThixApp>? apps = null) : HttpMe
     private static readonly ThixApp Launcher = new()
     {
         Id = "thixlauncher",
+        ShortName = "launcher",
         Name = "ThixLauncher",
         Tagline = "",
         Description = "",

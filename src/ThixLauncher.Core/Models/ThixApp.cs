@@ -25,6 +25,9 @@ public sealed record ThixApp
     /// <summary>The key of the app ("thixclip"); used in settings, logs and the download folder.</summary>
     public required string Id { get; init; }
 
+    /// <summary>The short name of the app on the website: its page is thixapps.de/apps/&lt;short name&gt; ("clip"). Lower-case letters only.</summary>
+    public required string ShortName { get; init; }
+
     public required string Name { get; init; }
 
     /// <summary>One line: what it is ("Zwischenablage-Verlauf").</summary>

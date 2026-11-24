@@ -355,6 +355,7 @@ public sealed class AppServiceTests
     private static ThixApp OfficeApp(string id, string name) => new()
     {
         Id = id,
+        ShortName = id,
         Name = name,
         Tagline = name,
         Description = name,
