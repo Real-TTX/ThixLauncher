@@ -426,7 +426,7 @@ public sealed class UiTests
     }
 
     [AvaloniaFact]
-    public async Task The_cloud_tab_signs_in_in_the_browser_and_shows_the_account()
+    public async Task The_cloud_tab_signs_in_in_the_browser_and_shows_the_account_also_at_the_foot_of_the_menu()
     {
         using var data = new TestData();
         var opened = new List<string>();
@@ -434,7 +434,8 @@ public sealed class UiTests
         try
         {
             var window = Open();
-            window.ShowSettings(SettingsPage.CloudTab);
+            Assert.Equal("Mit Cloud verbinden", window.CloudText.Text);
+            window.CloudStatusButton.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
             Settle(window);
             var page = (SettingsPage)window.PageHost.Content!;
             Assert.True(page.CloudLogin.IsVisible);
@@ -452,6 +453,11 @@ public sealed class UiTests
             Assert.False(page.CloudLogin.IsVisible);
             Assert.Equal("Anna Beispiel (anna)", page.CloudAccountText.Text);
             Assert.Equal("Verbunden", page.CloudStateText.Text);
+            await WaitUntil(window, () => window.CloudText.Text == "Verbunden · anna");
+            window.ToggleSidebar();
+            Settle(window);
+            Assert.False(window.CloudText.IsVisible);
+            Assert.True(window.CloudStatusButton.IsVisible);
             Assert.True(page.ConnectAppsSwitch.IsChecked);
 
             page.ConnectAppsSwitch.IsChecked = false;

@@ -3,6 +3,9 @@ using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
+using Avalonia.Media;
+using Avalonia.Controls.Shapes;
 using Avalonia.Threading;
 using MatDesktop;
 using ThixLauncher.Controls;
@@ -16,7 +19,8 @@ namespace ThixLauncher;
 /// <summary>
 /// The main window: MatDesktop's chrome (MatTitleBar, DESK-03; MatNav, DESK-04, folds to a rail of 68 px) around the pages
 /// (the library = the installed apps, the store = every app, the page of one app, settings, about). The installed apps sit in
-/// the title bar to start them with one click. Keyboard: Ctrl/Cmd+1 library, +2 store, +3 updates, +F search, +R or F5 look
+/// the title bar to start them with one click; the foot of the menu shows the state of MatCloud like every Thix app (a click
+/// opens Einstellungen › Cloud). Keyboard: Ctrl/Cmd+1 library, +2 store, +3 updates, +F search, +R or F5 look
 /// for updates, +, settings, +B fold the menu, Enter the page of the chosen app, Esc back (from an app's page to where it was
 /// opened, from any other page to the library) or hide the window.
 /// Close, Esc and Alt+F4 hide the window; only "Beenden" ends ThixLauncher (DESK-06).
@@ -33,6 +37,9 @@ public partial class MainWindow : MatWindow
     private readonly MatNavItem _navStore;
     private readonly MatNavItem _navUpdates;
     private readonly MatNavItem _navSettings;
+    private readonly Ellipse _cloudDot = new() { Width = 8, Height = 8, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, -2, -1) };
+    private readonly TextBlock _cloudText = new() { FontSize = MatTokens.Type.FsSm, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 170 };
+    private readonly Button _cloudStatus;
     private bool _refreshPosted;
     private bool _detailFromStore;
 
@@ -66,7 +73,13 @@ public partial class MainWindow : MatWindow
         Sidebar.ItemInvoked += (_, item) => OnNavInvoked(item);
         Sidebar.AboutRequested += (_, _) => ShowAbout();
         Sidebar.UpdateRequested += (_, _) => ShowSettings(SettingsPage.UpdatesTab);
-        Sidebar.FoldChanged += (_, folded) => SettingsService.Remember(current => current with { IsSidebarCollapsed = folded });
+        Sidebar.FoldChanged += (_, folded) =>
+        {
+            SettingsService.Remember(current => current with { IsSidebarCollapsed = folded });
+            RefreshCloudStatus();
+        };
+        _cloudStatus = NewCloudStatusButton();
+        Sidebar.Foot = new StackPanel { Spacing = 10, Margin = new Thickness(0, 12, 0, 10), Children = { _cloudStatus } };
 
         _detail = new Lazy<AppDetailPage>(() =>
         {
@@ -98,8 +111,17 @@ public partial class MainWindow : MatWindow
         AddHandler(KeyDownEvent, OnPreviewKeyDown, RoutingStrategies.Tunnel);
         AppService.Changed += (_, _) => PostRefresh();
         UpdateCoordinator.Checked += (_, _) => Ui.Post(RefreshChrome);
+        CloudService.StatusChanged += (_, _) => Ui.Post(RefreshCloudStatus);
+        SettingsService.Changed += (_, _) => Ui.Post(RefreshCloudStatus);
         RefreshChrome();
+        RefreshCloudStatus();
     }
+
+    /// <summary>The state of MatCloud at the foot of the menu (tests).</summary>
+    public Button CloudStatusButton => _cloudStatus;
+
+    /// <summary>The text of the cloud state (hidden while the menu is folded; tests).</summary>
+    public TextBlock CloudText => _cloudText;
 
     /// <summary>Set by App when the application ends: then the window really closes.</summary>
     public bool IsExiting { get; set; }
@@ -237,6 +259,51 @@ public partial class MainWindow : MatWindow
         }
 
         ShowApps(null, appId);
+    }
+
+    private Button NewCloudStatusButton()
+    {
+        var button = new Button
+        {
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            Padding = new Thickness(8, 0),
+            Content = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 9,
+                Children = { new Panel { Children = { new MatIcon { Icon = "cloud", Size = 18 }, _cloudDot } }, _cloudText },
+            },
+        }.Themed("MatButton.Ghost");
+        button.Click += (_, _) => ShowSettings(SettingsPage.CloudTab);
+        return button;
+    }
+
+    /// <summary>The cloud state in the menu: a word, a dot in the colour of the state, the account; folded only the icon with the dot.</summary>
+    private void RefreshCloudStatus()
+    {
+        var cloud = SettingsService.Get().Cloud;
+        var status = CloudService.Status;
+        _cloudStatus.IsVisible = !AccessPolicy.IsCloudDisabled;
+        (_cloudText.Text, var dot) = status.State switch
+        {
+            CloudState.Online => ($"Verbunden · {cloud.UserName}", "Mat.Success"),
+            CloudState.Connecting => ("Verbinde …", "Mat.Accent"),
+            CloudState.Offline => ("Cloud nicht erreichbar", "Mat.Warning"),
+            CloudState.SignedOut => ("Abgemeldet – neu anmelden", "Mat.Danger"),
+            _ => cloud.IsConnected ? ("Cloud verbunden", "Mat.Success") : ("Mit Cloud verbinden", (string?)null),
+        };
+        _cloudDot.IsVisible = dot is not null;
+        if (dot is not null)
+        {
+            _cloudDot.Use(Shape.FillProperty, dot);
+        }
+
+        var folded = Sidebar.IsFolded;
+        _cloudText.IsVisible = !folded;
+        _cloudStatus.HorizontalContentAlignment = folded ? HorizontalAlignment.Center : HorizontalAlignment.Left;
+        var tip = status.Message.Length > 0 ? status.Message : _cloudText.Text;
+        ToolTip.SetTip(_cloudStatus, folded && tip != _cloudText.Text ? $"{_cloudText.Text}\n{tip}" : tip);
+        AutomationProperties.SetName(_cloudStatus, _cloudText.Text);
     }
 
     private void PostRefresh()

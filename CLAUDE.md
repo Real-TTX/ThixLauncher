@@ -98,7 +98,7 @@ src/ThixLauncher        (Avalonia app)
   AppActions            the actions of an app for every page and the tray: main button (Aktualisieren / Öffnen / Installieren),
                         second button, may it be removed, RunAsync (asks the install options before a first install, asks before removing)
   MainWindow            MatTitleBar (logo, word mark, the installed apps to start), MatNav (Bibliothek, Store, Updates (n) = the
-                        library filtered, Einstellungen, version = About, fold), page host; an app's page goes back to where it was
+                        library filtered, Einstellungen; foot: the cloud state → Einstellungen › Cloud, version = About, fold), page host; an app's page goes back to where it was
                         opened (store or library); keyboard (OnPreviewKeyDown)
   Pages/                AppsPage = the LIBRARY, the start page (the installed apps; title with the compact toolbar beside it – search /
                         filter "Alle installierten" | "Mit Update" / sort / "Nach Updates suchen" / "Alle aktualisieren (n)" while updates
