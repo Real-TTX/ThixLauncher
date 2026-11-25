@@ -66,8 +66,10 @@ src/ThixLauncher.Core   (no UI) models, business layer (static classes), infrast
   Business/             AppCatalog (the apps), WebCatalog (docs/catalog.json for the website), StoreService (the store's talk with GitHub WITHOUT the API: PictureAsync – raw.githubusercontent.com
                         /<repo>/main/<ScreenshotFolder>/<file>, kept in <data>/store/<app>/, asked again once a day with the ETag, "-dark" first in
                         the dark theme, only PNG, safe names –, ChangesAsync – github.com/<repo>/commits/<main|dev>.atom, first line of the
-                        whole message, 6 h in memory –, Featured = the first app not installed), AppService (state per app in memory, Query/Count, RefreshAsync, InstallAsync = install or
-                        update with download + SHA-256, UninstallAsync, Launch, UpdateAllAsync; one action per app; all checks),
+                        whole message, 6 h in memory –, Featured = the first app not installed), AppService (state per app in memory, Query/Count, RefreshAsync, DetectInstalledAsync, InstallAsync = install or
+                        update with download + SHA-256, UninstallAsync, LaunchAsync, UpdateAllAsync; one action per app; all checks; every
+                        call to the system on a worker thread, the state read by the UI never asks the system – HasDetected after the
+                        first detection –; DescribeActivity for the hang report),
                         CloudService (sign-in in the browser / with a password, CheckAsync in the background, HandOffAsync before the setup of a fresh
                         install: at most 8 s, never throws; ForgetHandoff after removing), SettingsService, AccessPolicy (LockConfiguration,
                         DisableAppChanges, DisableUpdates, DisableCloud), AutostartService
@@ -84,7 +86,9 @@ src/ThixLauncher.Core   (no UI) models, business layer (static classes), infrast
                         PNGs, with ETag/304 – and commit feeds – Commits –; apps of one repository – ThixOffice – told apart
                         by the manifest's and the package's file name; a test may give its own apps; Installers = the "installer" block per
                         app, the sample ThixNote has one), SampleCloud (MatCloud in memory), TokenStore (DPAPI / Keychain),
-                        SettingsStore, AppPaths, AppInfo, AppClock, Log, ProblemReports
+                        SettingsStore, AppPaths, AppInfo, AppClock, Log (+ Recent: the newest lines in memory), ProblemReports (crash and hang
+                        reports; a hang dump is read from a snapshot of the process – PssCaptureSnapshot, the launcher stands still for
+                        milliseconds –, at most one per run, the newest KeptDumps = 3 stay)
   Platform/             IAppSystem + AppSystem (the current one; UseForTests), WindowsAppSystem (uninstall entry, MSI products by their upgrade code, the app's setup with
                         the AppSetupCommand – quiet: stderr is read, exit code 2 = the setup refused the options –, its uninstaller),
                         MacAppSystem (bundle in /Applications or ~/Applications, ditto / hdiutil, quit, swap, then "--configure …"),
@@ -120,7 +124,11 @@ src/ThixLauncher        (Avalonia app)
   Setup/                ThixLauncherSetup (MatSetupWindow: install, update, uninstall; the Options switches from installer.json)
   Dialogs/              ConfirmDialog, InstallOptionsDialog (SETUP-08: a switch per offered option, the app's defaults; Installieren /
                         Abbrechen), ProblemReportDialog
-  SelfTest, Snapshot, UiWatchdog, Ui
+  SelfTest, Snapshot, Ui
+  UiWatchdog            knocks on the UI thread every second (HangDetector: a hang = the oldest knock not run for 8 s, so a late
+                        watchdog is no hang); the report says what the UI thread did (UiThreadProbe: CPU time over the hang, whether it
+                        takes a WM_NULL – waiting in a message loop or not –, IsHungAppWindow), what ran (AppService.DescribeActivity),
+                        the newest log lines, and the length of the hang without the pause of the dump
 tests/ThixLauncher.Tests
 ```
 
@@ -143,6 +151,10 @@ tests/ThixLauncher.Tests
   `AutomationProperties.Name` and a tooltip. Several instances of a control on one page must work (no static state).
 - **Avalonia:** a property bound with `control.Use(...)` is not overridden by setting it: rebuild the child instead (AppLogo).
   `ListBox` handles Enter itself: listen with `handledEventsToo`.
+- **The UI thread never waits for the system:** registry, Windows Installer, files of other apps, processes, downloads and
+  setups run on a worker (`Task.Run` in the business layer, so whoever calls it is safe); no lock is held across such a call.
+  Windows Installer can wait while another installation runs, and creating, closing or starting a freshly downloaded program can
+  wait for the virus scanner. `UiThreadTests` hold it with a system whose detection waits.
 - **Platforms:** one code base; differences behind `OperatingSystem.IsWindows()/IsMacOS()` in one class each. macOS cannot
   be checked from the Windows machine: CI builds and tests it, the owner tries it on a Mac.
 - Edit text files with the editor tools or Node/`[IO.File]` with UTF-8: Windows PowerShell 5.1 `Get-Content`/`Set-Content`
