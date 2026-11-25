@@ -144,7 +144,7 @@ public sealed class StoreTests
             data.System.Add(app, "0.1.1-20261119");
         }
 
-        AppService.DetectInstalled();
+        await AppService.DetectInstalledAsync();
         Assert.Equal("thixcalc", StoreService.Featured(AppService.All())?.App.Id);
     }
 

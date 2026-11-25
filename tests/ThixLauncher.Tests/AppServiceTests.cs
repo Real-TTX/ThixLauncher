@@ -205,12 +205,12 @@ public sealed class AppServiceTests
         data.System.Add(AppCatalog.Find("thixclip")!, "0.1.12-20261115");
         await AppService.RefreshAsync();
 
-        AppService.Launch("thixclip");
+        await AppService.LaunchAsync("thixclip");
         Assert.Equal(["thixclip"], data.System.Launched);
 
         await AppService.UninstallAsync("thixclip");
         Assert.False(AppService.Get("thixclip").IsInstalled);
-        Assert.Contains("nicht installiert", Assert.Throws<BusinessException>(() => AppService.Launch("thixclip")).Message);
+        Assert.Contains("nicht installiert", (await Assert.ThrowsAsync<BusinessException>(() => AppService.LaunchAsync("thixclip"))).Message);
         Assert.Contains("nicht installiert", (await Assert.ThrowsAsync<BusinessException>(() => AppService.UninstallAsync("thixclip"))).Message);
     }
 
@@ -226,7 +226,7 @@ public sealed class AppServiceTests
         Assert.Contains("DisableAppChanges", (await Assert.ThrowsAsync<BusinessException>(() => AppService.InstallAsync("thixclip"))).Message);
         Assert.Contains("DisableAppChanges", (await Assert.ThrowsAsync<BusinessException>(() => AppService.UninstallAsync("thixclip"))).Message);
         Assert.Contains("DisableAppChanges", (await Assert.ThrowsAsync<BusinessException>(() => AppService.UpdateAllAsync(quietOnly: true))).Message);
-        AppService.Launch("thixclip");
+        await AppService.LaunchAsync("thixclip");
         Assert.Equal(["thixclip"], data.System.Launched);
         Assert.Equal("0.1.9-20261110", AppService.Get("thixclip").Installed!.VersionText);
     }

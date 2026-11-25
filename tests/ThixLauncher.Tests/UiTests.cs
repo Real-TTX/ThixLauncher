@@ -63,6 +63,7 @@ public sealed class UiTests
         // the installed app sits in the title bar and starts with one click
         Assert.Single(window.QuickLaunchButtons);
         window.QuickLaunchButtons[0].RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        await WaitUntil(window, () => data.System.Launched.Count == 1); // the start runs on a worker thread
         Assert.Equal(["thixclip"], data.System.Launched);
 
         Assert.StartsWith("13 Thix-Apps · 12 noch nicht installiert", window.Store.SubtitleText.Text);

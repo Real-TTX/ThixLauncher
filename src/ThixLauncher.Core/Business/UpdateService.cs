@@ -95,7 +95,8 @@ public static class UpdateService
         var url = $"https://github.com/{AppInfo.Repository}/releases/download/{manifest.Channel}-channel/{package.File}";
         try
         {
-            await ReleaseFeed.DownloadAsync(url, packagePath, package.Sha256, progress, cancellationToken);
+            // on a worker thread: creating and closing a freshly written program can wait for the virus scanner
+            await Task.Run(() => ReleaseFeed.DownloadAsync(url, packagePath, package.Sha256, progress, cancellationToken), CancellationToken.None);
         }
         catch (FeedException exception)
         {

@@ -64,7 +64,7 @@ internal static class AppActions
         switch (action)
         {
             case AppAction.Open:
-                AppService.Launch(app.Id);
+                await AppService.LaunchAsync(app.Id);
                 return null;
 
             case AppAction.Install:

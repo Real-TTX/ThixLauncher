@@ -39,13 +39,13 @@ public sealed class ThixShotPackageTests(ITestOutputHelper output)
 
         var executable = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Programs", "ThixShot", "ThixShot.exe");
-        AppService.DetectInstalled();
+        await AppService.DetectInstalledAsync();
         Assert.False(AppService.Get(appId).IsInstalled);
         Assert.False(File.Exists(executable));
         try
         {
             await AppService.InstallAsync(appId, cancellationToken: timeout.Token);
-            AppService.DetectInstalled();
+            await AppService.DetectInstalledAsync();
             var status = AppService.Get(appId);
             var latest = Assert.IsType<AppRelease>(status.Latest);
             var installed = Assert.IsType<InstalledApp>(status.Installed);
@@ -59,7 +59,7 @@ public sealed class ThixShotPackageTests(ITestOutputHelper output)
         }
         finally
         {
-            AppService.DetectInstalled();
+            await AppService.DetectInstalledAsync();
             if (AppService.Get(appId).IsInstalled)
             {
                 using var cleanupTimeout = new CancellationTokenSource(TimeSpan.FromMinutes(2));
@@ -67,7 +67,7 @@ public sealed class ThixShotPackageTests(ITestOutputHelper output)
             }
         }
 
-        AppService.DetectInstalled();
+        await AppService.DetectInstalledAsync();
         Assert.Equal(AppState.NotInstalled, AppService.Get(appId).State);
         Assert.False(File.Exists(executable));
     }

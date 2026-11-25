@@ -169,7 +169,7 @@ public sealed class InstallOptionsTests
         Assert.Null(AppService.InstallOptionsOf("thixclip")); // a build without the block: nothing to ask
 
         data.System.Add(Note, "1.0.1-20261115");
-        AppService.DetectInstalled();
+        await AppService.DetectInstalledAsync();
         Assert.Null(AppService.InstallOptionsOf("thixnote")); // installed: an update keeps what the app has
     }
 

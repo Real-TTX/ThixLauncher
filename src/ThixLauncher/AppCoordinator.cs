@@ -55,8 +55,8 @@ internal static class AppCoordinator
             }
         });
 
-        // The window shows the installed apps at once; the feeds follow a moment later.
-        AppService.DetectInstalled();
+        // The installed apps are searched on a worker thread (the window shows them a moment later); the feeds follow after that.
+        _ = AppService.DetectInstalledAsync();
         DispatcherTimer.RunOnce(() => _ = RefreshAsync(automatic: true), TimeSpan.FromSeconds(2));
 
         // The cloud on its own: whether it answers changes nothing for the apps (it only decides whether an app installed now is signed in too).

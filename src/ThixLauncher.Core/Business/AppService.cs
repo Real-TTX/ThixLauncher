@@ -9,13 +9,20 @@ namespace ThixLauncher.Core.Business;
 /// from GitHub), and the actions – install, update, remove, start. Every action checks here what may happen (policy,
 /// platform, state, a checksum for every package), whatever the UI shows or hides. One action per app at a time; the state
 /// of each app is kept in memory and <see cref="Changed"/> tells the UI (from any thread).
+/// Everything that asks the system (registry, Windows Installer, files, processes) runs on a worker thread, never on the
+/// caller's: the UI thread only reads the state kept here, and <see cref="Gate"/> is never held across a call to the system.
 /// </summary>
 public static class AppService
 {
     private static readonly object Gate = new();
     private static readonly Dictionary<string, Entry> Entries = new(StringComparer.OrdinalIgnoreCase);
     private static Task? _refresh;
+    private static Task? _detection;
+    private static bool _hasDetected;
     private static bool _isUpdatingAll;
+
+    /// <summary>Counts <see cref="ResetForTests"/>: a detection of an earlier test does not write into the next one.</summary>
+    private static int _generation;
 
     /// <summary>Raised after every change of an app's state (any thread).</summary>
     public static event EventHandler? Changed;
@@ -33,6 +40,21 @@ public static class AppService
             lock (Gate)
             {
                 return _refresh is { IsCompleted: false };
+            }
+        }
+    }
+
+    /// <summary>
+    /// The system was asked at least once what is installed. Before that every app looks not installed (the first look at the
+    /// state starts the detection on a worker thread; the library says that it is searching).
+    /// </summary>
+    public static bool HasDetected
+    {
+        get
+        {
+            lock (Gate)
+            {
+                return _hasDetected;
             }
         }
     }
@@ -86,19 +108,75 @@ public static class AppService
     /// <summary>How many apps a filter shows (the counts of the menu and the filter).</summary>
     public static int Count(AppFilter filter) => All().Count(status => Fits(status, filter));
 
-    /// <summary>Asks the system again what is installed (fast, no network): after the user installed or removed an app by hand.</summary>
-    public static void DetectInstalled()
+    /// <summary>
+    /// Asks the system again what is installed (no network; on a worker thread – Windows Installer can wait while another
+    /// installation runs): at the start and when the user may have installed or removed an app by hand. A detection that is
+    /// running already is joined. Never throws.
+    /// </summary>
+    public static Task DetectInstalledAsync()
     {
-        foreach (var app in AppCatalog.Apps)
+        lock (Gate)
         {
-            var installed = Detect(app);
-            lock (Gate)
+            if (_detection is { IsCompleted: false } running)
             {
-                EntryOf(app).Installed = installed;
+                return running;
             }
+
+            var generation = _generation;
+            var system = AppSystem.Current;
+            _detection = Task.Run(() => DetectAll(system, generation));
+            return _detection;
+        }
+    }
+
+    /// <summary>
+    /// What ThixLauncher is doing with the apps right now, in a few German lines (the hang report names it). Waits at most a
+    /// moment for the state: a lock held longer than that is itself worth reporting.
+    /// </summary>
+    public static IReadOnlyList<string> DescribeActivity()
+    {
+        if (!Monitor.TryEnter(Gate, TimeSpan.FromMilliseconds(500)))
+        {
+            return ["Der Zustand der Apps ist gesperrt (ein Thread hält die Sperre länger als 0,5 Sekunden)."];
         }
 
-        RaiseChanged();
+        try
+        {
+            var lines = new List<string>();
+            if (_refresh is { IsCompleted: false })
+            {
+                lines.Add("Die Apps werden gerade geprüft (Feeds und installierte Versionen).");
+            }
+
+            if (_detection is { IsCompleted: false })
+            {
+                lines.Add("Die installierten Apps werden gerade gesucht.");
+            }
+
+            if (_isUpdatingAll)
+            {
+                lines.Add("„Alle aktualisieren“ läuft.");
+            }
+
+            foreach (var (id, entry) in Entries.Where(pair => pair.Value.Busy is not null).OrderBy(pair => pair.Key, StringComparer.Ordinal))
+            {
+                var step = entry.Progress is { } progress
+                    ? $" – {progress.Step}{(progress.Fraction is { } fraction ? $" ({fraction * 100:0} %)" : "")}"
+                    : "";
+                lines.Add($"{id}: {entry.Busy}{step}");
+            }
+
+            if (lines.Count == 0)
+            {
+                lines.Add("Keine Aktion an den Apps.");
+            }
+
+            return lines;
+        }
+        finally
+        {
+            Monitor.Exit(Gate);
+        }
     }
 
     /// <summary>
@@ -139,8 +217,16 @@ public static class AppService
     /// <paramref name="choices"/> are the answers to the install options of the app (<see cref="InstallOptionsOf"/>, SETUP-08): a
     /// first install passes them to the setup of the app, what is left open takes the default of the app; an update ignores
     /// them (the app keeps what it has), and so does an app without install options.
+    /// Runs on a worker thread from the start (detection, download, the package check and the setup ask the system).
     /// </summary>
-    public static async Task<string?> InstallAsync(string appId, InstallChoices? choices = null, CancellationToken cancellationToken = default)
+    public static Task<string?> InstallAsync(string appId, InstallChoices? choices = null, CancellationToken cancellationToken = default) =>
+        Task.Run(() => InstallOnWorkerAsync(appId, choices, cancellationToken), CancellationToken.None);
+
+    /// <summary>Removes the app with its own uninstaller (the quiet one when it has one). Its user data stays. Runs on a worker thread.</summary>
+    public static Task UninstallAsync(string appId, CancellationToken cancellationToken = default) =>
+        Task.Run(() => UninstallOnWorkerAsync(appId, cancellationToken), CancellationToken.None);
+
+    private static async Task<string?> InstallOnWorkerAsync(string appId, InstallChoices? choices, CancellationToken cancellationToken)
     {
         var app = AppCatalog.Find(appId) ?? throw new BusinessException("Diese App gibt es nicht.");
         AccessPolicy.EnsureAppChangesAllowed();
@@ -180,10 +266,7 @@ public static class AppService
             await AppSystem.Current.InstallAsync(app, packageFile, installed, setup, new Reporter<string>(step => Report(app, new AppProgress(step))), cancellationToken);
 
             var now = Detect(app);
-            lock (Gate)
-            {
-                EntryOf(app).Installed = now;
-            }
+            SetInstalled(app, now);
 
             if (now is null)
             {
@@ -201,10 +284,7 @@ public static class AppService
             Log.Error($"{(isUpdate ? "Update" : "Installation")} of {app.Id} failed", exception);
             // the app may be there all the same (macOS: copied, but its options refused): then it keeps the sign-in
             var now = Detect(app);
-            lock (Gate)
-            {
-                EntryOf(app).Installed = now;
-            }
+            SetInstalled(app, now);
 
             if (!isUpdate && now is null)
             {
@@ -220,8 +300,7 @@ public static class AppService
         }
     }
 
-    /// <summary>Removes the app with its own uninstaller (the quiet one when it has one). Its user data stays.</summary>
-    public static async Task UninstallAsync(string appId, CancellationToken cancellationToken = default)
+    private static async Task UninstallOnWorkerAsync(string appId, CancellationToken cancellationToken)
     {
         var app = AppCatalog.Find(appId) ?? throw new BusinessException("Diese App gibt es nicht.");
         AccessPolicy.EnsureAppChangesAllowed();
@@ -235,10 +314,7 @@ public static class AppService
             await AppSystem.Current.UninstallAsync(app, installed, new Reporter<string>(step => Report(app, new AppProgress(step))), cancellationToken);
 
             var now = Detect(app);
-            lock (Gate)
-            {
-                EntryOf(app).Installed = now;
-            }
+            SetInstalled(app, now);
 
             if (now is not null)
             {
@@ -259,8 +335,11 @@ public static class AppService
         }
     }
 
-    /// <summary>Starts the installed app (a running one shows its window: every Thix app runs once per user).</summary>
-    public static void Launch(string appId)
+    /// <summary>
+    /// Starts the installed app (a running one shows its window: every Thix app runs once per user). The start runs on a worker
+    /// thread: Windows checks a freshly installed program inside CreateProcess, which can take seconds.
+    /// </summary>
+    public static async Task LaunchAsync(string appId)
     {
         var status = Get(appId);
         EnsureSupported();
@@ -281,7 +360,8 @@ public static class AppService
 
         try
         {
-            AppSystem.Current.Launch(status.App, status.Installed);
+            var installed = status.Installed;
+            await Task.Run(() => AppSystem.Current.Launch(status.App, installed));
             Log.Info($"Started {status.App.Id}");
         }
         catch (AppSystemException exception)
@@ -345,7 +425,10 @@ public static class AppService
         lock (Gate)
         {
             Entries.Clear();
+            _generation++;
             _refresh = null;
+            _detection = null;
+            _hasDetected = false;
             _isUpdatingAll = false;
             LastRefresh = null;
         }
@@ -356,6 +439,7 @@ public static class AppService
     private static async Task RefreshAllAsync(CancellationToken cancellationToken)
     {
         var channel = Channel;
+        var stamps = StampsNow();
         await Task.WhenAll(AppCatalog.Apps.Select(async app =>
         {
             var installed = Detect(app);
@@ -374,7 +458,11 @@ public static class AppService
             lock (Gate)
             {
                 var entry = EntryOf(app);
-                entry.Installed = installed;
+                if (IsCurrent(app, entry, stamps))
+                {
+                    entry.Installed = installed;
+                }
+
                 if (error is null || entry.LatestChannel != channel)
                 {
                     entry.Latest = latest;
@@ -385,9 +473,72 @@ public static class AppService
             }
         }));
 
+        lock (Gate)
+        {
+            _hasDetected |= stamps.Generation == _generation;
+        }
+
         LastRefresh = AppClock.Now;
         RaiseChanged();
     }
+
+    /// <summary>Asks the system for every app (worker thread) and keeps what it said, unless an action changed the app meanwhile.</summary>
+    private static void DetectAll(IAppSystem system, int generation)
+    {
+        try
+        {
+            var stamps = StampsNow();
+            var found = AppCatalog.Apps.Select(app => (App: app, Installed: Detect(app, system))).ToList();
+            lock (Gate)
+            {
+                if (generation != _generation)
+                {
+                    return;
+                }
+
+                foreach (var (app, installed) in found)
+                {
+                    var entry = EntryOf(app);
+                    if (IsCurrent(app, entry, stamps))
+                    {
+                        entry.Installed = installed;
+                    }
+                }
+
+                _hasDetected = true;
+            }
+
+            RaiseChanged();
+        }
+        catch (Exception exception)
+        {
+            // a fire-and-forget task: whatever went wrong goes into the log, the state keeps what it knew
+            Log.Error("Detecting the installed apps failed", exception);
+        }
+    }
+
+    /// <summary>The installation an action found afterwards; a detection that started before it does not overwrite it.</summary>
+    private static void SetInstalled(ThixApp app, InstalledApp? installed)
+    {
+        lock (Gate)
+        {
+            var entry = EntryOf(app);
+            entry.Installed = installed;
+            entry.Stamp++;
+        }
+    }
+
+    private static Stamps StampsNow()
+    {
+        lock (Gate)
+        {
+            return new Stamps(_generation, Entries.ToDictionary(pair => pair.Key, pair => pair.Value.Stamp, StringComparer.OrdinalIgnoreCase));
+        }
+    }
+
+    /// <summary>A detection may write the app's state: no action changed it since the detection began, and none runs now (under <see cref="Gate"/>).</summary>
+    private static bool IsCurrent(ThixApp app, Entry entry, Stamps stamps) =>
+        stamps.Generation == _generation && entry.Busy is null && entry.Stamp == stamps.ByApp.GetValueOrDefault(app.Id);
 
     private static async Task<AppRelease?> ReadLatestAsync(ThixApp app, CancellationToken cancellationToken)
     {
@@ -411,20 +562,30 @@ public static class AppService
         }
     }
 
+    /// <summary>
+    /// The state kept in memory – never a question to the system (this runs on the UI thread). The first look before any
+    /// detection starts one on a worker thread; until it is done the app counts as not installed.
+    /// </summary>
     private static AppStatus StatusOf(ThixApp app)
     {
+        var channel = Channel;
+        AppStatus status;
+        bool startDetection;
         lock (Gate)
         {
-            if (!Entries.ContainsKey(app.Id))
-            {
-                EntryOf(app).Installed = Detect(app);
-            }
-
+            startDetection = !_hasDetected && _detection is null && _refresh is not { IsCompleted: false };
             var entry = EntryOf(app);
-            var latest = entry.LatestChannel == Channel ? entry.Latest : null;
+            var latest = entry.LatestChannel == channel ? entry.Latest : null;
             var state = entry.Busy ?? StateOf(entry.Installed, latest);
-            return new AppStatus(app, entry.Installed, latest, state, entry.FeedError, entry.Progress);
+            status = new AppStatus(app, entry.Installed, latest, state, entry.FeedError, entry.Progress);
         }
+
+        if (startDetection)
+        {
+            _ = DetectInstalledAsync();
+        }
+
+        return status;
     }
 
     private static AppState StateOf(InstalledApp? installed, AppRelease? latest)
@@ -448,11 +609,11 @@ public static class AppService
         }
     }
 
-    private static InstalledApp? Detect(ThixApp app)
+    private static InstalledApp? Detect(ThixApp app, IAppSystem? system = null)
     {
         try
         {
-            return AppSystem.Current.Detect(app);
+            return (system ?? AppSystem.Current).Detect(app);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or System.Security.SecurityException)
         {
@@ -572,7 +733,13 @@ public static class AppService
         public AppState? Busy { get; set; }
 
         public AppProgress? Progress { get; set; }
+
+        /// <summary>Counts the installations an action set (<see cref="SetInstalled"/>).</summary>
+        public int Stamp { get; set; }
     }
+
+    /// <summary>The generation and each app's <see cref="Entry.Stamp"/> when a detection began.</summary>
+    private sealed record Stamps(int Generation, Dictionary<string, int> ByApp);
 
     /// <summary>Reports straight away on the thread that reports (Progress&lt;T&gt; would post to the UI thread of the caller).</summary>
     private sealed class Reporter<T>(Action<T> report) : IProgress<T>

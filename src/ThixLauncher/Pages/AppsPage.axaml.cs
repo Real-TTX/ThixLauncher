@@ -279,6 +279,7 @@ public partial class AppsPage : UserControl
         EmptyState.IsVisible = rows.Count == 0;
         EmptyText.Text = search.Length > 0
             ? $"Keine installierte App passt zu „{search}“ – im Store gibt es alle Apps."
+            : !AppService.HasDetected ? "Die installierten Apps werden gesucht …"
             : Filter == AppFilter.Updates ? "Alles aktuell – keine Updates." : "Noch keine App installiert.";
         RefreshSubtitle();
         RefreshUpdates();

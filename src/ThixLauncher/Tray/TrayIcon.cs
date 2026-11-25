@@ -127,11 +127,11 @@ internal sealed class TrayIcon : IDisposable
         }
     }
 
-    private void Launch(string appId)
+    private async void Launch(string appId)
     {
         try
         {
-            AppService.Launch(appId);
+            await AppService.LaunchAsync(appId);
         }
         catch (BusinessException exception)
         {

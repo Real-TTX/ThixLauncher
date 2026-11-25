@@ -156,7 +156,7 @@ public partial class MainWindow : MatWindow
     public void ShowWindow()
     {
         BringToFront();
-        AppService.DetectInstalled(); // an app installed or removed by hand meanwhile
+        _ = AppService.DetectInstalledAsync(); // an app installed or removed by hand meanwhile (on a worker thread)
     }
 
     /// <summary>The library with a filter (Installed – every installed app – or Updates); optionally an app chosen.</summary>
@@ -360,11 +360,11 @@ public partial class MainWindow : MatWindow
         };
         ToolTip.SetTip(button, $"{app.Name} starten");
         AutomationProperties.SetName(button, $"{app.Name} starten");
-        button.Click += (_, _) =>
+        button.Click += async (_, _) =>
         {
             try
             {
-                AppService.Launch(app.Id);
+                await AppService.LaunchAsync(app.Id);
             }
             catch (BusinessException exception)
             {

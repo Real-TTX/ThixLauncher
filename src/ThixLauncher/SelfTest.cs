@@ -112,7 +112,7 @@ internal static class SelfTest
             await AppService.InstallAsync("thixnote");
             Ensure(AppService.Get("thixnote").Installed?.VersionText == "1.1.1-20261116", "not installed");
             Ensure(system.Setups[^1].Setup.WindowsArguments is ["--quiet", ..], "the install options of the manifest were not passed");
-            AppService.Launch("thixnote");
+            await AppService.LaunchAsync("thixnote");
             Ensure(system.Launched.SequenceEqual(["thixnote"]), "not started");
             await AppService.UninstallAsync("thixnote");
             Ensure(!AppService.Get("thixnote").IsInstalled, "not removed");
@@ -158,7 +158,7 @@ internal static class SelfTest
         await Check("windows and bindings", async () =>
         {
             system.Add(AppCatalog.Find("thixclip")!, "0.1.9-20261110");
-            AppService.DetectInstalled();
+            await AppService.DetectInstalledAsync();
             var window = new MainWindow();
             window.ShowWindow();
             await Settle();
