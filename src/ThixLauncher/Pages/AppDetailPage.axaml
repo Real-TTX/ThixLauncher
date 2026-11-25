@@ -35,7 +35,11 @@
             <Grid ColumnDefinitions="Auto,*">
               <controls:AppLogo x:Name="Logo" Size="96" Margin="0,0,22,0" />
               <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="6">
-                <TextBlock x:Name="NameText" FontSize="{DynamicResource Mat.FontSize2xl}" FontWeight="SemiBold" />
+                <!-- The name and the chips of the app's features right after it -->
+                <Grid ColumnDefinitions="*,Auto" HorizontalAlignment="Left">
+                  <TextBlock x:Name="NameText" FontSize="{DynamicResource Mat.FontSize2xl}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                  <controls:FeatureChips Grid.Column="1" x:Name="Features" Margin="12,2,0,0" />
+                </Grid>
                 <TextBlock x:Name="TaglineText" Theme="{StaticResource MatText.Muted}" TextWrapping="Wrap" />
                 <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,4,0,0">
                   <controls:StateBadge x:Name="Badge" />
@@ -85,7 +89,7 @@
             <StackPanel Spacing="16">
               <TextBlock x:Name="DescriptionText" TextWrapping="Wrap" LineHeight="21" MaxWidth="760" HorizontalAlignment="Left" />
               <Border Theme="{StaticResource MatCard}" HorizontalAlignment="Left" MinWidth="460">
-                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
                   <TextBlock Text="Installiert" Theme="{StaticResource MatText.Muted}" Margin="0,4,28,4" />
                   <TextBlock Grid.Column="1" x:Name="InstalledText" Margin="0,4" />
                   <TextBlock Grid.Row="1" Text="Verfügbar" Theme="{StaticResource MatText.Muted}" Margin="0,4,28,4" />
@@ -96,6 +100,8 @@
                   <TextBlock Grid.Row="3" Grid.Column="1" x:Name="PublishedText" Margin="0,4" />
                   <TextBlock Grid.Row="4" Text="Installation" Theme="{StaticResource MatText.Muted}" Margin="0,4,28,4" />
                   <TextBlock Grid.Row="4" Grid.Column="1" x:Name="SetupText" Margin="0,4" TextWrapping="Wrap" />
+                  <TextBlock Grid.Row="5" Text="Funktionen" Theme="{StaticResource MatText.Muted}" Margin="0,4,28,4" x:Name="FeaturesLabel" />
+                  <TextBlock Grid.Row="5" Grid.Column="1" x:Name="FeaturesText" Margin="0,4" TextWrapping="Wrap" />
                 </Grid>
               </Border>
             </StackPanel>

@@ -59,7 +59,11 @@
                 <Grid Grid.Row="1" ColumnDefinitions="Auto,*" Margin="0,10,0,0">
                   <controls:AppLogo x:Name="HeroLogo" Size="52" Margin="0,0,12,0" />
                   <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock x:Name="HeroName" FontSize="{DynamicResource Mat.FontSize2xl}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <!-- The name, cut when it is long, and the chips of its features right after it -->
+                    <Grid ColumnDefinitions="*,Auto" HorizontalAlignment="Left">
+                      <TextBlock x:Name="HeroName" FontSize="{DynamicResource Mat.FontSize2xl}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                      <controls:FeatureChips Grid.Column="1" x:Name="HeroFeatures" Margin="10,2,0,0" />
+                    </Grid>
                     <TextBlock x:Name="HeroTagline" Theme="{StaticResource MatText.Muted}" TextTrimming="CharacterEllipsis" />
                   </StackPanel>
                 </Grid>

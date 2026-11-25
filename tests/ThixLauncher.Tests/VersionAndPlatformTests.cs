@@ -1,3 +1,4 @@
+using MatCloud.Contract;
 using ThixLauncher.Core.Business;
 using ThixLauncher.Core.Models;
 using ThixLauncher.Core.Platform;
@@ -115,5 +116,43 @@ public sealed class VersionAndPlatformTests
         {
             Assert.Equal(AppCatalog.Apps.Count, AppCatalog.Apps.Select(key).Distinct(StringComparer.OrdinalIgnoreCase).Count());
         }
+    }
+
+    [Fact]
+    public void An_app_has_the_feature_Cloud_exactly_when_it_signs_in_at_MatCloud()
+    {
+        foreach (var app in AppCatalog.Apps)
+        {
+            Assert.True(app.Features.Contains(AppFeature.Cloud) == (app.CloudApp is not null), $"{app.Id}: the feature Cloud and CloudApp go together");
+            Assert.True(app.CloudApp is null || CloudApps.IsKnown(app.CloudApp), $"{app.Id}: MatCloud does not know the app {app.CloudApp}");
+
+            // every feature once, in the order of the store
+            Assert.Equal(AppFeatures.All.Where(app.Features.Contains), app.Features);
+        }
+
+        Assert.Equal(["thixcalc", "thixcalendar", "thixclip", "thixcontacts", "thixfred", "thixmail", "thixnote", "thixshow", "thixspace", "thixsync", "thixwrite"],
+            AppCatalog.Apps.Where(app => app.Features.Contains(AppFeature.Cloud)).Select(app => app.Id));
+
+        // no app speaks MCP yet
+        Assert.DoesNotContain(AppCatalog.Apps, app => app.Features.Contains(AppFeature.Mcp));
+    }
+
+    [Fact]
+    public void Every_feature_has_its_key_its_word_its_explanation_and_an_icon_of_the_sprite()
+    {
+        Assert.Equal([AppFeature.Cloud, AppFeature.Mcp], AppFeatures.All);
+        Assert.Equal(("cloud", "Cloud", "Synchronisiert über MatCloud auf allen Geräten"),
+            (AppFeatures.Key(AppFeature.Cloud), AppFeatures.Name(AppFeature.Cloud), AppFeatures.Description(AppFeature.Cloud)));
+        Assert.Equal(("mcp", "MCP", "KI-Assistenten können die App über das Model Context Protocol nutzen"),
+            (AppFeatures.Key(AppFeature.Mcp), AppFeatures.Name(AppFeature.Mcp), AppFeatures.Description(AppFeature.Mcp)));
+
+        var sprite = File.ReadAllText(Path.Combine(Repository.Root, "src", "ThixLauncher", "MatDesktop", "Themes", "MatIcons.axaml"));
+        foreach (var feature in AppFeatures.All)
+        {
+            Assert.Matches("^[a-z]+$", AppFeatures.Key(feature));
+            Assert.Contains($"x:Key=\"MatIcon.{AppFeatures.Icon(feature)}\"", sprite);
+        }
+
+        Assert.Equal(AppFeatures.All.Count, AppFeatures.All.Select(AppFeatures.Key).Distinct().Count());
     }
 }

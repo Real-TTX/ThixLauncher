@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using ThixLauncher.Core.Business;
+using ThixLauncher.Core.Models;
 
 namespace ThixLauncher.Tests;
 
@@ -48,6 +49,13 @@ public sealed class WebCatalogTests
         Assert.Equal("https://raw.githubusercontent.com/Real-TTX/ThixLauncher/main/src/ThixLauncher/Assets/apps/thixmail.png", (string?)mail["icon"]);
         Assert.True((bool)mail["cloud"]!);
 
+        // the features with what the store says about them; an app without any has an empty list
+        var feature = Assert.Single(mail["features"]!.AsArray())!;
+        Assert.Equal("cloud", (string?)feature["id"]);
+        Assert.Equal("Cloud", (string?)feature["name"]);
+        Assert.Equal("Synchronisiert über MatCloud auf allen Geräten", (string?)feature["description"]);
+        Assert.Empty(apps.Single(app => (string?)app!["id"] == "thixtunnel")!["features"]!.AsArray());
+
         foreach (var app in AppCatalog.Apps)
         {
             Assert.True(File.Exists(Path.Combine(Repository.Root, WebCatalog.AppIconFolder, app.Id + ".png")), app.Id + " has no logo");
@@ -55,6 +63,8 @@ public sealed class WebCatalogTests
             var pictures = entry["screenshots"]!.AsArray();
             Assert.Equal(app.Screenshots.Count, pictures.Count);
             Assert.All(pictures, picture => Assert.StartsWith($"https://raw.githubusercontent.com/{app.Repository}/main/", (string?)picture!["url"]));
+            Assert.Equal(app.Features.Select(AppFeatures.Key), entry["features"]!.AsArray().Select(feature => (string?)feature!["id"]));
+            Assert.Equal(app.CloudApp is not null, (bool)entry["cloud"]!);
         }
 
         Assert.True(File.Exists(Path.Combine(Repository.Root, WebCatalog.LauncherIconPath)));

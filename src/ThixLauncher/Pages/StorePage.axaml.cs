@@ -158,6 +158,7 @@ public partial class StorePage : UserControl
         HeroLogo.AppId = app.Id;
         HeroLogo.FallbackIcon = app.Icon;
         HeroName.Text = app.Name;
+        HeroFeatures.Show(app);
         HeroTagline.Text = app.Tagline;
         HeroDescription.Text = app.Description;
         HeroBadge.Show(status);

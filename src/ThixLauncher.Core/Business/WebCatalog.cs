@@ -8,8 +8,9 @@ namespace ThixLauncher.Core.Business;
 
 /// <summary>
 /// The catalog for the website (thixapps.de, MatCMS plugin "thix-store"): the launcher and every app of <see cref="AppCatalog"/> as JSON,
-/// with the addresses a page needs (the manifest of the release channel, the icon, the pictures). It is the file <c>docs/catalog.json</c> of
-/// this repository; the website reads it from the main branch, so the shop window shows what the released launcher installs.
+/// with the addresses a page needs (the manifest of the release channel, the icon, the pictures) and its features ("features": id, name
+/// and description of every <see cref="AppFeature"/> of the app; "cloud" stays for older readers). It is the file <c>docs/catalog.json</c>
+/// of this repository; the website reads it from the main branch, so the shop window shows what the released launcher installs.
 /// A test keeps the file equal to the catalog (THIXLAUNCHER_WRITE_CATALOG=1 writes it).
 /// </summary>
 public static class WebCatalog
@@ -75,6 +76,17 @@ public static class WebCatalog
             screenshots.Add(entry);
         }
 
+        var features = new JsonArray();
+        foreach (var feature in app.Features)
+        {
+            features.Add(new JsonObject
+            {
+                ["id"] = AppFeatures.Key(feature),
+                ["name"] = AppFeatures.Name(feature),
+                ["description"] = AppFeatures.Description(feature),
+            });
+        }
+
         return new JsonObject
         {
             ["id"] = app.Id,
@@ -87,6 +99,7 @@ public static class WebCatalog
             ["icon"] = Raw(AppInfo.Repository, $"{AppIconFolder}/{app.Id}.png"),
             ["project"] = app.ProjectUrl,
             ["cloud"] = app.CloudApp is not null,
+            ["features"] = features,
             ["screenshots"] = screenshots,
         };
     }

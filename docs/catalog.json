@@ -19,6 +19,13 @@
       "icon": "https://raw.githubusercontent.com/Real-TTX/ThixLauncher/main/src/ThixLauncher/Assets/apps/thixcalc.png",
       "project": "https://github.com/Real-TTX/ThixOffice",
       "cloud": true,
+      "features": [
+        {
+          "id": "cloud",
+          "name": "Cloud",
+          "description": "Synchronisiert über MatCloud auf allen Geräten"
+        }
+      ],
       "screenshots": [
         {
           "url": "https://raw.githubusercontent.com/Real-TTX/ThixOffice/main/docs/images/thixcalc-main-light.png",
@@ -53,6 +60,13 @@
       "icon": "https://raw.githubusercontent.com/Real-TTX/ThixLauncher/main/src/ThixLauncher/Assets/apps/thixcalendar.png",
       "project": "https://github.com/Real-TTX/ThixCalendar",
       "cloud": true,
+      "features": [
+        {
+          "id": "cloud",
+          "name": "Cloud",
+          "description": "Synchronisiert über MatCloud auf allen Geräten"
+        }
+      ],
       "screenshots": [
         {
           "url": "https://raw.githubusercontent.com/Real-TTX/ThixCalendar/main/docs/images/desktop-week-light.png",
@@ -87,6 +101,13 @@
       "icon": "https://raw.githubusercontent.com/Real-TTX/ThixLauncher/main/src/ThixLauncher/Assets/apps/thixclip.png",
       "project": "https://github.com/Real-TTX/ThixClip",
       "cloud": true,
+      "features": [
+        {
+          "id": "cloud",
+          "name": "Cloud",
+          "description": "Synchronisiert über MatCloud auf allen Geräten"
+        }
+      ],
       "screenshots": [
         {
           "url": "https://raw.githubusercontent.com/Real-TTX/ThixClip/main/docs/images/main-history-light.png",
@@ -121,6 +142,13 @@
       "icon": "https://raw.githubusercontent.com/Real-TTX/ThixLauncher/main/src/ThixLauncher/Assets/apps/thixcontacts.png",
       "project": "https://github.com/Real-TTX/ThixOffice",
       "cloud": true,
+      "features": [
+        {
+          "id": "cloud",
+          "name": "Cloud",
+          "description": "Synchronisiert über MatCloud auf allen Geräten"
+        }
+      ],
       "screenshots": [
         {
           "url": "https://raw.githubusercontent.com/Real-TTX/ThixOffice/main/docs/images/thixcontacts-main-light.png",
@@ -155,6 +183,13 @@
       "icon": "https://raw.githubusercontent.com/Real-TTX/ThixLauncher/main/src/ThixLauncher/Assets/apps/thixfred.png",
       "project": "https://github.com/Real-TTX/ThixFred",
       "cloud": true,
+      "features": [
+        {
+          "id": "cloud",
+          "name": "Cloud",
+          "description": "Synchronisiert über MatCloud auf allen Geräten"
+        }
+      ],
       "screenshots": [
         {
           "url": "https://raw.githubusercontent.com/Real-TTX/ThixFred/main/docs/images/main-themes-light.png",
@@ -194,6 +229,13 @@
       "icon": "https://raw.githubusercontent.com/Real-TTX/ThixLauncher/main/src/ThixLauncher/Assets/apps/thixmail.png",
       "project": "https://github.com/Real-TTX/ThixOffice",
       "cloud": true,
+      "features": [
+        {
+          "id": "cloud",
+          "name": "Cloud",
+          "description": "Synchronisiert über MatCloud auf allen Geräten"
+        }
+      ],
       "screenshots": [
         {
           "url": "https://raw.githubusercontent.com/Real-TTX/ThixOffice/main/docs/images/thixmail-main-newsletter-light.png",
@@ -228,6 +270,13 @@
       "icon": "https://raw.githubusercontent.com/Real-TTX/ThixLauncher/main/src/ThixLauncher/Assets/apps/thixnote.png",
       "project": "https://github.com/Real-TTX/ThixNote",
       "cloud": true,
+      "features": [
+        {
+          "id": "cloud",
+          "name": "Cloud",
+          "description": "Synchronisiert über MatCloud auf allen Geräten"
+        }
+      ],
       "screenshots": [
         {
           "url": "https://raw.githubusercontent.com/Real-TTX/ThixNote/main/docs/images/main-notes-light.png",
@@ -262,6 +311,7 @@
       "icon": "https://raw.githubusercontent.com/Real-TTX/ThixLauncher/main/src/ThixLauncher/Assets/apps/thixshot.png",
       "project": "https://github.com/Real-TTX/ThixShot",
       "cloud": false,
+      "features": [],
       "screenshots": [
         {
           "url": "https://raw.githubusercontent.com/Real-TTX/ThixShot/main/docs/aufnahmestudio.png",
@@ -288,6 +338,13 @@
       "icon": "https://raw.githubusercontent.com/Real-TTX/ThixLauncher/main/src/ThixLauncher/Assets/apps/thixshow.png",
       "project": "https://github.com/Real-TTX/ThixOffice",
       "cloud": true,
+      "features": [
+        {
+          "id": "cloud",
+          "name": "Cloud",
+          "description": "Synchronisiert über MatCloud auf allen Geräten"
+        }
+      ],
       "screenshots": [
         {
           "url": "https://raw.githubusercontent.com/Real-TTX/ThixOffice/main/docs/images/thixshow-main-light.png",
@@ -322,6 +379,13 @@
       "icon": "https://raw.githubusercontent.com/Real-TTX/ThixLauncher/main/src/ThixLauncher/Assets/apps/thixspace.png",
       "project": "https://github.com/Real-TTX/ThixSpace",
       "cloud": true,
+      "features": [
+        {
+          "id": "cloud",
+          "name": "Cloud",
+          "description": "Synchronisiert über MatCloud auf allen Geräten"
+        }
+      ],
       "screenshots": [
         {
           "url": "https://raw.githubusercontent.com/Real-TTX/ThixSpace/main/docs/images/main-map-light.png",
@@ -351,6 +415,13 @@
       "icon": "https://raw.githubusercontent.com/Real-TTX/ThixLauncher/main/src/ThixLauncher/Assets/apps/thixsync.png",
       "project": "https://github.com/Real-TTX/ThixSync",
       "cloud": true,
+      "features": [
+        {
+          "id": "cloud",
+          "name": "Cloud",
+          "description": "Synchronisiert über MatCloud auf allen Geräten"
+        }
+      ],
       "screenshots": [
         {
           "url": "https://raw.githubusercontent.com/Real-TTX/ThixSync/main/docs/images/main-jobs-light.png",
@@ -380,6 +451,7 @@
       "icon": "https://raw.githubusercontent.com/Real-TTX/ThixLauncher/main/src/ThixLauncher/Assets/apps/thixtunnel.png",
       "project": "https://github.com/Real-TTX/ThixTunnel",
       "cloud": false,
+      "features": [],
       "screenshots": [
         {
           "url": "https://raw.githubusercontent.com/Real-TTX/ThixTunnel/main/docs/images/main-connections-light.png",
@@ -414,6 +486,13 @@
       "icon": "https://raw.githubusercontent.com/Real-TTX/ThixLauncher/main/src/ThixLauncher/Assets/apps/thixwrite.png",
       "project": "https://github.com/Real-TTX/ThixOffice",
       "cloud": true,
+      "features": [
+        {
+          "id": "cloud",
+          "name": "Cloud",
+          "description": "Synchronisiert über MatCloud auf allen Geräten"
+        }
+      ],
       "screenshots": [
         {
           "url": "https://raw.githubusercontent.com/Real-TTX/ThixOffice/main/docs/images/thixwrite-main-light.png",

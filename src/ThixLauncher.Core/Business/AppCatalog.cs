@@ -17,6 +17,7 @@ public static class AppCatalog
             Id = "thixcalc",
             ShortName = "calc",
             CloudApp = CloudApps.Calc,
+            Features = [AppFeature.Cloud],
             Name = "ThixCalc",
             Tagline = "Tabellenkalkulation für Zahlen, Listen und Auswertungen",
             Description = "Rechnen wie in Excel: Formeln mit 459 Funktionen unter deutschen Namen, Zahlenformate, Sortieren und Filtern, " +
@@ -50,6 +51,7 @@ public static class AppCatalog
             Id = "thixcalendar",
             ShortName = "calendar",
             CloudApp = CloudApps.Calendar,
+            Features = [AppFeature.Cloud],
             Name = "ThixCalendar",
             Tagline = "Alle Kalender, keine verpasste Erinnerung",
             Description = "Microsoft 365, Google Kalender, ICS-Abos und eigene Kalender in einem Fenster – mit Erinnerungen, die stehen " +
@@ -78,6 +80,7 @@ public static class AppCatalog
             Id = "thixclip",
             ShortName = "clip",
             CloudApp = CloudApps.Clip,
+            Features = [AppFeature.Cloud],
             Name = "ThixClip",
             Tagline = "Zwischenablage-Verlauf",
             Description = "ThixClip merkt sich, was du kopierst – Texte, Links und Bilder samt erkanntem Text – und holt es mit einem " +
@@ -105,6 +108,7 @@ public static class AppCatalog
             Id = "thixcontacts",
             ShortName = "contacts",
             CloudApp = CloudApps.Contacts,
+            Features = [AppFeature.Cloud],
             Name = "ThixContacts",
             Tagline = "Adressbuch für Kontakte und Kontaktgruppen",
             Description = "Kontakte verwalten wie in Outlook: Personen mit Adressen, Telefonnummern und Bild, Gruppen, Kategorien und " +
@@ -138,6 +142,7 @@ public static class AppCatalog
             Id = "thixfred",
             ShortName = "fred",
             CloudApp = CloudApps.Fred,
+            Features = [AppFeature.Cloud],
             Name = "ThixFred",
             Tagline = "Launcher für Programme und Befehle",
             Description = "Ein Tastenkürzel, ein Suchfeld: Programme starten und beenden, rechnen, Befehle im Terminal ausführen, im Web " +
@@ -166,6 +171,7 @@ public static class AppCatalog
             Id = "thixmail",
             ShortName = "mail",
             CloudApp = CloudApps.Mail,
+            Features = [AppFeature.Cloud],
             Name = "ThixMail",
             Tagline = "E-Mail, Kalender und Personen in einem Fenster",
             Description = "Mailen wie in Outlook: Konten über IMAP und SMTP, offline lesen, schreiben und ordnen, Unterhaltungen, Suche und " +
@@ -199,6 +205,7 @@ public static class AppCatalog
             Id = "thixnote",
             ShortName = "note",
             CloudApp = CloudApps.Note,
+            Features = [AppFeature.Cloud],
             Name = "ThixNote",
             Tagline = "Notizen als Dateien",
             Description = "Eine bewusst einfache Notiz-App: Markdown, Text und kennwortgeschützte Notizen als normale Dateien, mit Tabs " +
@@ -253,6 +260,7 @@ public static class AppCatalog
             Id = "thixshow",
             ShortName = "show",
             CloudApp = CloudApps.Show,
+            Features = [AppFeature.Cloud],
             Name = "ThixShow",
             Tagline = "Präsentationen mit Folien, Designs und Bildschirmpräsentation",
             Description = "Präsentieren wie in PowerPoint: Folien mit Layouts und Designs, Formen, Bilder und Diagramme, " +
@@ -286,6 +294,7 @@ public static class AppCatalog
             Id = "thixspace",
             ShortName = "space",
             CloudApp = CloudApps.Space,
+            Features = [AppFeature.Cloud],
             Name = "ThixSpace",
             Tagline = "Speicheranalyse mit interaktiver Karte",
             Description = "ThixSpace analysiert Laufwerke und SMB-Freigaben und zeigt auf einer interaktiven Karte, was wie viel Platz belegt. " +
@@ -313,6 +322,7 @@ public static class AppCatalog
             Id = "thixsync",
             ShortName = "sync",
             CloudApp = CloudApps.Sync,
+            Features = [AppFeature.Cloud],
             Name = "ThixSync",
             Tagline = "Synchronisation und Backup für alle Speicher",
             Description = "ThixSync gleicht Ordner zwischen Computer, USB-Laufwerk, NAS, Server und Cloud ab – bidirektional, als Spiegel oder als " +
@@ -367,6 +377,7 @@ public static class AppCatalog
             Id = "thixwrite",
             ShortName = "write",
             CloudApp = CloudApps.Write,
+            Features = [AppFeature.Cloud],
             Name = "ThixWrite",
             Tagline = "Textverarbeitung für Dokumente, Briefe und Berichte",
             Description = "Schreiben wie in Word: Menüband, Seiten wie auf Papier, Formatvorlagen, Aufzählungen, Suchen und Ersetzen und " +

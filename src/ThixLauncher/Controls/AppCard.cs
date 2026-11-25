@@ -14,7 +14,8 @@ namespace ThixLauncher.Controls;
 /// like a store). The tile of the library is an app tile: the logo big on the band (class <c>app-band</c>, the page colours it
 /// with the state of the tile), name, line and state centred under it, the action across the foot. The tile of the store
 /// (<see cref="ShowsCover"/>) is a poster: the first picture of the app from GitHub as its cover (<see cref="AppPicture"/>) with
-/// the logo on it. While the app is being changed a progress bar runs (tile: at the foot of the band, row: under the text).
+/// the logo on it. The app's features (<see cref="FeatureChips"/>: Cloud, MCP) sit as chips in the top right corner of the band
+/// (tile) or beside the name (row). While the app is being changed a progress bar runs (tile: at the foot of the band, row: under the text).
 /// The card is built once and shows each new state (<see cref="Show"/>); both layouts use the same parts.
 /// </summary>
 public sealed class AppCard : Decorator
@@ -30,6 +31,7 @@ public sealed class AppCard : Decorator
     private readonly TextBlock _version = new() { FontSize = MatTokens.Type.FsSm, TextTrimming = TextTrimming.CharacterEllipsis };
     private readonly ProgressBar _progress = new() { Maximum = 1, IsVisible = false };
     private readonly StateBadge _badge = new();
+    private readonly FeatureChips _features = new();
     private readonly Button _action = new() { VerticalAlignment = VerticalAlignment.Center, MinWidth = 132 };
     private readonly IconLabel _actionLabel = new();
 
@@ -54,6 +56,7 @@ public sealed class AppCard : Decorator
 
         _name.Text = app.Name;
         _tagline.Text = app.Tagline;
+        _features.Show(app);
         AutomationProperties.SetName(this, app.Name);
         ShowView(view);
     }
@@ -83,6 +86,9 @@ public sealed class AppCard : Decorator
 
     public StateBadge Badge => _badge;
 
+    /// <summary>The chips of the app's features (Cloud, MCP; hidden when it has none).</summary>
+    public FeatureChips Features => _features;
+
     /// <summary>The cover of the tile (the first picture of the app; tests).</summary>
     public AppPicture Cover => _cover;
 
@@ -90,7 +96,7 @@ public sealed class AppCard : Decorator
     public void ShowView(AppsView view)
     {
         View = view;
-        foreach (var part in new Control[] { _logo, _cover, _name, _tagline, _version, _progress, _badge, _action })
+        foreach (var part in new Control[] { _logo, _cover, _name, _tagline, _version, _progress, _badge, _features, _action })
         {
             Detach(part);
         }
@@ -146,6 +152,10 @@ public sealed class AppCard : Decorator
         _version.Margin = new Thickness(10, 0, 0, 0);
         _badge.HorizontalAlignment = HorizontalAlignment.Left;
         _badge.Margin = default;
+        _features.IsOnPicture = true;
+        _features.HorizontalAlignment = HorizontalAlignment.Right;
+        _features.VerticalAlignment = VerticalAlignment.Top;
+        _features.Margin = new Thickness(10);
         _progress.MaxWidth = double.PositiveInfinity;
         _progress.HorizontalAlignment = HorizontalAlignment.Stretch;
         _progress.VerticalAlignment = VerticalAlignment.Bottom;
@@ -161,11 +171,11 @@ public sealed class AppCard : Decorator
             shade.Classes.Add("cover-shade");
             var ring = new Border { Child = _logo, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(12) };
             ring.Classes.Add("logo-ring");
-            bandContent.Children.AddRange([_cover, shade, ring, _progress]);
+            bandContent.Children.AddRange([_cover, shade, ring, _features, _progress]);
         }
         else
         {
-            bandContent.Children.AddRange([_logo, _progress]);
+            bandContent.Children.AddRange([_logo, _features, _progress]);
         }
 
         var band = new Border { Height = 150, CornerRadius = new CornerRadius(radius, radius, 0, 0), ClipToBounds = true, Child = bandContent };
@@ -193,6 +203,10 @@ public sealed class AppCard : Decorator
         _version.Margin = new Thickness(0, 2, 0, 0);
         _badge.HorizontalAlignment = HorizontalAlignment.Left;
         _badge.Margin = new Thickness(16, 0, 16, 0);
+        _features.IsOnPicture = false;
+        _features.HorizontalAlignment = HorizontalAlignment.Left;
+        _features.VerticalAlignment = VerticalAlignment.Center;
+        _features.Margin = new Thickness(10, 0, 0, 0);
         _progress.MaxWidth = 360;
         _progress.HorizontalAlignment = HorizontalAlignment.Left;
         _progress.VerticalAlignment = VerticalAlignment.Top;
@@ -200,7 +214,10 @@ public sealed class AppCard : Decorator
         _action.HorizontalAlignment = HorizontalAlignment.Right;
         _action.Margin = default;
 
-        var texts = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Children = { _name, _tagline, _version, _progress } };
+        // The name takes what it needs (cut when the row is narrow), the chips follow it.
+        var nameLine = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), HorizontalAlignment = HorizontalAlignment.Left, Children = { _name, _features } };
+        Grid.SetColumn(_features, 1);
+        var texts = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Children = { nameLine, _tagline, _version, _progress } };
         var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto"), Children = { _logo, texts, _badge, _action } };
         Grid.SetRow(texts, 0);
         Grid.SetRow(_action, 0);

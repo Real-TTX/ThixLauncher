@@ -303,6 +303,58 @@ public sealed class UiTests
     }
 
     [AvaloniaFact]
+    public async Task The_store_and_the_page_of_an_app_show_its_features_as_chips()
+    {
+        using var data = new TestData();
+        await AppService.RefreshAsync();
+        var window = Open();
+        window.ShowStore();
+        Settle(window);
+        const string cloud = "Synchronisiert über MatCloud auf allen Geräten";
+
+        // a tile: the chip on its band with what it means as the tool tip; an app without features shows none
+        var clip = window.Store.Cards.Single(card => card.App.Id == "thixclip");
+        Assert.Equal(["Cloud"], clip.Features.Texts);
+        Assert.True(clip.Features.IsEffectivelyVisible);
+        Assert.True(clip.Features.Bounds.Width > 0);
+        Assert.Equal(cloud, ToolTip.GetTip(clip.Features.Chips[0]));
+        Assert.Equal($"Cloud: {cloud}", Avalonia.Automation.AutomationProperties.GetName(clip.Features.Chips[0]));
+        Assert.False(window.Store.Cards.Single(card => card.App.Id == "thixtunnel").Features.IsVisible);
+
+        // the row of the list shows the same chip beside the name
+        clip.ShowView(AppsView.List);
+        Settle(window);
+        Assert.True(clip.Features.IsEffectivelyVisible);
+        clip.ShowView(AppsView.Tiles);
+
+        // the big app of the store
+        window.Store.ShowHero("thixclip");
+        Assert.Equal(["Cloud"], window.Store.HeroFeatures.Texts);
+        Assert.True(window.Store.HeroFeatures.IsVisible);
+        window.Store.ShowHero("thixtunnel");
+        Assert.False(window.Store.HeroFeatures.IsVisible);
+
+        // the page of an app: the chip beside the name, the feature with its meaning among the facts
+        window.ShowDetails("thixclip");
+        Settle(window);
+        Assert.Equal(["Cloud"], window.Detail.Features.Texts);
+        Assert.True(window.Detail.Features.IsEffectivelyVisible);
+        Assert.True(window.Detail.FeaturesText.IsVisible);
+        Assert.Equal($"Cloud: {cloud}", window.Detail.FeaturesText.Text);
+        window.ShowDetails("thixtunnel");
+        Settle(window);
+        Assert.False(window.Detail.Features.IsVisible);
+        Assert.False(window.Detail.FeaturesLabel.IsVisible);
+
+        // MCP gets a chip of its own after Cloud
+        var chips = new Controls.FeatureChips();
+        chips.Show(AppCatalog.Find("thixtunnel")! with { Features = [AppFeature.Cloud, AppFeature.Mcp] });
+        Assert.Equal(["Cloud", "MCP"], chips.Texts);
+        Assert.Equal("KI-Assistenten können die App über das Model Context Protocol nutzen", ToolTip.GetTip(chips.Chips[1]));
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public async Task The_apps_switch_between_tiles_and_list_and_the_choice_stays()
     {
         using var data = new TestData();

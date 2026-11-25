@@ -89,6 +89,10 @@ Nightlies aus dem Branch `dev` stehen im Pre-Release `nightly-channel`.
 - **Store:** eine App groß (zuerst die erste, die noch nicht installiert ist; ‹ › blättert durch alle) und darunter alle Apps als
   Kacheln. Ein Klick öffnet die **Seite der App**: ihre Screenshots (eins groß, die anderen zum Anklicken), Übersicht,
   **Änderungen** und Details, mit Installieren / Aktualisieren / Öffnen / Deinstallieren.
+- **Funktionen einer App** (`ThixApp.Features`) stehen als kleine Chips auf ihrer Kachel, neben ihrem Namen und in der Übersicht
+  ihrer Seite – der Tooltip sagt, was sie bedeuten: **Cloud** (synchronisiert über MatCloud auf allen Geräten – jede App, die sich
+  bei der MatCloud anmeldet) und **MCP** (KI-Assistenten können die App über das Model Context Protocol nutzen – noch keine App).
+  Eine App ohne Funktionen zeigt keine Chips. Auch die Website bekommt sie (`features` in `docs/catalog.json`).
 - **GitHub, ohne Limit:** Die Screenshots kommen aus `docs/images` des Repositorys der App
   (`raw.githubusercontent.com/<repo>/main/docs/images/…`, im dunklen Design die `-dark`-Variante, sonst die helle), die
   Änderungen aus dem Commit-Feed des Branches des Kanals (`github.com/<repo>/commits/main.atom` bzw. `dev.atom`). Beides ist

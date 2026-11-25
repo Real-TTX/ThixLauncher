@@ -6,7 +6,7 @@ Guidance for working in this repository. Keep it in sync with the code: update i
 
 The launcher of the Thix apps for **Windows and macOS** (desktop app, tray / menu bar): it installs the apps with one
 click, keeps them up to date, starts them and removes them. The catalog has **ThixCalc**, **ThixCalendar**, **ThixClip**, **ThixContacts**, **ThixFred**, **ThixMail**, **ThixNote**, **ThixShot**, **ThixShow**, **ThixSpace**, **ThixSync**, **ThixTunnel** and **ThixWrite**
-(`AppCatalog`; ThixWrite, ThixCalc, ThixShow, ThixContacts and ThixMail come from ThixOffice, one repository with shared rolling releases); a new app is one entry there plus its logo in `src/ThixLauncher/Assets/apps/<id>.png`. Every app has a `ShortName` ("clip"): its page on the website is thixapps.de/apps/<short name>. The website (MatCMS plugin `thix-store`) reads **`docs/catalog.json`** = `WebCatalog.Json()` from main; `WebCatalogTests` keeps the file equal to the catalog (`THIXLAUNCHER_WRITE_CATALOG=1 dotnet test` writes it). The apps come
+(`AppCatalog`; ThixWrite, ThixCalc, ThixShow, ThixContacts and ThixMail come from ThixOffice, one repository with shared rolling releases); a new app is one entry there plus its logo in `src/ThixLauncher/Assets/apps/<id>.png`. Every app has a `ShortName` ("clip"): its page on the website is thixapps.de/apps/<short name>. Its `Features` (`AppFeature`: Cloud, MCP – extensible, words in `AppFeatures`) are chips in the store and in the catalog of the website; Cloud goes with `CloudApp` (a test holds them together), no app has MCP yet. The website (MatCMS plugin `thix-store`) reads **`docs/catalog.json`** = `WebCatalog.Json()` from main; `WebCatalogTests` keeps the file equal to the catalog (`THIXLAUNCHER_WRITE_CATALOG=1 dotnet test` writes it). The apps come
 straight from their GitHub releases (public, no token), every package is checked by **SHA-256** before it runs.
 With **MatCloud** (`../MatCloud`, the cloud of the Thix apps) the launcher signs in once and
 hands its sign-in to every app it installs (`CloudService`, contract `POST /api/v1/devices/handoff` + `CloudHandoff`); the cloud never holds up
@@ -61,9 +61,11 @@ src/ThixLauncher.Core   (no UI) models, business layer (static classes), infrast
                         AppVersion (release / nightly / local, build number compare), AppRelease, InstalledApp, AppStatus + AppState,
                         AppQuery (search, AppFilter, AppSort), AppSettings (theme, AppChannel, updates, AppsView tiles / list, Cloud = CloudSettings – only CloudService
                         writes it –, ConnectInstalledApps), UpdateManifest (+ "installer"), BusinessException; ThixApp.CloudApp = its id at MatCloud;
+                        ThixApp.Features = AppFeature (Cloud = it syncs through MatCloud, exactly the apps with a CloudApp; Mcp = AI assistants
+                        use it over the Model Context Protocol, no app yet) with AppFeatures (Key for the website, Name, Description = tool tip, Icon);
                         InstallerConfig (SETUP-08: InstallerSwitch, InstallerFileType, InstallChoices, SetupAction, SetupRequest,
                         AppSetupCommand = how a platform runs an app's package)
-  Business/             AppCatalog (the apps), WebCatalog (docs/catalog.json for the website), StoreService (the store's talk with GitHub WITHOUT the API: PictureAsync – raw.githubusercontent.com
+  Business/             AppCatalog (the apps), WebCatalog (docs/catalog.json for the website; per app "features": id, name, description – "cloud" stays for older readers), StoreService (the store's talk with GitHub WITHOUT the API: PictureAsync – raw.githubusercontent.com
                         /<repo>/main/<ScreenshotFolder>/<file>, kept in <data>/store/<app>/, asked again once a day with the ETag, "-dark" first in
                         the dark theme, only PNG, safe names –, ChangesAsync – github.com/<repo>/commits/<main|dev>.atom, first line of the
                         whole message, 6 h in memory –, Featured = the first app not installed), AppService (state per app in memory, Query/Count, RefreshAsync, DetectInstalledAsync, InstallAsync = install or
@@ -110,15 +112,17 @@ src/ThixLauncher        (Avalonia app)
                         tiles or list, under the title when narrow – and the state line; on "Updates" a waiting update of ThixLauncher
                         itself (button → Einstellungen › Updates); the apps as app tiles – the logo big, the texts centred – (default) or card rows, remembered via
                         SettingsService.Remember; the last tile AddAppsCard "Apps hinzufügen" opens the store; actions of the chosen app
-                        below), StorePage (every app: one big – picture, logo, text, state, main action, "Mehr erfahren", ‹ n / 8 › –, then
+                        below), StorePage (every app: one big – picture, logo, name with its feature chips, text, state, main action, "Mehr erfahren", ‹ n / 8 › –, then
                         all as tiles; a click on a tile opens its page, its button acts; search hides the big one), TileStyles.axaml (the
-                        tile theme AppTile and the band styles, included by both), AppDetailPage (like a store page: header card with the
-                        actions – Deinstallieren after a gap –, the gallery: one picture big with its caption, the others as thumbnails;
+                        tile theme AppTile and the band styles, included by both), AppDetailPage (like a store page: header card – the name
+                        with its feature chips – with the actions – Deinstallieren after a gap –, the overview lists the features with their meaning, the gallery: one picture big with its caption, the others as thumbnails;
                         tabs Übersicht | Änderungen (StoreService.ChangesAsync, a row opens the commit) | Details), SettingsPage (tabs Allgemein | Apps | Cloud | Updates | Erweitert;
                         Cloud like ThixClip: the code in a card or user name and password; connected: the account, Abmelden, "Neue Apps gleich verbinden"), AboutPage
-  Controls/             ONE code base per control: AppCard (one app as tile – cover picture with the logo on it – or row, same parts),
+  Controls/             ONE code base per control: AppCard (one app as tile – cover picture with the logo on it, the feature chips top right
+                        on the band – or row – the chips beside the name –, same parts),
                         AddAppsCard, AppPicture (a picture of the store: loads when shown and on a theme change, the logo stands in),
-                        AppLogo, StateBadge, ActionBar, IconLabel, InfoBar, FormErrors
+                        AppLogo, StateBadge, FeatureChips (an app's features: icon + word in Mat.AccentText on Mat.AccentSoft, the meaning as
+                        tool tip; on a picture/band Mat.Surface with Mat.Border; hidden without features), ActionBar, IconLabel, InfoBar, FormErrors
   Tray/                 TrayIcon (TRAY-01 order; own items: start each installed app, Nach Updates suchen, Alle Apps aktualisieren; amber dot while
                         updates wait)
   Setup/                ThixLauncherSetup (MatSetupWindow: install, update, uninstall; the Options switches from installer.json)

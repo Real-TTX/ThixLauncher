@@ -186,6 +186,7 @@ public partial class AppDetailPage : UserControl
         Logo.AppId = app.Id;
         Logo.FallbackIcon = app.Icon;
         NameText.Text = app.Name;
+        Features.Show(app);
         TaglineText.Text = app.Tagline;
         DescriptionText.Text = app.Description;
         Badge.Show(status);
@@ -201,6 +202,8 @@ public partial class AppDetailPage : UserControl
         SetupText.Text = app.InstallsQuietly
             ? "Mit einem Klick, ohne Rückfrage"
             : "Das Setup der App öffnet sich und fragt nach Ordner und Optionen";
+        FeaturesLabel.IsVisible = FeaturesText.IsVisible = app.Features.Count > 0;
+        FeaturesText.Text = string.Join("\n", app.Features.Select(feature => $"{AppFeatures.Name(feature)}: {AppFeatures.Description(feature)}"));
 
         LocationText.Text = status.Installed?.Location is { Length: > 0 } location ? location : "–";
         PackageText.Text = status.Latest is { } latest

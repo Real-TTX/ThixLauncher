@@ -80,6 +80,12 @@ public sealed record ThixApp
     /// </summary>
     public string? CloudApp { get; init; }
 
+    /// <summary>
+    /// The notable features of the app, in the order of <see cref="AppFeatures.All"/>: chips in the store and on its page, and in the
+    /// catalog of the website. <see cref="AppFeature.Cloud"/> goes with <see cref="CloudApp"/> (a test holds the two together).
+    /// </summary>
+    public IReadOnlyList<AppFeature> Features { get; init; } = [];
+
     /// <summary>The repository folder containing the screenshots displayed in the store.</summary>
     public string ScreenshotFolder { get; init; } = Business.StoreService.ImagesFolder;
 
