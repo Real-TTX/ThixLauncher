@@ -184,7 +184,19 @@ internal static class SelfTest
                 setup.Close();
             }
 
-            ProblemReports.WriteHang(TimeSpan.FromSeconds(9), withDump: false);
+            // a hang report with its dump, taken from a snapshot: the launcher must not stand still while the file is written
+            var details = UiWatchdog.ReportDetails(UiThreadProbe.OfCurrentThread()?.Look(Stopwatch.GetTimestamp(), []),
+                AppService.DescribeActivity(), Log.Recent(5));
+            var hang = ProblemReports.WriteHang(TimeSpan.FromSeconds(9), details, withDump: OperatingSystem.IsWindows())
+                       ?? throw new InvalidOperationException("no hang report written");
+            var text = await File.ReadAllTextAsync(hang.Path);
+            Ensure(text.Contains("Was ThixLauncher gerade tat:", StringComparison.Ordinal), "the hang report does not say what ran");
+            if (OperatingSystem.IsWindows())
+            {
+                Ensure(File.Exists(Path.ChangeExtension(hang.Path, ".dmp")) && text.Contains("Speicherabbild dieses Moments", StringComparison.Ordinal), "no hang dump: " + text);
+                Ensure(hang.DumpPause < TimeSpan.FromSeconds(2), $"the dump held the launcher still for {hang.DumpPause}");
+            }
+
             Dialogs.ProblemReportDialog.ShowUnseen()?.Close();
             window.IsExiting = true;
             window.Close();
