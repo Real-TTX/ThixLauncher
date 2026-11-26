@@ -1,9 +1,9 @@
-// MatCloud.Contract 1.7.0 – a copy from MatCloud, do not edit here
+// MatCloud.Contract 1.9.0 – a copy from MatCloud, do not edit here
 namespace MatCloud.Contract.Drive;
 
 /// <summary>
 /// The Drive of MatCloud (app <see cref="CloudApps.Drive"/>, ThixDrive): the files and folders of an account. Besides a device of ThixDrive, a device of
-/// <see cref="GuestApps"/> (ThixWrite, ThixCalc, ThixShow, ThixSync) may call these routes and reaches the Drive of ITS account – a grant of the server, not a rule
+/// <see cref="GuestApps"/> (ThixWrite, ThixCalc, ThixShow, ThixSync, ThixPdf) may call these routes and reaches the Drive of ITS account – a grant of the server, not a rule
 /// that loosens the others: a device of ThixClip or ThixNote gets 403. When an administrator switches the Drive off, the office apps lose it too (403).
 ///
 /// Every item has a stable <see cref="DriveItem.Id"/> (a number that never changes, also not when the item is renamed or moved). A file has versions; its
@@ -22,8 +22,8 @@ namespace MatCloud.Contract.Drive;
 /// </summary>
 public static class DriveContract
 {
-    /// <summary>The apps whose devices may use the Drive besides ThixDrive's own: the office apps open and save their documents here.</summary>
-    public static readonly IReadOnlyList<string> GuestApps = [CloudApps.Write, CloudApps.Calc, CloudApps.Show, CloudApps.Sync];
+    /// <summary>The apps whose devices may use the Drive besides ThixDrive's own: the office apps and ThixPdf open and save their documents here.</summary>
+    public static readonly IReadOnlyList<string> GuestApps = [CloudApps.Write, CloudApps.Calc, CloudApps.Show, CloudApps.Sync, CloudApps.Pdf];
 
     public const string Root = "/api/v1/drive";
 

@@ -252,6 +252,45 @@
       ]
     },
     {
+      "id": "thixpdf",
+      "shortName": "pdf",
+      "name": "ThixPdf",
+      "tagline": "PDFs ansehen, kommentieren, ausfüllen und unterschreiben",
+      "description": "Alles für PDFs in einem Programm: lesen und durchsuchen, markieren und kommentieren, Formulare ausfüllen und selbst anlegen, von Hand oder digital mit Zertifikat unterschreiben, Seiten drehen, verschieben, zusammenführen und teilen, mit Kennwort schützen. Mit der MatCloud liegen deine PDFs in ThixDrive, Unterschriften und Stempel sind auf all deinen Computern gleich.",
+      "repository": "Real-TTX/ThixPdf",
+      "manifest": "https://github.com/Real-TTX/ThixPdf/releases/download/release-channel/thixpdf-update.json",
+      "icon": "https://raw.githubusercontent.com/Real-TTX/ThixLauncher/main/src/ThixLauncher/Assets/apps/thixpdf.png",
+      "project": "https://github.com/Real-TTX/ThixPdf",
+      "cloud": true,
+      "screenshots": [
+        {
+          "url": "https://raw.githubusercontent.com/Real-TTX/ThixPdf/main/docs/images/thixpdf-main-light.png",
+          "caption": "PDFs lesen und durchsuchen",
+          "dark": "https://raw.githubusercontent.com/Real-TTX/ThixPdf/main/docs/images/thixpdf-main-dark.png"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Real-TTX/ThixPdf/main/docs/images/thixpdf-main-comment-light.png",
+          "caption": "Markieren und kommentieren",
+          "dark": "https://raw.githubusercontent.com/Real-TTX/ThixPdf/main/docs/images/thixpdf-main-comment-dark.png"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Real-TTX/ThixPdf/main/docs/images/thixpdf-main-form-light.png",
+          "caption": "Formulare ausfüllen",
+          "dark": "https://raw.githubusercontent.com/Real-TTX/ThixPdf/main/docs/images/thixpdf-main-form-dark.png"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Real-TTX/ThixPdf/main/docs/images/thixpdf-main-sign-light.png",
+          "caption": "Unterschreiben",
+          "dark": "https://raw.githubusercontent.com/Real-TTX/ThixPdf/main/docs/images/thixpdf-main-sign-dark.png"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Real-TTX/ThixPdf/main/docs/images/thixpdf-main-pages-light.png",
+          "caption": "Seiten ordnen",
+          "dark": "https://raw.githubusercontent.com/Real-TTX/ThixPdf/main/docs/images/thixpdf-main-pages-dark.png"
+        }
+      ]
+    },
+    {
       "id": "thixshot",
       "shortName": "shot",
       "name": "ThixShot",

@@ -224,6 +224,39 @@ public static class AppCatalog
         },
         new ThixApp
         {
+            Id = "thixpdf",
+            ShortName = "pdf",
+            CloudApp = CloudApps.Pdf,
+            Name = "ThixPdf",
+            Tagline = "PDFs ansehen, kommentieren, ausfüllen und unterschreiben",
+            Description = "Alles für PDFs in einem Programm: lesen und durchsuchen, markieren und kommentieren, Formulare ausfüllen und " +
+                          "selbst anlegen, von Hand oder digital mit Zertifikat unterschreiben, Seiten drehen, verschieben, zusammenführen " +
+                          "und teilen, mit Kennwort schützen. Mit der MatCloud liegen deine PDFs in ThixDrive, Unterschriften und Stempel " +
+                          "sind auf all deinen Computern gleich.",
+            Icon = "file-text",
+            Repository = "Real-TTX/ThixPdf",
+            Feed = FeedKind.ChannelManifest,
+            ManifestFileName = "thixpdf-update.json",
+            WindowsExecutable = "ThixPdf.exe",
+            WindowsUninstallKey = "ThixPdf",
+            // ThixPdfSetup.exe (the program itself, the install code of ThixOffice) --update installs or updates without a window: a
+            // fresh install takes the default choices (Start menu, "Öffnen mit" for PDFs, no desktop shortcut, no default program
+            // taken); a running ThixPdf keeps its unsaved changes as recovery files and ends, it is not started again (that would take
+            // "--restart").
+            WindowsQuietInstallArguments = "--update",
+            MacBundleName = "ThixPdf.app",
+            MacBundleId = "info.schmoldt.thixpdf",
+            Screenshots =
+            [
+                new AppScreenshot("thixpdf-main-light.png", "PDFs lesen und durchsuchen"),
+                new AppScreenshot("thixpdf-main-comment-light.png", "Markieren und kommentieren"),
+                new AppScreenshot("thixpdf-main-form-light.png", "Formulare ausfüllen"),
+                new AppScreenshot("thixpdf-main-sign-light.png", "Unterschreiben"),
+                new AppScreenshot("thixpdf-main-pages-light.png", "Seiten ordnen"),
+            ],
+        },
+        new ThixApp
+        {
             Id = "thixshot",
             ShortName = "shot",
             Name = "ThixShot",

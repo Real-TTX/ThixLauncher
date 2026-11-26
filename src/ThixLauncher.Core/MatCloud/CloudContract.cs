@@ -1,4 +1,4 @@
-// MatCloud.Contract 1.7.0 – a copy from MatCloud, do not edit here
+// MatCloud.Contract 1.9.0 – a copy from MatCloud, do not edit here
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -12,7 +12,7 @@ namespace MatCloud.Contract;
 /// A device belongs to ONE app (<see cref="DeviceLoginRequest.App"/>): its token reads and writes only the data of that app. Apps with a module in
 /// MatCloud (ThixClip: <see cref="Clip.ClipContract"/>) have routes of their own; every other app keeps its data in the general sync
 /// (<see cref="SyncContract"/>). The one exception is granted by a module, explicitly: the Drive lets the office apps in
-/// (<see cref="Drive.DriveContract.GuestApps"/>: a device of ThixWrite, ThixCalc, ThixShow or ThixSync reaches the Drive of its account).
+/// (<see cref="Drive.DriveContract.GuestApps"/>: a device of ThixWrite, ThixCalc, ThixShow, ThixSync or ThixPdf reaches the Drive of its account).
 /// </summary>
 public static class CloudContract
 {
@@ -106,6 +106,12 @@ public static class CloudApps
     /// <summary>ThixSync (file sync and backup): its sync jobs and connections in the general sync; reaches the Drive of its account as a source or target (<see cref="Drive.DriveContract.GuestApps"/>).</summary>
     public const string Sync = "sync";
 
+    /// <summary>ThixGate (remote manager: RDP, VNC, SSH): its folders, connections and saved credentials (encrypted on the device) in the general sync.</summary>
+    public const string Gate = "gate";
+
+    /// <summary>ThixPdf (PDF viewer and editor): opens and saves its PDFs in the Drive (<see cref="Drive.DriveContract.GuestApps"/>); its signatures and stamps in the general sync.</summary>
+    public const string Pdf = "pdf";
+
     public static readonly IReadOnlyList<CloudApp> All =
     [
         new(Clip, "ThixClip", "Der Zwischenablage-Verlauf auf allen Geräten"),
@@ -122,6 +128,8 @@ public static class CloudApps
         new(Mail, "ThixMail", "E-Mail: Konten-Einstellungen, Kontakte und Kalender aus der Cloud"),
         new(Space, "ThixSpace", "Speicheranalyse: Quellen und Analysen auf allen Geräten"),
         new(Sync, "ThixSync", "Synchronisation und Backup: Aufträge und Verbindungen auf allen Geräten, ThixDrive als Ziel"),
+        new(Gate, "ThixGate", "Remote-Verbindungen (RDP, VNC, SSH): Ordner und Verbindungen auf allen Geräten"),
+        new(Pdf, "ThixPdf", "PDFs ansehen, kommentieren, ausfüllen und unterschreiben: Dokumente in der Ablage, Signaturen und Stempel auf allen Geräten"),
     ];
 
     public static CloudApp? Find(string? id) => All.FirstOrDefault(a => string.Equals(a.Id, id, StringComparison.Ordinal));
