@@ -86,7 +86,7 @@ internal sealed class SampleGitHub(IReadOnlyList<ThixApp>? apps = null) : HttpMe
     };
 
     /// <summary>
-    /// The sample state of the snapshots: ThixCalc 0.1.1, ThixClip 0.1.12 in release (installed: 0.1.9), ThixContacts 0.1.1, ThixFred 0.1.1, ThixMail 0.1.1, ThixNote 1.1.1, ThixShot 0.2.7, ThixShow 0.1.1, ThixSpace 0.1.1, ThixSync 0.1.1, ThixTunnel 0.2.8, ThixWrite 0.1.1, nightlies of all;
+    /// The sample state of the snapshots: ThixCalc 0.1.1, ThixClip 0.1.12 in release (installed: 0.1.9), ThixContacts 0.1.1, ThixFred 0.1.1, ThixMail 0.1.1, ThixNote 1.1.1, ThixPdf 0.1.1, ThixShot 0.2.7, ThixShow 0.1.1, ThixSpace 0.1.1, ThixSync 0.1.1, ThixTunnel 0.2.8, ThixWrite 0.1.1, nightlies of all;
     /// ThixNote with install options (<see cref="SampleNoteInstaller"/>), the others as builds without them.
     /// </summary>
     public static SampleGitHub WithSampleReleases()
@@ -107,6 +107,8 @@ internal sealed class SampleGitHub(IReadOnlyList<ThixApp>? apps = null) : HttpMe
         github.Versions[("thixmail", AppVersion.Nightly)] = "nightly-3-20261122";
         github.Versions[("thixnote", AppVersion.Release)] = "1.1.1-20261116";
         github.Versions[("thixnote", AppVersion.Nightly)] = "nightly-5-20261116";
+        github.Versions[("thixpdf", AppVersion.Release)] = "0.1.1-20261126";
+        github.Versions[("thixpdf", AppVersion.Nightly)] = "nightly-2-20261126";
         github.Versions[("thixshot", AppVersion.Release)] = "0.2.7-20261122";
         github.Versions[("thixshot", AppVersion.Nightly)] = "nightly-8-20261122";
         github.Versions[("thixshow", AppVersion.Release)] = "0.1.1-20261119";
