@@ -219,6 +219,47 @@
       ]
     },
     {
+      "id": "thixgate",
+      "shortName": "gate",
+      "name": "ThixGate",
+      "tagline": "Remote-Verbindungen an einem Ort: Remote Desktop, VNC und SSH",
+      "description": "Ordner, Verbindungen und gespeicherte Zugangsdaten in einer Bibliothek. Remote Desktop und VNC laufen direkt in ThixGate mit der Engine von Matgate, SSH öffnet das Terminal des Systems. Mit der MatCloud sind Ordner, Verbindungen und Zugangsdaten auf all deinen Computern gleich (Passwörter nie); wer mag, verbindet sich über Matgate.",
+      "repository": "Real-TTX/ThixGate",
+      "manifest": "https://github.com/Real-TTX/ThixGate/releases/download/release-channel/thixgate-update.json",
+      "icon": "https://raw.githubusercontent.com/Real-TTX/ThixLauncher/main/src/ThixLauncher/Assets/apps/thixgate.png",
+      "project": "https://github.com/Real-TTX/ThixGate",
+      "cloud": true,
+      "features": [
+        {
+          "id": "cloud",
+          "name": "Cloud",
+          "description": "Synchronisiert über MatCloud auf allen Geräten"
+        }
+      ],
+      "screenshots": [
+        {
+          "url": "https://raw.githubusercontent.com/Real-TTX/ThixGate/main/docs/images/main-connections-light.png",
+          "caption": "Alle Verbindungen mit Ordnern und Suche",
+          "dark": "https://raw.githubusercontent.com/Real-TTX/ThixGate/main/docs/images/main-connections-dark.png"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Real-TTX/ThixGate/main/docs/images/main-connection-form-general-light.png",
+          "caption": "Eine Verbindung bearbeiten",
+          "dark": "https://raw.githubusercontent.com/Real-TTX/ThixGate/main/docs/images/main-connection-form-general-dark.png"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Real-TTX/ThixGate/main/docs/images/main-credentials-light.png",
+          "caption": "Zugangsdaten einmal speichern",
+          "dark": "https://raw.githubusercontent.com/Real-TTX/ThixGate/main/docs/images/main-credentials-dark.png"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Real-TTX/ThixGate/main/docs/images/main-matgate-connections-light.png",
+          "caption": "Die Verbindungen aus Matgate",
+          "dark": "https://raw.githubusercontent.com/Real-TTX/ThixGate/main/docs/images/main-matgate-connections-dark.png"
+        }
+      ]
+    },
+    {
       "id": "thixmail",
       "shortName": "mail",
       "name": "ThixMail",

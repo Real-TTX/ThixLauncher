@@ -168,6 +168,36 @@ public static class AppCatalog
         },
         new ThixApp
         {
+            Id = "thixgate",
+            ShortName = "gate",
+            CloudApp = CloudApps.Gate,
+            Features = [AppFeature.Cloud],
+            Name = "ThixGate",
+            Tagline = "Remote-Verbindungen an einem Ort: Remote Desktop, VNC und SSH",
+            Description = "Ordner, Verbindungen und gespeicherte Zugangsdaten in einer Bibliothek. Remote Desktop und VNC laufen direkt " +
+                          "in ThixGate mit der Engine von Matgate, SSH öffnet das Terminal des Systems. Mit der MatCloud sind Ordner, " +
+                          "Verbindungen und Zugangsdaten auf all deinen Computern gleich (Passwörter nie); wer mag, verbindet sich über Matgate.",
+            Icon = "network",
+            Repository = "Real-TTX/ThixGate",
+            Feed = FeedKind.ChannelManifest,
+            ManifestFileName = "thixgate-update.json",
+            WindowsExecutable = "ThixGate.exe",
+            WindowsUninstallKey = "ThixGate",
+            // ThixGateSetup.exe (the program itself) --update installs or updates without a window; a running ThixGate closes its
+            // sessions and ends, the installed one starts in the tray.
+            WindowsQuietInstallArguments = "--update",
+            MacBundleName = "ThixGate.app",
+            MacBundleId = "info.schmoldt.thixgate",
+            Screenshots =
+            [
+                new AppScreenshot("main-connections-light.png", "Alle Verbindungen mit Ordnern und Suche"),
+                new AppScreenshot("main-connection-form-general-light.png", "Eine Verbindung bearbeiten"),
+                new AppScreenshot("main-credentials-light.png", "Zugangsdaten einmal speichern"),
+                new AppScreenshot("main-matgate-connections-light.png", "Die Verbindungen aus Matgate"),
+            ],
+        },
+        new ThixApp
+        {
             Id = "thixmail",
             ShortName = "mail",
             CloudApp = CloudApps.Mail,

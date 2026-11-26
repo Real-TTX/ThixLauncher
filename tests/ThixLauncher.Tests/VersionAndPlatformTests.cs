@@ -96,7 +96,7 @@ public sealed class VersionAndPlatformTests
     [Fact]
     public void Every_app_of_the_catalog_is_complete()
     {
-        Assert.Equal(["thixcalc", "thixcalendar", "thixclip", "thixcontacts", "thixfred", "thixmail", "thixnote", "thixpdf", "thixshot", "thixshow", "thixspace", "thixsync", "thixtunnel", "thixwrite"], AppCatalog.Apps.Select(app => app.Id));
+        Assert.Equal(["thixcalc", "thixcalendar", "thixclip", "thixcontacts", "thixfred", "thixgate", "thixmail", "thixnote", "thixpdf", "thixshot", "thixshow", "thixspace", "thixsync", "thixtunnel", "thixwrite"], AppCatalog.Apps.Select(app => app.Id));
         foreach (var app in AppCatalog.Apps)
         {
             Assert.Matches("^Real-TTX/Thix", app.Repository);
@@ -130,7 +130,7 @@ public sealed class VersionAndPlatformTests
             Assert.Equal(AppFeatures.All.Where(app.Features.Contains), app.Features);
         }
 
-        Assert.Equal(["thixcalc", "thixcalendar", "thixclip", "thixcontacts", "thixfred", "thixmail", "thixnote", "thixpdf", "thixshow", "thixspace", "thixsync", "thixwrite"],
+        Assert.Equal(["thixcalc", "thixcalendar", "thixclip", "thixcontacts", "thixfred", "thixgate", "thixmail", "thixnote", "thixpdf", "thixshow", "thixspace", "thixsync", "thixwrite"],
             AppCatalog.Apps.Where(app => app.Features.Contains(AppFeature.Cloud)).Select(app => app.Id));
 
         // no app speaks MCP yet

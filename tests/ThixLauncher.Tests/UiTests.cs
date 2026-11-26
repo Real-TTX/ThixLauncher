@@ -52,7 +52,7 @@ public sealed class UiTests
         window.ShowStore();
         Settle(window);
         var rows = window.Store.Cards;
-        Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixMail", "ThixNote", "ThixPdf", "ThixShot", "ThixShow", "ThixSpace", "ThixSync", "ThixTunnel", "ThixWrite"], rows.Select(row => row.App.Name));
+        Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixGate", "ThixMail", "ThixNote", "ThixPdf", "ThixShot", "ThixShow", "ThixSpace", "ThixSync", "ThixTunnel", "ThixWrite"], rows.Select(row => row.App.Name));
         var clip = rows[2];
         Assert.Equal("Aktualisieren", clip.ActionText);
         Assert.Equal("Update verfügbar", clip.Badge.Text);
@@ -66,7 +66,7 @@ public sealed class UiTests
         await WaitUntil(window, () => data.System.Launched.Count == 1); // the start runs on a worker thread
         Assert.Equal(["thixclip"], data.System.Launched);
 
-        Assert.StartsWith("14 Thix-Apps · 13 noch nicht installiert", window.Store.SubtitleText.Text);
+        Assert.StartsWith("15 Thix-Apps · 14 noch nicht installiert", window.Store.SubtitleText.Text);
         window.Close();
     }
 

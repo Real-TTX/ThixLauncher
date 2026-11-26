@@ -253,14 +253,15 @@ public sealed class AppServiceTests
         data.System.Add(AppCatalog.Find("thixnote")!, "1.0.1-20261115");
         await AppService.RefreshAsync();
 
-        Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixMail", "ThixNote", "ThixPdf", "ThixShot", "ThixShow", "ThixSpace", "ThixSync", "ThixTunnel", "ThixWrite"], Names(new AppQuery()));
-        Assert.Equal(["ThixNote", "ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixMail", "ThixPdf", "ThixShot", "ThixShow", "ThixSpace", "ThixSync", "ThixTunnel", "ThixWrite"], Names(new AppQuery(Sort: AppSort.State)));
+        Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixGate", "ThixMail", "ThixNote", "ThixPdf", "ThixShot", "ThixShow", "ThixSpace", "ThixSync", "ThixTunnel", "ThixWrite"], Names(new AppQuery()));
+        Assert.Equal(["ThixNote", "ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixGate", "ThixMail", "ThixPdf", "ThixShot", "ThixShow", "ThixSpace", "ThixSync", "ThixTunnel", "ThixWrite"], Names(new AppQuery(Sort: AppSort.State)));
         Assert.Equal(["ThixNote"], Names(new AppQuery(Filter: AppFilter.Installed)));
         Assert.Equal(["ThixNote"], Names(new AppQuery(Filter: AppFilter.Updates)));
-        Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixMail", "ThixPdf", "ThixShot", "ThixShow", "ThixSpace", "ThixSync", "ThixTunnel", "ThixWrite"], Names(new AppQuery(Filter: AppFilter.NotInstalled)));
-        Assert.Equal(["ThixFred"], Names(new AppQuery("terminal")));
+        Assert.Equal(["ThixCalc", "ThixCalendar", "ThixClip", "ThixContacts", "ThixFred", "ThixGate", "ThixMail", "ThixPdf", "ThixShot", "ThixShow", "ThixSpace", "ThixSync", "ThixTunnel", "ThixWrite"], Names(new AppQuery(Filter: AppFilter.NotInstalled)));
+        Assert.Equal(["ThixFred", "ThixGate"], Names(new AppQuery("terminal")));
         Assert.Equal(["ThixShot"], Names(new AppQuery("screenshot")));
-        Assert.Equal(["ThixTunnel"], Names(new AppQuery("ssh")));
+        Assert.Equal(["ThixGate", "ThixTunnel"], Names(new AppQuery("ssh")));
+        Assert.Equal(["ThixGate"], Names(new AppQuery("remote desktop")));
         Assert.Equal(["ThixClip"], Names(new AppQuery("zwischenablage")));
         Assert.Equal(["ThixNote"], Names(new AppQuery("markdown")));
         // ThixMail shows the calendar of the account too
