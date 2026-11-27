@@ -102,6 +102,22 @@ public sealed class SettingsAndUpdateTests
     }
 
     [Fact]
+    public void After_an_update_asked_for_in_the_window_the_window_comes_back_once()
+    {
+        using var data = new TestData();
+        Assert.False(UpdateService.TakeShowWindowAfterUpdate()); // an update in the background: the tray
+
+        UpdateService.ShowWindowAfterUpdate();
+        Assert.True(UpdateService.TakeShowWindowAfterUpdate());
+        Assert.False(UpdateService.TakeShowWindowAfterUpdate()); // once: the next autostart stays in the tray
+
+        // A marker left from long ago (an update that never ran) does not show the window.
+        UpdateService.ShowWindowAfterUpdate();
+        File.SetLastWriteTimeUtc(Directory.GetFiles(AppPaths.UpdateDirectory, "show-window-after-update").Single(), DateTime.UtcNow.AddHours(-1));
+        Assert.False(UpdateService.TakeShowWindowAfterUpdate());
+    }
+
+    [Fact]
     public async Task The_policy_DisableUpdates_stops_the_update_check()
     {
         using var data = new TestData();

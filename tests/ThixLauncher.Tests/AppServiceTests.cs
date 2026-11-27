@@ -262,7 +262,8 @@ public sealed class AppServiceTests
         Assert.Equal(["ThixShot"], Names(new AppQuery("screenshot")));
         Assert.Equal(["ThixGate", "ThixTunnel"], Names(new AppQuery("ssh")));
         Assert.Equal(["ThixGate"], Names(new AppQuery("remote desktop")));
-        Assert.Equal(["ThixClip"], Names(new AppQuery("zwischenablage")));
+        // ThixGate shares the clipboard with a remote desktop
+        Assert.Equal(["ThixClip", "ThixGate"], Names(new AppQuery("zwischenablage")));
         Assert.Equal(["ThixNote"], Names(new AppQuery("markdown")));
         // ThixMail shows the calendar of the account too
         Assert.Equal(["ThixCalendar", "ThixMail"], Names(new AppQuery("kalender")));

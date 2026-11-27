@@ -75,7 +75,9 @@ src/ThixLauncher.Core   (no UI) models, business layer (static classes), infrast
                         CloudService (sign-in in the browser / with a password, CheckAsync in the background, HandOffAsync before the setup of a fresh
                         install: at most 8 s, never throws; ForgetHandoff after removing), SettingsService, AccessPolicy (LockConfiguration,
                         DisableAppChanges, DisableUpdates, DisableCloud), AutostartService
-                        (HKCU Run / LaunchAgent), InstallService (Windows self-installing exe), UpdateService + MacAppBundle (own OTA),
+                        (HKCU Run / LaunchAgent), InstallService (Windows self-installing exe), UpdateService + MacAppBundle (own OTA;
+                        the restart says "--tray", asked for in the window or with the window open a marker "show-window-after-update"
+                        in the update folder brings the window back once),
                         InstallerOptions (SETUP-08 of MatDesign for the launcher itself: installer.json – embedded, and as "installer"
                         in its update manifest – offers desktop shortcut, autostart, automatic updates, no file types; the command line
                         --quiet / --update / --configure [--desktop-shortcut=yes|no --autostart=yes|no --automatic-updates=yes|no

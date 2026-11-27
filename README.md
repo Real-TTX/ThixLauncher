@@ -101,7 +101,9 @@ Nightlies aus dem Branch `dev` stehen im Pre-Release `nightly-channel`.
   Welche Bilder eine App zeigt, steht im Katalog (`ThixApp.Screenshots`).
 - **Starten:** aus der Bibliothek, über die Symbole oben in der Titelleiste oder aus dem Menü des Tray-Symbols.
 - **Updates von ThixLauncher selbst (OTA):** aus dem eigenen Kanal (`thixlauncher-update.json`), optional als
-  **Full-Auto-Update** ohne Rückfrage. Lokale Builds aktualisieren sich nicht.
+  **Full-Auto-Update** ohne Rückfrage. Lokale Builds aktualisieren sich nicht. Danach startet ThixLauncher wieder: mit seinem
+  Fenster, wenn das Update dort mit „Update installieren“ angestoßen wurde oder das Fenster offen war, sonst still im Tray bzw.
+  in der Menüleiste.
 - **MatCloud:** Unter Einstellungen › Cloud meldet sich ThixLauncher einmal bei der MatCloud an (im Browser mit Code oder mit
   Benutzername und Passwort). Jede App, die er danach **neu installiert**, ist gleich mit demselben Konto verbunden: vor ihrem Setup holt
   ThixLauncher bei der MatCloud eine Anmeldung für die App (`POST /api/v1/devices/handoff`) und legt sie für ihren ersten Start ab
