@@ -16,7 +16,8 @@ namespace ThixLauncher;
 ///  - Windows: the published ThixLauncher.exe is also its setup (RunSetupIfRequested).
 ///  - The look is MatDesktop's theme with ThixLauncher's accent (DESK-02).
 ///  - One instance per user and data folder (MatSingleInstance, DESK-05): a second start opens the window of the first one.
-///  - "--autostart" (sign-in) and "--tray" (after an update) start hidden in the tray / menu bar.
+///  - "--autostart" (sign-in) and "--tray" (after an update) start hidden in the tray / menu bar - after an update asked for in the
+///    window (or with the window open) the window shows again (UpdateService.TakeShowWindowAfterUpdate).
 ///  - The apps: their state is read at start and every 6 hours (AppCoordinator), the launcher itself looks for its own
 ///    updates (UpdateCoordinator).
 /// </summary>
@@ -40,6 +41,9 @@ public partial class App : Application
 
     /// <summary>The main window (null during setup).</summary>
     public MainWindow? MainWindow => _mainWindow;
+
+    /// <summary>The main window is on the screen (not only in the tray).</summary>
+    public bool IsMainWindowShown => _mainWindow is { IsVisible: true };
 
     public override void Initialize()
     {
@@ -148,7 +152,8 @@ public partial class App : Application
         _mainWindow = new MainWindow();
         _trayIcon = new TrayIcon(this);
 
-        var startHidden = args.Contains(TrayArgument) || args.Contains(AutostartService.StartupArgument);
+        // After an update asked for in the window (or with the window open) the window comes back, even though the restart says "--tray".
+        var startHidden = (args.Contains(TrayArgument) || args.Contains(AutostartService.StartupArgument)) && !UpdateService.TakeShowWindowAfterUpdate();
         if (!startHidden)
         {
             _mainWindow.ShowWindow();
