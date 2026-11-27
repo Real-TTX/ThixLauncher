@@ -167,10 +167,12 @@ public static class AppCatalog
             ShortName = "gate",
             CloudApp = CloudApps.Gate,
             Name = "ThixGate",
-            Tagline = "Remote-Verbindungen an einem Ort: Remote Desktop, VNC und SSH",
-            Description = "Ordner, Verbindungen und gespeicherte Zugangsdaten in einer Bibliothek. Remote Desktop und VNC laufen direkt " +
-                          "in ThixGate mit der Engine von Matgate, SSH öffnet das Terminal des Systems. Mit der MatCloud sind Ordner, " +
-                          "Verbindungen und Zugangsdaten auf all deinen Computern gleich (Passwörter nie); wer mag, verbindet sich über Matgate.",
+            Tagline = "Remote-Verbindungen an einem Ort: Remote Desktop, VNC, SSH, Dateien und Datenbanken",
+            Description = "Ordner, Verbindungen und gespeicherte Zugangsdaten in einer Bibliothek; jede Verbindung öffnet als Tab. " +
+                          "Remote Desktop und VNC mit der Engine von Matgate – mit Zwischenablage in beide Richtungen, eigenen Ordnern als " +
+                          "Laufwerk, mehreren Monitoren, Ton und Statusleiste. SSH im eigenen Terminal, Dateien über SFTP, FTP, SMB und " +
+                          "WebDAV, Datenbanken (SQL Server, MySQL, PostgreSQL) und Websites. Mit der MatCloud sind Ordner, Verbindungen und " +
+                          "Zugangsdaten auf all deinen Computern gleich (Passwörter nie); wer mag, verbindet sich über Matgate.",
             Icon = "network",
             Repository = "Real-TTX/ThixGate",
             Feed = FeedKind.ChannelManifest,
@@ -185,8 +187,11 @@ public static class AppCatalog
             Screenshots =
             [
                 new AppScreenshot("main-connections-light.png", "Alle Verbindungen mit Ordnern und Suche"),
+                new AppScreenshot("session-status.png", "Remote Desktop im Tab mit Statusleiste"),
+                new AppScreenshot("session-ssh.png", "SSH im eigenen Terminal"),
+                new AppScreenshot("session-files.png", "Dateien über SFTP, FTP, SMB und WebDAV"),
+                new AppScreenshot("session-database.png", "Datenbanken abfragen und bearbeiten"),
                 new AppScreenshot("main-connection-form-general-light.png", "Eine Verbindung bearbeiten"),
-                new AppScreenshot("main-credentials-light.png", "Zugangsdaten einmal speichern"),
                 new AppScreenshot("main-matgate-connections-light.png", "Die Verbindungen aus Matgate"),
             ],
         },

@@ -187,8 +187,8 @@
       "id": "thixgate",
       "shortName": "gate",
       "name": "ThixGate",
-      "tagline": "Remote-Verbindungen an einem Ort: Remote Desktop, VNC und SSH",
-      "description": "Ordner, Verbindungen und gespeicherte Zugangsdaten in einer Bibliothek. Remote Desktop und VNC laufen direkt in ThixGate mit der Engine von Matgate, SSH öffnet das Terminal des Systems. Mit der MatCloud sind Ordner, Verbindungen und Zugangsdaten auf all deinen Computern gleich (Passwörter nie); wer mag, verbindet sich über Matgate.",
+      "tagline": "Remote-Verbindungen an einem Ort: Remote Desktop, VNC, SSH, Dateien und Datenbanken",
+      "description": "Ordner, Verbindungen und gespeicherte Zugangsdaten in einer Bibliothek; jede Verbindung öffnet als Tab. Remote Desktop und VNC mit der Engine von Matgate – mit Zwischenablage in beide Richtungen, eigenen Ordnern als Laufwerk, mehreren Monitoren, Ton und Statusleiste. SSH im eigenen Terminal, Dateien über SFTP, FTP, SMB und WebDAV, Datenbanken (SQL Server, MySQL, PostgreSQL) und Websites. Mit der MatCloud sind Ordner, Verbindungen und Zugangsdaten auf all deinen Computern gleich (Passwörter nie); wer mag, verbindet sich über Matgate.",
       "repository": "Real-TTX/ThixGate",
       "manifest": "https://github.com/Real-TTX/ThixGate/releases/download/release-channel/thixgate-update.json",
       "icon": "https://raw.githubusercontent.com/Real-TTX/ThixLauncher/main/src/ThixLauncher/Assets/apps/thixgate.png",
@@ -201,14 +201,25 @@
           "dark": "https://raw.githubusercontent.com/Real-TTX/ThixGate/main/docs/images/main-connections-dark.png"
         },
         {
+          "url": "https://raw.githubusercontent.com/Real-TTX/ThixGate/main/docs/images/session-status.png",
+          "caption": "Remote Desktop im Tab mit Statusleiste"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Real-TTX/ThixGate/main/docs/images/session-ssh.png",
+          "caption": "SSH im eigenen Terminal"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Real-TTX/ThixGate/main/docs/images/session-files.png",
+          "caption": "Dateien über SFTP, FTP, SMB und WebDAV"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Real-TTX/ThixGate/main/docs/images/session-database.png",
+          "caption": "Datenbanken abfragen und bearbeiten"
+        },
+        {
           "url": "https://raw.githubusercontent.com/Real-TTX/ThixGate/main/docs/images/main-connection-form-general-light.png",
           "caption": "Eine Verbindung bearbeiten",
           "dark": "https://raw.githubusercontent.com/Real-TTX/ThixGate/main/docs/images/main-connection-form-general-dark.png"
-        },
-        {
-          "url": "https://raw.githubusercontent.com/Real-TTX/ThixGate/main/docs/images/main-credentials-light.png",
-          "caption": "Zugangsdaten einmal speichern",
-          "dark": "https://raw.githubusercontent.com/Real-TTX/ThixGate/main/docs/images/main-credentials-dark.png"
         },
         {
           "url": "https://raw.githubusercontent.com/Real-TTX/ThixGate/main/docs/images/main-matgate-connections-light.png",
